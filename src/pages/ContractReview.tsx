@@ -4,20 +4,28 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle2, AlertTriangle } from "lucide-react";
+import { contracts } from "@/services/api";
+import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 type RiskLevel = "low" | "medium" | "high" | null;
 
-export default function ContractReview() {
+interface ContractReviewProps {
+  user: any;
+}
+
+export default function ContractReview({ user }: ContractReviewProps) {
+  const { toast } = useToast();
   const [contractText, setContractText] = useState("");
   const [riskLevel, setRiskLevel] = useState<RiskLevel>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const analyzeContract = () => {
+  const analyzeContract = async () => {
     setIsAnalyzing(true);
     
     // 간단한 키워드 기반 위험도 분석 시뮬레이션
-    setTimeout(() => {
+    setTimeout(async () => {
       const text = contractText.toLowerCase();
       let risk: RiskLevel = "low";
       const newSuggestions: string[] = [];
@@ -45,6 +53,17 @@ export default function ContractReview() {
       setRiskLevel(risk);
       setSuggestions(newSuggestions);
       setIsAnalyzing(false);
+
+      // 로그인한 경우 검토 이력 저장
+      if (user) {
+        const riskText = risk === "low" ? "낮음" : risk === "medium" ? "보통" : "높음";
+        await contracts.saveAnalysis({
+          text: contractText,
+          risk: riskText,
+          suggestions: newSuggestions.join(" "),
+        });
+        toast({ title: "저장 완료", description: "검토 이력이 저장되었습니다" });
+      }
     }, 1500);
   };
 
@@ -150,6 +169,16 @@ export default function ContractReview() {
                       ))}
                     </ul>
                   </div>
+
+                  {user && (
+                    <div className="pt-4 border-t">
+                      <Link to="/history">
+                        <Button variant="outline" className="w-full">
+                          검토 이력 보기
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>

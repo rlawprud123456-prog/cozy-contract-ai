@@ -1,8 +1,13 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Link } from "react-router-dom";
 
-export default function Profile() {
+interface ProfileProps {
+  user: any;
+}
+
+export default function Profile({ user }: ProfileProps) {
   return (
     <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-background to-secondary/30 p-4">
       <div className="container mx-auto max-w-4xl py-8">
@@ -12,11 +17,13 @@ export default function Profile() {
           <CardHeader>
             <div className="flex items-center space-x-4">
               <Avatar className="w-20 h-20">
-                <AvatarFallback className="bg-primary text-primary-foreground text-2xl">홍</AvatarFallback>
+                <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
+                  {user?.name?.charAt(0) || "U"}
+                </AvatarFallback>
               </Avatar>
               <div>
-                <CardTitle>홍길동</CardTitle>
-                <CardDescription>example@email.com</CardDescription>
+                <CardTitle>{user?.name || "사용자"}</CardTitle>
+                <CardDescription>{user?.email || "email@example.com"}</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -31,9 +38,9 @@ export default function Profile() {
             <CardDescription>최근 검토한 계약서 목록</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center text-muted-foreground py-8">
-              아직 검토한 계약서가 없습니다.
-            </div>
+            <Link to="/history">
+              <Button variant="outline" className="w-full">검토 이력 보기</Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
