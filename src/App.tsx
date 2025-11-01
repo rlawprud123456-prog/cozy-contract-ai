@@ -18,6 +18,7 @@ import PartnerList from "./pages/PartnerList";
 import ScammerSearch from "./pages/ScammerSearch";
 import ContractCreate from "./pages/ContractCreate";
 import Escrow from "./pages/Escrow";
+import PartnerApply from "./pages/PartnerApply";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { auth } from "./services/api";
@@ -55,6 +56,7 @@ function AppContent() {
           <Route path="/scam" element={<ScammerSearch />} />
           <Route path="/profile" element={<ProtectedRoute user={user}><Profile user={user} /></ProtectedRoute>} />
           <Route path="/history" element={<ProtectedRoute user={user}><History /></ProtectedRoute>} />
+          <Route path="/partner/apply" element={<PartnerApply />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
