@@ -16,6 +16,8 @@ import Match from "./pages/Match";
 import Partners from "./pages/Partners";
 import PartnerList from "./pages/PartnerList";
 import ScammerSearch from "./pages/ScammerSearch";
+import ContractCreate from "./pages/ContractCreate";
+import Escrow from "./pages/Escrow";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { auth } from "./services/api";
@@ -44,6 +46,8 @@ function AppContent() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login onLogin={setUser} />} />
           <Route path="/signup" element={<Signup onSignup={setUser} />} />
+          <Route path="/contract/create" element={<ContractCreate user={user} />} />
+          <Route path="/escrow" element={<Escrow user={user} />} />
           <Route path="/review" element={<ContractReview user={user} />} />
           <Route path="/match" element={<Match />} />
           <Route path="/partners" element={<Partners />} />

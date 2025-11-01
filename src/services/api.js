@@ -49,3 +49,86 @@ const scamDB=[
 export const scammers={
   async search({name,phone,license}){return {items:scamDB.filter(s=>(!name||s.name.includes(name))&&(!phone||s.phone.includes(phone))&&(!license||(s.license||'').includes(license))) }}
 }
+
+// 계약 및 에스크로 관리
+export const contractManagement = {
+  async create(contract) {
+    await delay()
+    const contracts = get('contracts', [])
+    const newContract = {
+      ...contract,
+      id: Date.now(),
+      status: 'pending', // pending, in_progress, completed, cancelled
+      createdAt: new Date().toISOString()
+    }
+    contracts.push(newContract)
+    set('contracts', contracts)
+    return { contract: newContract }
+  },
+  async list() {
+    await delay()
+    return { items: get('contracts', []) }
+  },
+  async getById(id) {
+    await delay()
+    const contract = get('contracts', []).find(c => c.id === id)
+    return { contract }
+  },
+  async updateStatus(id, status) {
+    await delay()
+    const contracts = get('contracts', [])
+    const index = contracts.findIndex(c => c.id === id)
+    if (index !== -1) {
+      contracts[index].status = status
+      set('contracts', contracts)
+      return { contract: contracts[index] }
+    }
+    throw new Error('계약을 찾을 수 없습니다')
+  }
+}
+
+export const escrow = {
+  async deposit({ contractId, amount, type }) {
+    await delay()
+    const payments = get('escrowPayments', [])
+    const payment = {
+      id: Date.now(),
+      contractId,
+      amount,
+      type, // deposit(선금), mid(중도금), final(잔금)
+      status: 'held', // held(보관중), released(지급완료), refunded(환불)
+      createdAt: new Date().toISOString()
+    }
+    payments.push(payment)
+    set('escrowPayments', payments)
+    return { payment }
+  },
+  async getByContract(contractId) {
+    await delay()
+    return { items: get('escrowPayments', []).filter(p => p.contractId === contractId) }
+  },
+  async release(paymentId) {
+    await delay()
+    const payments = get('escrowPayments', [])
+    const index = payments.findIndex(p => p.id === paymentId)
+    if (index !== -1) {
+      payments[index].status = 'released'
+      payments[index].releasedAt = new Date().toISOString()
+      set('escrowPayments', payments)
+      return { payment: payments[index] }
+    }
+    throw new Error('결제를 찾을 수 없습니다')
+  },
+  async refund(paymentId) {
+    await delay()
+    const payments = get('escrowPayments', [])
+    const index = payments.findIndex(p => p.id === paymentId)
+    if (index !== -1) {
+      payments[index].status = 'refunded'
+      payments[index].refundedAt = new Date().toISOString()
+      set('escrowPayments', payments)
+      return { payment: payments[index] }
+    }
+    throw new Error('결제를 찾을 수 없습니다')
+  }
+}

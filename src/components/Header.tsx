@@ -21,6 +21,8 @@ export default function Header({ user, onLogout }: HeaderProps) {
       </Link>
       <nav className="flex items-center space-x-6">
         <NavLink to="/" className={navClass} end>홈</NavLink>
+        <NavLink to="/contract/create" className={navClass}>계약작성</NavLink>
+        <NavLink to="/escrow" className={navClass}>에스크로</NavLink>
         <NavLink to="/review" className={navClass}>계약검토</NavLink>
         <NavLink to="/match" className={navClass}>전문가매칭</NavLink>
         <NavLink to="/partners" className={navClass}>파트너</NavLink>
