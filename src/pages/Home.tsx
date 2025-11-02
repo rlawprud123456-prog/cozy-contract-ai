@@ -5,6 +5,7 @@ import { Briefcase, ArrowRight } from "lucide-react";
 import iconEscrow from "@/assets/icon-escrow.jpg";
 import iconContract from "@/assets/icon-contract.jpg";
 import iconPartners from "@/assets/icon-partners.jpg";
+import heroInterior from "@/assets/hero-interior.jpg";
 
 const sampleData = [
   { id: 1, title: "화이트톤 리폼", img: "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=800&q=80", desc: "밝고 심플한 공간 디자인" },
@@ -20,7 +21,10 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <div className="relative overflow-hidden mb-20">
-        <div className="absolute inset-0 z-0 bg-gradient-to-br from-muted/30 via-background to-muted/20"></div>
+        <div className="absolute inset-0 z-0">
+          <img src={heroInterior} alt="인테리어 배경" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-background/70"></div>
+        </div>
         <div className="relative z-10 container mx-auto px-4 py-24 max-w-6xl">
           <div className="text-center">
             <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6">
