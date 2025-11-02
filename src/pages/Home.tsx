@@ -1,7 +1,11 @@
 import { Link } from "react-router-dom";
 import Card from "@/components/Card";
 import { Button } from "@/components/ui/button";
-import { Shield, FileText, Users, Briefcase, ArrowRight } from "lucide-react";
+import { Briefcase, ArrowRight } from "lucide-react";
+import heroImage from "@/assets/hero-interior.jpg";
+import iconEscrow from "@/assets/icon-escrow.jpg";
+import iconContract from "@/assets/icon-contract.jpg";
+import iconPartners from "@/assets/icon-partners.jpg";
 
 const sampleData = [
   { id: 1, title: "화이트톤 리폼", img: "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=800&q=80", desc: "밝고 심플한 공간 디자인" },
@@ -15,34 +19,47 @@ const sampleData = [
 export default function Home() {
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-16 max-w-6xl">
-        {/* Hero Section */}
-        <div className="mb-20 text-center">
-          <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6">
-            당신의 공간을 새롭게
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-12">
-            전문가와 함께하는 안전한 인테리어 계약
-          </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Link to="/contract/create">
-              <Button size="lg" className="h-14 px-8 text-base rounded-full shadow-[var(--shadow-md)]">
-                계약 시작하기
-              </Button>
-            </Link>
-            <Link to="/match">
-              <Button size="lg" variant="outline" className="h-14 px-8 text-base rounded-full">
-                전문가 찾기
-              </Button>
-            </Link>
+      {/* Hero Section with Background */}
+      <div className="relative overflow-hidden mb-20">
+        <div className="absolute inset-0 z-0">
+          <img 
+            src={heroImage} 
+            alt="Modern interior design" 
+            className="w-full h-full object-cover opacity-20"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/80 to-background"></div>
+        </div>
+        <div className="relative z-10 container mx-auto px-4 py-24 max-w-6xl">
+          <div className="text-center">
+            <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6">
+              당신의 공간을 새롭게
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-12">
+              전문가와 함께하는 안전한 인테리어 계약
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link to="/contract/create">
+                <Button size="lg" className="h-14 px-8 text-base rounded-full shadow-[var(--shadow-md)]">
+                  계약 시작하기
+                </Button>
+              </Link>
+              <Link to="/match">
+                <Button size="lg" variant="outline" className="h-14 px-8 text-base rounded-full">
+                  전문가 찾기
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
+      </div>
+
+      <div className="container mx-auto px-4 pb-16 max-w-6xl">
 
         {/* Features Section */}
         <div className="grid md:grid-cols-3 gap-4 mb-20">
           <div className="p-8 rounded-3xl bg-card border border-border hover:shadow-[var(--shadow-lg)] transition-all">
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-              <Shield className="w-6 h-6 text-primary" />
+            <div className="w-20 h-20 rounded-2xl overflow-hidden mb-4">
+              <img src={iconEscrow} alt="Escrow Security" className="w-full h-full object-cover" />
             </div>
             <h3 className="text-lg font-bold text-foreground mb-2">안전한 에스크로</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
@@ -50,8 +67,8 @@ export default function Home() {
             </p>
           </div>
           <div className="p-8 rounded-3xl bg-card border border-border hover:shadow-[var(--shadow-lg)] transition-all">
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-              <FileText className="w-6 h-6 text-primary" />
+            <div className="w-20 h-20 rounded-2xl overflow-hidden mb-4">
+              <img src={iconContract} alt="Contract Review" className="w-full h-full object-cover" />
             </div>
             <h3 className="text-lg font-bold text-foreground mb-2">계약서 검토</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
@@ -59,8 +76,8 @@ export default function Home() {
             </p>
           </div>
           <div className="p-8 rounded-3xl bg-card border border-border hover:shadow-[var(--shadow-lg)] transition-all">
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-              <Users className="w-6 h-6 text-primary" />
+            <div className="w-20 h-20 rounded-2xl overflow-hidden mb-4">
+              <img src={iconPartners} alt="Verified Partners" className="w-full h-full object-cover" />
             </div>
             <h3 className="text-lg font-bold text-foreground mb-2">검증된 전문가</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
