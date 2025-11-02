@@ -1,40 +1,43 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { PenSquare } from "lucide-react";
+import { Plus } from "lucide-react";
 import PostForm from "@/components/community/PostForm";
 import PostList from "@/components/community/PostList";
 
 export default function Help() {
   const [showForm, setShowForm] = useState(false);
+  const [refresh, setRefresh] = useState(0);
+
+  const handleSuccess = () => {
+    setShowForm(false);
+    setRefresh(prev => prev + 1);
+  };
 
   return (
     <div className="min-h-[calc(100vh-180px)] bg-background p-4">
       <div className="container mx-auto max-w-4xl py-8">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold text-primary mb-2">고수님 도와주세요</h1>
             <p className="text-muted-foreground">인테리어 전문가에게 조언을 구하세요</p>
           </div>
           <Button onClick={() => setShowForm(!showForm)}>
-            <PenSquare className="w-4 h-4 mr-2" />
-            {showForm ? "취소" : "글쓰기"}
+            <Plus className="w-4 h-4 mr-2" />
+            글쓰기
           </Button>
         </div>
         
         {showForm && (
-          <div className="mb-8">
-            <PostForm
-              category="help"
-              onSuccess={() => {
-                setShowForm(false);
-                window.location.reload();
-              }}
+          <div className="mb-6">
+            <PostForm 
+              category="help" 
+              onSuccess={handleSuccess}
               onCancel={() => setShowForm(false)}
             />
           </div>
         )}
 
-        <PostList category="help" />
+        <PostList category="help" refresh={refresh} />
       </div>
     </div>
   );

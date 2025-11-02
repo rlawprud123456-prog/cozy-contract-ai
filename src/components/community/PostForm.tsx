@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, X } from "lucide-react";
+import { ImagePlus, X } from "lucide-react";
 
 interface PostFormProps {
   category: string;
@@ -13,48 +14,44 @@ interface PostFormProps {
 }
 
 export default function PostForm({ category, onSuccess, onCancel }: PostFormProps) {
-  const { toast } = useToast();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [images, setImages] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const { toast } = useToast();
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newImages = Array.from(e.target.files);
-      setImages(prev => [...prev, ...newImages].slice(0, 5)); // 최대 5개
+      setImages([...images, ...newImages]);
     }
   };
 
   const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
+    setImages(images.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!title.trim() || !content.trim()) {
-      toast({
-        title: "입력 오류",
-        description: "제목과 내용을 입력해주세요",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setUploading(true);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("로그인이 필요합니다");
+      if (!user) {
+        toast({
+          title: "로그인이 필요합니다",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      // 이미지 업로드
+      // Upload images
       const imageUrls: string[] = [];
       for (const image of images) {
         const fileExt = image.name.split('.').pop();
-        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+        const fileName = `${user.id}/${Date.now()}_${Math.random()}.${fileExt}`;
         
-        const { error: uploadError, data } = await supabase.storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
           .from('community-images')
           .upload(fileName, image);
 
@@ -63,34 +60,31 @@ export default function PostForm({ category, onSuccess, onCancel }: PostFormProp
         const { data: { publicUrl } } = supabase.storage
           .from('community-images')
           .getPublicUrl(fileName);
-        
+
         imageUrls.push(publicUrl);
       }
 
-      // 게시글 저장
+      // Create post
       const { error } = await supabase
         .from('community_posts')
         .insert({
           user_id: user.id,
           category,
-          title: title.trim(),
-          content: content.trim(),
+          title,
+          content,
           images: imageUrls,
         });
 
       if (error) throw error;
 
       toast({
-        title: "게시글 작성 완료",
-        description: "게시글이 성공적으로 작성되었습니다",
+        title: "게시글이 작성되었습니다",
       });
-
       onSuccess();
     } catch (error: any) {
-      console.error("Error creating post:", error);
       toast({
-        title: "작성 실패",
-        description: error.message || "게시글 작성 중 오류가 발생했습니다",
+        title: "게시글 작성 실패",
+        description: error.message,
         variant: "destructive",
       });
     } finally {
@@ -99,71 +93,85 @@ export default function PostForm({ category, onSuccess, onCancel }: PostFormProp
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-card rounded-lg p-6 space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6 bg-card p-6 rounded-lg border border-border">
       <div>
+        <Label htmlFor="title">제목</Label>
         <Input
-          placeholder="제목을 입력하세요"
+          id="title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          maxLength={100}
-          disabled={uploading}
+          required
+          placeholder="제목을 입력하세요"
+          className="mt-2"
         />
       </div>
-      
+
       <div>
+        <Label htmlFor="content">내용</Label>
         <Textarea
-          placeholder="내용을 입력하세요"
+          id="content"
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          rows={8}
-          maxLength={2000}
-          disabled={uploading}
+          required
+          placeholder="내용을 입력하세요"
+          className="mt-2 min-h-[200px]"
         />
       </div>
 
       <div>
-        <label className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground hover:text-foreground">
-          <Upload className="w-4 h-4" />
-          이미지 추가 (최대 5개)
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleImageChange}
-            className="hidden"
-            disabled={uploading || images.length >= 5}
-          />
-        </label>
-        
-        {images.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-2">
-            {images.map((img, idx) => (
-              <div key={idx} className="relative w-20 h-20">
-                <img
-                  src={URL.createObjectURL(img)}
-                  alt={`preview ${idx}`}
-                  className="w-full h-full object-cover rounded"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeImage(idx)}
-                  className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"
-                  disabled={uploading}
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
+        <Label htmlFor="images">이미지 첨부</Label>
+        <div className="mt-2 space-y-4">
+          <div className="flex items-center gap-2">
+            <Input
+              id="images"
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageChange}
+              className="hidden"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => document.getElementById('images')?.click()}
+            >
+              <ImagePlus className="w-4 h-4 mr-2" />
+              이미지 선택
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              {images.length}개 선택됨
+            </span>
           </div>
-        )}
+
+          {images.length > 0 && (
+            <div className="grid grid-cols-3 gap-2">
+              {images.map((image, index) => (
+                <div key={index} className="relative group">
+                  <img
+                    src={URL.createObjectURL(image)}
+                    alt={`미리보기 ${index + 1}`}
+                    className="w-full h-24 object-cover rounded"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 justify-end">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          취소
+        </Button>
         <Button type="submit" disabled={uploading}>
           {uploading ? "작성 중..." : "작성하기"}
-        </Button>
-        <Button type="button" variant="outline" onClick={onCancel} disabled={uploading}>
-          취소
         </Button>
       </div>
     </form>
