@@ -27,12 +27,9 @@ export default function Home() {
         </div>
         <div className="relative z-10 container mx-auto px-4 py-24 max-w-6xl">
           <div className="text-center">
-            <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-4">
-              새로고침
+            <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6">
+              당신의 공간을 새롭게
             </h1>
-            <p className="text-2xl md:text-3xl font-semibold text-primary mb-6">
-              검증되지 않은 시공업체는 한 발자국도 못 들어온다
-            </p>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-12">
               전문가와 함께하는 안전한 인테리어 계약
             </p>
