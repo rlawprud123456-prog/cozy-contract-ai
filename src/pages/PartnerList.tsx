@@ -2,18 +2,43 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { useParams, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { partners } from "@/services/api";
-import { Star, Phone, ArrowLeft } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Star, ArrowLeft } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function PartnerList() {
   const { category } = useParams();
   const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (category) {
-      partners.listByCategory(category).then(({ items }) => setItems(items));
-    }
-  }, [category]);
+    const loadPartners = async () => {
+      if (!category) return;
+      
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from("partner_profiles")
+          .select("*")
+          .eq("category", category);
+
+        if (error) throw error;
+        setItems(data || []);
+      } catch (error: any) {
+        console.error("파트너 로딩 오류:", error);
+        toast({
+          title: "로딩 실패",
+          description: "파트너 정보를 불러올 수 없습니다.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPartners();
+  }, [category, toast]);
 
   return (
     <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-background to-secondary/30 p-4">
@@ -24,9 +49,17 @@ export default function PartnerList() {
         </Link>
         
         <h1 className="text-3xl font-bold text-primary mb-2">{category}</h1>
-        <p className="text-muted-foreground mb-8">전문가 {items.length}명</p>
+        <p className="text-muted-foreground mb-8">
+          {loading ? "로딩 중..." : `전문가 ${items.length}명`}
+        </p>
 
-        {items.length === 0 ? (
+        {loading ? (
+          <Card className="shadow-[var(--shadow-card)]">
+            <CardContent className="py-12 text-center text-muted-foreground">
+              로딩 중...
+            </CardContent>
+          </Card>
+        ) : items.length === 0 ? (
           <Card className="shadow-[var(--shadow-card)]">
             <CardContent className="py-12 text-center text-muted-foreground">
               해당 카테고리에 등록된 전문가가 없습니다.
@@ -37,22 +70,15 @@ export default function PartnerList() {
             {items.map((partner) => (
               <Card key={partner.id} className="shadow-[var(--shadow-card)]">
                 <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle>{partner.name}</CardTitle>
-                      <CardDescription>{partner.city}</CardDescription>
-                    </div>
-                    <div className="flex items-center gap-1 text-amber-500">
-                      <Star className="h-5 w-5 fill-current" />
-                      <span className="font-semibold">{partner.rating}</span>
-                    </div>
-                  </div>
+                  <CardTitle>{partner.business_name}</CardTitle>
+                  <CardDescription>{partner.category}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-                    <Phone className="h-4 w-4" />
-                    <span>{partner.phone}</span>
-                  </div>
+                  {partner.description && (
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {partner.description}
+                    </p>
+                  )}
                   <Button className="bg-primary hover:bg-primary/90">상담 신청</Button>
                 </CardContent>
               </Card>

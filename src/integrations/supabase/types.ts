@@ -56,6 +56,13 @@ export type Database = {
             foreignKeyName: "contracts_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: false
+            referencedRelation: "partner_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
             referencedRelation: "partners"
             referencedColumns: ["id"]
           },
@@ -156,7 +163,36 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      partner_profiles: {
+        Row: {
+          business_name: string | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          portfolio_images: string[] | null
+          status: string | null
+        }
+        Insert: {
+          business_name?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          portfolio_images?: string[] | null
+          status?: string | null
+        }
+        Update: {
+          business_name?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          portfolio_images?: string[] | null
+          status?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
