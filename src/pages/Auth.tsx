@@ -3,10 +3,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
 import logo from "@/assets/logo.png";
+
+const signupSchema = z.object({
+  name: z.string().trim().min(2, "이름은 최소 2자 이상이어야 합니다").max(50, "이름은 최대 50자까지 입력 가능합니다"),
+  email: z.string().trim().email("올바른 이메일 주소를 입력해주세요").max(255, "이메일은 최대 255자까지 입력 가능합니다"),
+  password: z.string().min(6, "비밀번호는 최소 6자 이상이어야 합니다").max(100, "비밀번호는 최대 100자까지 입력 가능합니다"),
+});
+
+const loginSchema = z.object({
+  email: z.string().trim().email("올바른 이메일 주소를 입력해주세요"),
+  password: z.string().min(6, "비밀번호는 최소 6자 이상이어야 합니다"),
+});
 
 export default function Auth() {
   const [email, setEmail] = useState("");
@@ -16,18 +28,34 @@ export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // 이미 로그인된 사용자는 홈으로 리다이렉트
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        navigate("/");
+      }
+    });
+  }, [navigate]);
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
+      // 입력 유효성 검사
+      const validatedData = signupSchema.parse({
+        name: name.trim(),
+        email: email.trim(),
         password,
+      });
+
+      const { data, error } = await supabase.auth.signUp({
+        email: validatedData.email,
+        password: validatedData.password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
-            name: name,
+            name: validatedData.name,
           }
         }
       });
@@ -40,11 +68,22 @@ export default function Auth() {
       });
       navigate("/");
     } catch (error: any) {
-      toast({ 
-        title: "회원가입 실패", 
-        description: error.message, 
-        variant: "destructive" 
-      });
+      if (error instanceof z.ZodError) {
+        toast({ 
+          title: "입력 오류", 
+          description: error.errors[0].message, 
+          variant: "destructive" 
+        });
+      } else {
+        const errorMessage = error.message === "User already registered" 
+          ? "이미 가입된 이메일입니다" 
+          : error.message;
+        toast({ 
+          title: "회원가입 실패", 
+          description: errorMessage, 
+          variant: "destructive" 
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -55,9 +94,15 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+      // 입력 유효성 검사
+      const validatedData = loginSchema.parse({
+        email: email.trim(),
         password,
+      });
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: validatedData.email,
+        password: validatedData.password,
       });
 
       if (error) throw error;
@@ -68,11 +113,22 @@ export default function Auth() {
       });
       navigate("/");
     } catch (error: any) {
-      toast({ 
-        title: "로그인 실패", 
-        description: error.message, 
-        variant: "destructive" 
-      });
+      if (error instanceof z.ZodError) {
+        toast({ 
+          title: "입력 오류", 
+          description: error.errors[0].message, 
+          variant: "destructive" 
+        });
+      } else {
+        const errorMessage = error.message === "Invalid login credentials" 
+          ? "이메일 또는 비밀번호가 올바르지 않습니다" 
+          : error.message;
+        toast({ 
+          title: "로그인 실패", 
+          description: errorMessage, 
+          variant: "destructive" 
+        });
+      }
     } finally {
       setLoading(false);
     }
