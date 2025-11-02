@@ -49,11 +49,11 @@ function AppContent() {
           <Route path="/signup" element={<Signup onSignup={setUser} />} />
           <Route path="/contract/create" element={<ContractCreate user={user} />} />
           <Route path="/escrow" element={<Escrow user={user} />} />
-          <Route path="/review" element={<ContractReview user={user} />} />
+          <Route path="/contract-review" element={<ContractReview user={user} />} />
           <Route path="/match" element={<Match />} />
           <Route path="/partners" element={<Partners />} />
           <Route path="/partners/:category" element={<PartnerList />} />
-          <Route path="/scam" element={<ScammerSearch />} />
+          <Route path="/scammer-search" element={<ScammerSearch />} />
           <Route path="/profile" element={<ProtectedRoute user={user}><Profile user={user} /></ProtectedRoute>} />
           <Route path="/history" element={<ProtectedRoute user={user}><History /></ProtectedRoute>} />
           <Route path="/partner/apply" element={<PartnerApply />} />
