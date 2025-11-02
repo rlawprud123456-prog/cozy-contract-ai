@@ -7,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, FileText, Users, User } from "lucide-react";
+import { ChevronDown, FileText, Users, User, MessageSquare } from "lucide-react";
 
 interface HeaderProps {
   user: any;
@@ -67,6 +67,30 @@ export default function Header({ user, onLogout }: HeaderProps) {
         </DropdownMenu>
 
         <NavLink to="/scammer-search" className={navClass}>사기업체조회</NavLink>
+        
+        {/* 커뮤니티 드롭다운 */}
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors outline-none text-sm">
+            <MessageSquare className="w-4 h-4" />
+            커뮤니티
+            <ChevronDown className="w-4 h-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            <DropdownMenuItem asChild>
+              <Link to="/community/sad" className="cursor-pointer">속상해요</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/community/diy-tips" className="cursor-pointer">셀프인테리어 팁</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/community/jobs" className="cursor-pointer">구인구직</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/community/help" className="cursor-pointer">고수님 도와주세요</Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        
         <NavLink to="/partner/apply" className={navClass}>파트너신청</NavLink>
 
         {user ? (
