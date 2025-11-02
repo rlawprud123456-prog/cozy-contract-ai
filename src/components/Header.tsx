@@ -31,7 +31,7 @@ export default function Header({ user, onLogout }: HeaderProps) {
         
         {/* 계약관리 드롭다운 */}
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex items-center gap-1 text-foreground/70 hover:text-accent transition-colors outline-none">
+          <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors outline-none text-sm">
             <FileText className="w-4 h-4" />
             계약관리
             <ChevronDown className="w-4 h-4" />
@@ -51,7 +51,7 @@ export default function Header({ user, onLogout }: HeaderProps) {
 
         {/* 전문가찾기 드롭다운 */}
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex items-center gap-1 text-foreground/70 hover:text-accent transition-colors outline-none">
+          <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors outline-none text-sm">
             <Users className="w-4 h-4" />
             전문가찾기
             <ChevronDown className="w-4 h-4" />
@@ -73,7 +73,7 @@ export default function Header({ user, onLogout }: HeaderProps) {
           <>
             {/* 마이페이지 드롭다운 */}
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-1 text-foreground/70 hover:text-accent transition-colors outline-none">
+              <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors outline-none text-sm">
                 <User className="w-4 h-4" />
                 마이페이지
                 <ChevronDown className="w-4 h-4" />
@@ -85,16 +85,18 @@ export default function Header({ user, onLogout }: HeaderProps) {
                 <DropdownMenuItem asChild>
                   <Link to="/profile" className="cursor-pointer">프로필</Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/admin" className="cursor-pointer">관리자</Link>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button onClick={onLogout} variant="ghost" size="sm" className="text-foreground/70 hover:text-destructive">
+            <Button onClick={onLogout} variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive text-sm">
               로그아웃
             </Button>
           </>
         ) : (
           <>
-            <NavLink to="/login" className={navClass}>로그인</NavLink>
-            <NavLink to="/signup" className={navClass}>회원가입</NavLink>
+            <NavLink to="/auth" className={navClass}>로그인</NavLink>
           </>
         )}
       </nav>

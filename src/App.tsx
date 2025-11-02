@@ -4,11 +4,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { User, Session } from "@supabase/supabase-js";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
+import Auth from "./pages/Auth";
+import Admin from "./pages/Admin";
 import Profile from "./pages/Profile";
 import ContractReview from "./pages/ContractReview";
 import History from "./pages/History";
@@ -21,21 +23,36 @@ import Escrow from "./pages/Escrow";
 import PartnerApply from "./pages/PartnerApply";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { auth } from "./services/api";
 
 const queryClient = new QueryClient();
 
 function AppContent() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    auth.me().then(res => setUser(res.user));
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const logout = async () => {
-    await auth.logout();
+    await supabase.auth.signOut();
     setUser(null);
+    setSession(null);
     navigate("/");
   };
 
@@ -45,8 +62,8 @@ function AppContent() {
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login onLogin={setUser} />} />
-          <Route path="/signup" element={<Signup onSignup={setUser} />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="/contract/create" element={<ContractCreate user={user} />} />
           <Route path="/escrow" element={<Escrow user={user} />} />
           <Route path="/contract-review" element={<ContractReview user={user} />} />
