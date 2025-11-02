@@ -6,7 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { contractManagement } from "@/services/api";
+import { createContract } from "@/services/contract";
+import { supabase } from "@/integrations/supabase/client";
 import { FileText, Shield, Eye } from "lucide-react";
 import ContractPreview from "@/components/ContractPreview";
 
@@ -166,7 +167,9 @@ export default function ContractCreate({ user }: ContractCreateProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user) {
+    // 인증 확인
+    const { data: authData } = await supabase.auth.getUser();
+    if (!authData.user) {
       toast({
         title: "로그인 필요",
         description: "계약 생성을 위해 로그인해주세요",
@@ -193,17 +196,21 @@ export default function ContractCreate({ user }: ContractCreateProps) {
     try {
       setSubmitting(true);
 
-      const contract = {
-        ...formData,
-        userId: user.id,
-        userName: user.name,
-        totalAmount: parseIntSafe(formData.totalAmount),
-        depositAmount: parseIntSafe(formData.depositAmount),
-        midAmount: parseIntSafe(formData.midAmount),
-        finalAmount: parseIntSafe(formData.finalAmount),
-      };
-
-      await contractManagement.create(contract);
+      await createContract({
+        user_id: authData.user.id,
+        title: formData.projectName,
+        partner_name: formData.partnerName,
+        partner_phone: formData.partnerPhone,
+        project_name: formData.projectName,
+        location: formData.location,
+        total_amount: parseIntSafe(formData.totalAmount),
+        deposit_amount: parseIntSafe(formData.depositAmount),
+        mid_amount: parseIntSafe(formData.midAmount),
+        final_amount: parseIntSafe(formData.finalAmount),
+        start_date: formData.startDate,
+        end_date: formData.endDate,
+        description: formData.description || undefined,
+      });
 
       toast({
         title: "계약 생성 완료",
@@ -500,8 +507,14 @@ export default function ContractCreate({ user }: ContractCreateProps) {
       {showPreview && (
         <ContractPreview
           contract={{
-            ...formData,
-            userName: user?.name || "고객",
+            projectName: formData.projectName,
+            partnerName: formData.partnerName,
+            partnerPhone: formData.partnerPhone,
+            userName: "고객",
+            location: formData.location,
+            startDate: formData.startDate,
+            endDate: formData.endDate,
+            description: formData.description,
             totalAmount: parseIntSafe(formData.totalAmount),
             depositAmount: parseIntSafe(formData.depositAmount),
             midAmount: parseIntSafe(formData.midAmount),

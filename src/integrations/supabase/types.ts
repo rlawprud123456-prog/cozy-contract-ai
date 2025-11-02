@@ -19,11 +19,22 @@ export type Database = {
           amount: number | null
           contract_file_url: string | null
           created_at: string
+          deposit_amount: number | null
           description: string | null
+          end_date: string | null
+          final_amount: number | null
           id: string
+          location: string | null
+          mid_amount: number | null
           partner_id: string | null
+          partner_name: string | null
+          partner_phone: string | null
+          pdf_url: string | null
+          project_name: string | null
+          start_date: string | null
           status: string
           title: string
+          total_amount: number | null
           updated_at: string
           user_id: string
         }
@@ -31,11 +42,22 @@ export type Database = {
           amount?: number | null
           contract_file_url?: string | null
           created_at?: string
+          deposit_amount?: number | null
           description?: string | null
+          end_date?: string | null
+          final_amount?: number | null
           id?: string
+          location?: string | null
+          mid_amount?: number | null
           partner_id?: string | null
+          partner_name?: string | null
+          partner_phone?: string | null
+          pdf_url?: string | null
+          project_name?: string | null
+          start_date?: string | null
           status?: string
           title: string
+          total_amount?: number | null
           updated_at?: string
           user_id: string
         }
@@ -43,11 +65,22 @@ export type Database = {
           amount?: number | null
           contract_file_url?: string | null
           created_at?: string
+          deposit_amount?: number | null
           description?: string | null
+          end_date?: string | null
+          final_amount?: number | null
           id?: string
+          location?: string | null
+          mid_amount?: number | null
           partner_id?: string | null
+          partner_name?: string | null
+          partner_phone?: string | null
+          pdf_url?: string | null
+          project_name?: string | null
+          start_date?: string | null
           status?: string
           title?: string
+          total_amount?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -64,6 +97,47 @@ export type Database = {
             columns: ["partner_id"]
             isOneToOne: false
             referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      escrow_payments: {
+        Row: {
+          amount: number
+          contract_id: string
+          created_at: string
+          id: string
+          refunded_at: string | null
+          released_at: string | null
+          status: string
+          type: string
+        }
+        Insert: {
+          amount: number
+          contract_id: string
+          created_at?: string
+          id?: string
+          refunded_at?: string | null
+          released_at?: string | null
+          status?: string
+          type: string
+        }
+        Update: {
+          amount?: number
+          contract_id?: string
+          created_at?: string
+          id?: string
+          refunded_at?: string | null
+          released_at?: string | null
+          status?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escrow_payments_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
         ]
@@ -201,6 +275,14 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      set_contract_status_completed_if_all_released: {
+        Args: { p_contract_id: string }
+        Returns: undefined
+      }
+      set_contract_status_in_progress: {
+        Args: { p_contract_id: string }
+        Returns: undefined
       }
     }
     Enums: {
