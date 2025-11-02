@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { contractManagement } from "@/services/api";
-import { FileText, Shield } from "lucide-react";
+import { FileText, Shield, Eye } from "lucide-react";
+import ContractPreview from "@/components/ContractPreview";
 
 interface ContractCreateProps {
   user: any;
@@ -16,6 +17,9 @@ interface ContractCreateProps {
 export default function ContractCreate({ user }: ContractCreateProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [showPreview, setShowPreview] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
   const [formData, setFormData] = useState({
     partnerName: "",
     partnerPhone: "",
@@ -30,8 +34,133 @@ export default function ContractCreate({ user }: ContractCreateProps) {
     description: "",
   });
 
+  // 숫자 안전 파싱/합계 유틸
+  const parseIntSafe = (v: string) => Number(v || 0);
+  const sumMoney = () =>
+    parseIntSafe(formData.depositAmount) +
+    parseIntSafe(formData.midAmount) +
+    parseIntSafe(formData.finalAmount);
+
+  // 표시용 포맷
+  const formatMoney = (value: string | number) => {
+    const n = typeof value === "string" ? Number(value || 0) : value;
+    if (!n) return "0";
+    return n.toLocaleString("ko-KR");
+  };
+
+  // 인풋 변경
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target as { name: string; value: string };
+    const moneyFields = ["totalAmount", "depositAmount", "midAmount", "finalAmount"];
+
+    if (moneyFields.includes(name)) {
+      // 금액: 숫자만
+      const sanitized = value.replace(/[^\d]/g, "");
+      setFormData(prev => ({ ...prev, [name]: sanitized }));
+      return;
+    }
+
+    if (name === "partnerPhone") {
+      // 휴대폰 자동 하이픈 + 최대 11자리
+      const digits = value.replace(/\D/g, "").slice(0, 11);
+      let formatted = digits;
+
+      if (digits.startsWith("02")) {
+        if (digits.length > 2 && digits.length <= 6) {
+          formatted = digits.replace(/(\d{2})(\d+)/, "$1-$2");
+        } else if (digits.length > 6) {
+          formatted = digits.replace(/(\d{2})(\d{3,4})(\d{0,4})/, "$1-$2-$3").replace(/-$/, "");
+        }
+      } else {
+        if (digits.length > 3 && digits.length <= 7) {
+          formatted = digits.replace(/(\d{3})(\d+)/, "$1-$2");
+        } else if (digits.length > 7) {
+          formatted = digits.replace(/(\d{3})(\d{3,4})(\d{0,4})/, "$1-$2-$3").replace(/-$/, "");
+        }
+      }
+      setFormData(prev => ({ ...prev, [name]: formatted }));
+      return;
+    }
+
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // 숫자 인풋 휠/이상키 방지
+  const preventWheel = (e: React.WheelEvent<HTMLInputElement>) => {
+    (e.target as HTMLInputElement).blur();
+  };
+  const blockWeirdKeys = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (["e", "E", "+", "-", "."].includes(e.key)) e.preventDefault();
+  };
+
+  // 공통 검증
+  const validateCommon = () => {
+    // 필수
+    if (!formData.projectName || !formData.partnerName || !formData.totalAmount) {
+      toast({
+        title: "필수 항목 누락",
+        description: "프로젝트명, 전문가 이름, 총 계약금액은 필수입니다",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // 총액 최소 10만원
+    const total = parseIntSafe(formData.totalAmount);
+    if (total < 100000) {
+      toast({
+        title: "금액 확인",
+        description: "총 계약금액은 최소 10만원 이상이어야 합니다",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // 날짜 검증
+    if (formData.startDate && formData.endDate) {
+      const start = new Date(formData.startDate);
+      const end = new Date(formData.endDate);
+
+      if (start > end) {
+        toast({
+          title: "기간 확인",
+          description: "완료 예정일이 시작일보다 빠를 수 없습니다",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      // 시작일 과거 금지
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      start.setHours(0, 0, 0, 0);
+      if (start < today) {
+        toast({
+          title: "시작일 확인",
+          description: "시작일은 오늘 이후여야 합니다",
+          variant: "destructive",
+        });
+        return false;
+      }
+    }
+
+    // 합계 일치
+    const partial = sumMoney();
+    if (total !== partial) {
+      toast({
+        title: "금액 합계 불일치",
+        description: `선금+중도금+잔금(${partial.toLocaleString()}원)의 합이 총 계약금액(${total.toLocaleString()}원)과 일치해야 합니다`,
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  const handlePreview = () => {
+    if (!validateCommon()) return;
+    setShowPreview(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,24 +176,40 @@ export default function ContractCreate({ user }: ContractCreateProps) {
       return;
     }
 
+    // 휴대폰 형식 체크
+    const phone = (formData.partnerPhone || "").trim();
+    const phoneOk = /^01[016789]-?\d{3,4}-?\d{4}$/.test(phone) || /^02-?\d{3,4}-?\d{4}$/.test(phone);
+    if (!phoneOk) {
+      toast({
+        title: "연락처 형식 오류",
+        description: "올바른 전화번호를 입력하세요 (예: 010-1234-5678)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!validateCommon()) return;
+
     try {
+      setSubmitting(true);
+
       const contract = {
         ...formData,
         userId: user.id,
         userName: user.name,
-        totalAmount: Number(formData.totalAmount),
-        depositAmount: Number(formData.depositAmount),
-        midAmount: Number(formData.midAmount),
-        finalAmount: Number(formData.finalAmount),
+        totalAmount: parseIntSafe(formData.totalAmount),
+        depositAmount: parseIntSafe(formData.depositAmount),
+        midAmount: parseIntSafe(formData.midAmount),
+        finalAmount: parseIntSafe(formData.finalAmount),
       };
 
       await contractManagement.create(contract);
-      
+
       toast({
         title: "계약 생성 완료",
         description: "에스크로 결제 페이지로 이동합니다",
       });
-      
+
       navigate("/escrow");
     } catch (error) {
       toast({
@@ -72,6 +217,8 @@ export default function ContractCreate({ user }: ContractCreateProps) {
         description: error instanceof Error ? error.message : "계약 생성에 실패했습니다",
         variant: "destructive",
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -127,6 +274,7 @@ export default function ContractCreate({ user }: ContractCreateProps) {
                       value={formData.partnerPhone}
                       onChange={handleChange}
                       required
+                      maxLength={13}
                       placeholder="010-1234-5678"
                     />
                   </div>
@@ -214,8 +362,18 @@ export default function ContractCreate({ user }: ContractCreateProps) {
                       value={formData.totalAmount}
                       onChange={handleChange}
                       required
+                      min={100000}
+                      step={10000}
+                      inputMode="numeric"
+                      onWheel={preventWheel}
+                      onKeyDown={blockWeirdKeys}
                       placeholder="10000000"
                     />
+                    {formData.totalAmount && (
+                      <p className="text-sm text-muted-foreground">
+                        {formatMoney(formData.totalAmount)}원
+                      </p>
+                    )}
                   </div>
                   <div className="grid md:grid-cols-3 gap-4">
                     <div className="space-y-2">
@@ -227,8 +385,18 @@ export default function ContractCreate({ user }: ContractCreateProps) {
                         value={formData.depositAmount}
                         onChange={handleChange}
                         required
+                        min={0}
+                        step={10000}
+                        inputMode="numeric"
+                        onWheel={preventWheel}
+                        onKeyDown={blockWeirdKeys}
                         placeholder="3000000"
                       />
+                      {formData.depositAmount && (
+                        <p className="text-xs text-muted-foreground">
+                          {formatMoney(formData.depositAmount)}원
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="midAmount">중도금 (원) *</Label>
@@ -239,8 +407,18 @@ export default function ContractCreate({ user }: ContractCreateProps) {
                         value={formData.midAmount}
                         onChange={handleChange}
                         required
+                        min={0}
+                        step={10000}
+                        inputMode="numeric"
+                        onWheel={preventWheel}
+                        onKeyDown={blockWeirdKeys}
                         placeholder="4000000"
                       />
+                      {formData.midAmount && (
+                        <p className="text-xs text-muted-foreground">
+                          {formatMoney(formData.midAmount)}원
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="finalAmount">잔금 (원) *</Label>
@@ -251,10 +429,39 @@ export default function ContractCreate({ user }: ContractCreateProps) {
                         value={formData.finalAmount}
                         onChange={handleChange}
                         required
+                        min={0}
+                        step={10000}
+                        inputMode="numeric"
+                        onWheel={preventWheel}
+                        onKeyDown={blockWeirdKeys}
                         placeholder="3000000"
                       />
+                      {formData.finalAmount && (
+                        <p className="text-xs text-muted-foreground">
+                          {formatMoney(formData.finalAmount)}원
+                        </p>
+                      )}
                     </div>
                   </div>
+
+                  {/* 합계 표시 */}
+                  {(formData.depositAmount || formData.midAmount || formData.finalAmount) && (
+                    <div className="p-3 bg-secondary/50 rounded-lg">
+                      <div className="flex justify-between text-sm">
+                        <span>합계:</span>
+                        <span className="font-semibold">
+                          {formatMoney(sumMoney())}원
+                        </span>
+                      </div>
+                      {formData.totalAmount && (
+                        <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                          <span>총 계약금액:</span>
+                          <span>{formatMoney(formData.totalAmount)}원</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="p-4 bg-accent/10 rounded-lg border border-accent/20">
                     <p className="text-sm text-muted-foreground">
                       <Shield className="w-4 h-4 inline mr-1 text-accent" />
@@ -264,13 +471,45 @@ export default function ContractCreate({ user }: ContractCreateProps) {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full bg-accent hover:bg-accent/90">
-                계약 생성 및 에스크로 진행
-              </Button>
+              {/* 버튼 */}
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={handlePreview}
+                  disabled={submitting}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  계약서 미리보기
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1 bg-accent hover:bg-accent/90"
+                  disabled={submitting}
+                >
+                  {submitting ? "처리 중..." : "계약 생성 및 에스크로 진행"}
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>
       </div>
+
+      {/* 미리보기 모달 */}
+      {showPreview && (
+        <ContractPreview
+          contract={{
+            ...formData,
+            userName: user?.name || "고객",
+            totalAmount: parseIntSafe(formData.totalAmount),
+            depositAmount: parseIntSafe(formData.depositAmount),
+            midAmount: parseIntSafe(formData.midAmount),
+            finalAmount: parseIntSafe(formData.finalAmount),
+          }}
+          onClose={() => setShowPreview(false)}
+        />
+      )}
     </div>
   );
 }
