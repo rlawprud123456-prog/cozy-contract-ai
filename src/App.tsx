@@ -21,6 +21,10 @@ import ScammerSearch from "./pages/ScammerSearch";
 import ContractCreate from "./pages/ContractCreate";
 import Escrow from "./pages/Escrow";
 import PartnerApply from "./pages/PartnerApply";
+import Sad from "./pages/community/Sad";
+import DiyTips from "./pages/community/DiyTips";
+import Jobs from "./pages/community/Jobs";
+import Help from "./pages/community/Help";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -74,6 +78,10 @@ function AppContent() {
           <Route path="/profile" element={<ProtectedRoute user={user}><Profile user={user} /></ProtectedRoute>} />
           <Route path="/history" element={<ProtectedRoute user={user}><History /></ProtectedRoute>} />
           <Route path="/partner/apply" element={<PartnerApply />} />
+          <Route path="/community/sad" element={<Sad />} />
+          <Route path="/community/diy-tips" element={<DiyTips />} />
+          <Route path="/community/jobs" element={<Jobs />} />
+          <Route path="/community/help" element={<Help />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
