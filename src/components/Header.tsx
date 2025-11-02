@@ -63,12 +63,10 @@ export default function Header({ user, onLogout }: HeaderProps) {
             <DropdownMenuItem asChild>
               <Link to="/partners" className="cursor-pointer">파트너 목록</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/scammer-search" className="cursor-pointer">사기범 조회</Link>
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
+        <NavLink to="/scammer-search" className={navClass}>사기업체조회</NavLink>
         <NavLink to="/partner/apply" className={navClass}>파트너신청</NavLink>
 
         {user ? (
