@@ -17,16 +17,16 @@ interface HeaderProps {
 export default function Header({ user, onLogout }: HeaderProps) {
   const navClass = ({ isActive }: { isActive: boolean }) => 
     isActive 
-      ? "text-accent font-semibold transition-colors" 
-      : "text-foreground/70 hover:text-accent transition-colors";
+      ? "text-primary font-semibold transition-colors text-sm" 
+      : "text-muted-foreground hover:text-foreground transition-colors text-sm";
   
   return (
-    <header className="flex justify-between items-center px-6 py-4 bg-card shadow-[var(--shadow-soft)] border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-card/95">
+    <header className="flex justify-between items-center px-6 py-4 bg-background border-b border-border sticky top-0 z-50 backdrop-blur-lg bg-background/80">
       <Link to="/" className="flex items-center space-x-2 group">
-        <img src={logo} alt="새로고침 로고" className="w-10 h-10 object-contain transition-transform group-hover:scale-105" />
-        <span className="text-xl font-bold text-primary">새로고침</span>
+        <img src={logo} alt="새로고침 로고" className="w-9 h-9 object-contain" />
+        <span className="text-xl font-bold text-foreground">새로고침</span>
       </Link>
-      <nav className="flex items-center space-x-6">
+      <nav className="flex items-center space-x-5">
         <NavLink to="/" className={navClass} end>홈</NavLink>
         
         {/* 계약관리 드롭다운 */}

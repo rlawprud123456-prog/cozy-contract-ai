@@ -14,26 +14,24 @@ const sampleData = [
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30">
-      <div className="container mx-auto px-4 py-12 max-w-7xl">
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-16 max-w-6xl">
         {/* Hero Section */}
-        <div className="mb-12 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-primary mb-4">
+        <div className="mb-20 text-center">
+          <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6">
             당신의 공간을 새롭게
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-            전문가와 함께하는 안전한 인테리어 계약, 새로고침과 시작하세요
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-12">
+            전문가와 함께하는 안전한 인테리어 계약
           </p>
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="flex flex-wrap justify-center gap-3">
             <Link to="/contract/create">
-              <Button size="lg" className="bg-accent hover:bg-accent/90">
-                <FileText className="w-5 h-5 mr-2" />
+              <Button size="lg" className="h-14 px-8 text-base rounded-full shadow-[var(--shadow-md)]">
                 계약 시작하기
               </Button>
             </Link>
             <Link to="/match">
-              <Button size="lg" variant="outline">
-                <Users className="w-5 h-5 mr-2" />
+              <Button size="lg" variant="outline" className="h-14 px-8 text-base rounded-full">
                 전문가 찾기
               </Button>
             </Link>
@@ -41,70 +39,61 @@ export default function Home() {
         </div>
 
         {/* Features Section */}
-        <div className="grid md:grid-cols-3 gap-6 mb-16">
-          <div className="p-6 rounded-lg bg-card border border-border shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-card)] transition-shadow">
-            <Shield className="w-10 h-10 text-accent mb-3" />
-            <h3 className="text-xl font-bold text-foreground mb-2">안전한 에스크로</h3>
-            <p className="text-muted-foreground">
+        <div className="grid md:grid-cols-3 gap-4 mb-20">
+          <div className="p-8 rounded-3xl bg-card border border-border hover:shadow-[var(--shadow-lg)] transition-all">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+              <Shield className="w-6 h-6 text-primary" />
+            </div>
+            <h3 className="text-lg font-bold text-foreground mb-2">안전한 에스크로</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
               단계별 결제로 고객과 전문가 모두를 보호합니다
             </p>
           </div>
-          <div className="p-6 rounded-lg bg-card border border-border shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-card)] transition-shadow">
-            <FileText className="w-10 h-10 text-accent mb-3" />
-            <h3 className="text-xl font-bold text-foreground mb-2">계약서 검토</h3>
-            <p className="text-muted-foreground">
+          <div className="p-8 rounded-3xl bg-card border border-border hover:shadow-[var(--shadow-lg)] transition-all">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+              <FileText className="w-6 h-6 text-primary" />
+            </div>
+            <h3 className="text-lg font-bold text-foreground mb-2">계약서 검토</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
               AI 기반 위험 요소 분석으로 안전한 계약을 체결하세요
             </p>
           </div>
-          <div className="p-6 rounded-lg bg-card border border-border shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-card)] transition-shadow">
-            <Users className="w-10 h-10 text-accent mb-3" />
-            <h3 className="text-xl font-bold text-foreground mb-2">검증된 전문가</h3>
-            <p className="text-muted-foreground">
+          <div className="p-8 rounded-3xl bg-card border border-border hover:shadow-[var(--shadow-lg)] transition-all">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+              <Users className="w-6 h-6 text-primary" />
+            </div>
+            <h3 className="text-lg font-bold text-foreground mb-2">검증된 전문가</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
               신뢰할 수 있는 인테리어 전문가와 매칭됩니다
             </p>
           </div>
         </div>
         
         {/* Portfolio Section */}
-        <h2 className="text-2xl font-bold text-primary mb-6">오늘의 인테리어</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+        <h2 className="text-2xl font-bold text-foreground mb-6">오늘의 인테리어</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-20">
           {sampleData.map(item => <Card key={item.id} {...item} />)}
         </div>
 
         {/* Partner CTA Section */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-accent/10 via-accent/5 to-primary/10 border border-accent/20 p-8 md:p-12">
-          <div className="relative z-10 text-center max-w-3xl mx-auto">
-            <Briefcase className="w-12 h-12 mx-auto mb-4 text-accent" />
-            <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">
+        <div className="rounded-3xl bg-secondary p-12 text-center">
+          <div className="max-w-2xl mx-auto">
+            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
+              <Briefcase className="w-7 h-7 text-primary" />
+            </div>
+            <h2 className="text-3xl font-bold text-foreground mb-4">
               인테리어 전문가이신가요?
             </h2>
-            <p className="text-lg text-muted-foreground mb-6">
-              새로고침 파트너가 되어 더 많은 고객을 만나고, 안전한 결제 시스템으로 비즈니스를 성장시키세요
+            <p className="text-base text-muted-foreground mb-8 leading-relaxed">
+              새로고침 파트너가 되어 더 많은 고객을 만나고,<br />안전한 결제 시스템으로 비즈니스를 성장시키세요
             </p>
-            <div className="flex flex-wrap justify-center gap-4 mb-6">
-              <div className="flex items-center gap-2 text-foreground">
-                <Shield className="w-5 h-5 text-accent" />
-                <span>에스크로 결제 보호</span>
-              </div>
-              <div className="flex items-center gap-2 text-foreground">
-                <Users className="w-5 h-5 text-accent" />
-                <span>검증된 고객 매칭</span>
-              </div>
-              <div className="flex items-center gap-2 text-foreground">
-                <FileText className="w-5 h-5 text-accent" />
-                <span>계약서 관리 지원</span>
-              </div>
-            </div>
             <Link to="/partner/apply">
-              <Button size="lg" className="bg-accent hover:bg-accent/90">
+              <Button size="lg" className="h-14 px-8 text-base rounded-full shadow-[var(--shadow-md)]">
                 파트너 신청하기
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </Link>
           </div>
-          {/* Background decoration */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
         </div>
       </div>
     </div>
