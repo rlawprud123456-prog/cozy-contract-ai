@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import logo from "@/assets/logo.png";
 
 export default function Auth() {
   const [email, setEmail] = useState("");
@@ -81,7 +82,7 @@ export default function Auth() {
     <div className="min-h-[calc(100vh-180px)] bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">새로고침</h1>
+          <img src={logo} alt="새로고침 로고" className="w-40 h-40 mx-auto mb-4 object-contain" />
           <p className="text-muted-foreground">안전한 인테리어 계약 플랫폼</p>
         </div>
 

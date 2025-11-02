@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
 import Card from "@/components/Card";
 import { Button } from "@/components/ui/button";
-import { Briefcase, ArrowRight, Shield, FileCheck, Users } from "lucide-react";
+import { Briefcase, ArrowRight } from "lucide-react";
+import iconEscrow from "@/assets/icon-escrow.jpg";
+import iconContract from "@/assets/icon-contract.jpg";
+import iconPartners from "@/assets/icon-partners.jpg";
 
 const sampleData = [
   { id: 1, title: "화이트톤 리폼", img: "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=800&q=80", desc: "밝고 심플한 공간 디자인" },
@@ -47,8 +50,8 @@ export default function Home() {
         {/* Features Section */}
         <div className="grid md:grid-cols-3 gap-4 mb-20">
           <div className="p-8 rounded-3xl bg-card border border-border hover:shadow-[var(--shadow-lg)] transition-all">
-            <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mb-4">
-              <Shield className="w-10 h-10 text-foreground" />
+            <div className="w-20 h-20 rounded-2xl overflow-hidden mb-4">
+              <img src={iconEscrow} alt="Escrow Security" className="w-full h-full object-cover" />
             </div>
             <h3 className="text-lg font-bold text-foreground mb-2">안전한 에스크로</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
@@ -56,8 +59,8 @@ export default function Home() {
             </p>
           </div>
           <div className="p-8 rounded-3xl bg-card border border-border hover:shadow-[var(--shadow-lg)] transition-all">
-            <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mb-4">
-              <FileCheck className="w-10 h-10 text-foreground" />
+            <div className="w-20 h-20 rounded-2xl overflow-hidden mb-4">
+              <img src={iconContract} alt="Contract Review" className="w-full h-full object-cover" />
             </div>
             <h3 className="text-lg font-bold text-foreground mb-2">계약서 검토</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
@@ -65,8 +68,8 @@ export default function Home() {
             </p>
           </div>
           <div className="p-8 rounded-3xl bg-card border border-border hover:shadow-[var(--shadow-lg)] transition-all">
-            <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mb-4">
-              <Users className="w-10 h-10 text-foreground" />
+            <div className="w-20 h-20 rounded-2xl overflow-hidden mb-4">
+              <img src={iconPartners} alt="Verified Partners" className="w-full h-full object-cover" />
             </div>
             <h3 className="text-lg font-bold text-foreground mb-2">검증된 전문가</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
