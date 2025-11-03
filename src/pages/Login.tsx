@@ -1,8 +1,12 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
 
 const KakaoIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24">
@@ -14,13 +18,115 @@ const KakaoIcon = () => (
   </svg>
 );
 
+const emailSchema = z.string().email("올바른 이메일을 입력해주세요");
+const passwordSchema = z.string().min(6, "비밀번호는 최소 6자 이상이어야 합니다");
+
 export default function Login() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   const from = (location.state as any)?.from?.pathname || "/";
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEmailError("");
+    setPasswordError("");
+
+    // 유효성 검사
+    const emailValidation = emailSchema.safeParse(email);
+    const passwordValidation = passwordSchema.safeParse(password);
+
+    if (!emailValidation.success) {
+      setEmailError(emailValidation.error.errors[0].message);
+      return;
+    }
+
+    if (!passwordValidation.success) {
+      setPasswordError(passwordValidation.error.errors[0].message);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "로그인 성공",
+        description: "환영합니다!",
+      });
+      navigate(from);
+    } catch (e: any) {
+      toast({
+        title: "로그인 실패",
+        description: e?.message || "이메일 또는 비밀번호를 확인해주세요.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEmailError("");
+    setPasswordError("");
+
+    // 유효성 검사
+    const emailValidation = emailSchema.safeParse(email);
+    const passwordValidation = passwordSchema.safeParse(password);
+
+    if (!emailValidation.success) {
+      setEmailError(emailValidation.error.errors[0].message);
+      return;
+    }
+
+    if (!passwordValidation.success) {
+      setPasswordError(passwordValidation.error.errors[0].message);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name || email.split("@")[0],
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "회원가입 성공",
+        description: "로그인되었습니다.",
+      });
+      navigate(from);
+    } catch (e: any) {
+      toast({
+        title: "회원가입 실패",
+        description: e?.message || "회원가입 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const signInWithKakao = async () => {
     try {
@@ -46,42 +152,141 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-[70vh] flex items-center justify-center bg-gray-50 px-4 py-8">
       <div className="w-full max-w-md bg-white border rounded-2xl p-8 shadow-lg">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold mb-2">로그인</h1>
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold mb-2">새로고침</h1>
           <p className="text-sm text-muted-foreground">
-            새로고침 서비스를 이용하려면 로그인이 필요합니다
+            안전한 인테리어 계약 플랫폼
           </p>
         </div>
 
-        {/* 이메일/비밀번호 폼은 여기에 추가 가능 */}
+        <Tabs defaultValue="login" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="login">로그인</TabsTrigger>
+            <TabsTrigger value="signup">회원가입</TabsTrigger>
+          </TabsList>
 
-        <div className="space-y-3">
-          <Button
-            onClick={signInWithKakao}
-            disabled={loading}
-            className="w-full h-12 text-base font-medium hover:opacity-90 transition disabled:opacity-50"
-            style={{ backgroundColor: "#FEE500", color: "#111" }}
-          >
-            <KakaoIcon />
-            <span className="ml-2">
-              {loading ? "로그인 중..." : "카카오로 시작하기"}
-            </span>
-          </Button>
+          <TabsContent value="login">
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="login-email">이메일</Label>
+                <Input
+                  id="login-email"
+                  type="email"
+                  placeholder="example@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
+                />
+                {emailError && (
+                  <p className="text-sm text-red-600">{emailError}</p>
+                )}
+              </div>
 
-          <Button
-            variant="outline"
-            className="w-full h-12"
-            onClick={() => navigate("/")}
-            disabled={loading}
-          >
-            취소
-          </Button>
+              <div className="space-y-2">
+                <Label htmlFor="login-password">비밀번호</Label>
+                <Input
+                  id="login-password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                />
+                {passwordError && (
+                  <p className="text-sm text-red-600">{passwordError}</p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading}
+              >
+                {loading ? "로그인 중..." : "로그인"}
+              </Button>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="signup">
+            <form onSubmit={handleSignup} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="signup-name">이름 (선택)</Label>
+                <Input
+                  id="signup-name"
+                  type="text"
+                  placeholder="홍길동"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="signup-email">이메일</Label>
+                <Input
+                  id="signup-email"
+                  type="email"
+                  placeholder="example@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
+                />
+                {emailError && (
+                  <p className="text-sm text-red-600">{emailError}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="signup-password">비밀번호</Label>
+                <Input
+                  id="signup-password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                />
+                {passwordError && (
+                  <p className="text-sm text-red-600">{passwordError}</p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading}
+              >
+                {loading ? "가입 중..." : "회원가입"}
+              </Button>
+            </form>
+          </TabsContent>
+        </Tabs>
+
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-white px-2 text-muted-foreground">또는</span>
+          </div>
         </div>
 
+        <Button
+          onClick={signInWithKakao}
+          disabled={loading}
+          className="w-full h-12 text-base font-medium hover:opacity-90 transition disabled:opacity-50"
+          style={{ backgroundColor: "#FEE500", color: "#111" }}
+        >
+          <KakaoIcon />
+          <span className="ml-2">
+            {loading ? "로그인 중..." : "카카오로 시작하기"}
+          </span>
+        </Button>
+
         <p className="text-xs text-center text-muted-foreground mt-6">
-          로그인하시면{" "}
+          계속 진행하시면{" "}
           <a href="/terms" className="underline hover:text-foreground">
             이용약관
           </a>{" "}

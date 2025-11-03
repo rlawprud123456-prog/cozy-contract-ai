@@ -2,7 +2,13 @@ import { useEffect, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Menu, LogOut, FileText, UserCircle2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Menu, LogOut, FileText, UserCircle2, ChevronDown, Users, AlertTriangle, MessageSquare } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 type SBUser = {
@@ -90,25 +96,90 @@ export default function Header() {
         </Link>
 
         {/* 네비게이션 (데스크톱) */}
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden md:flex items-center gap-5">
           <NavLink to="/" className={navClass} end>
             홈
           </NavLink>
-          <NavLink to="/contract/create" className={navClass}>
-            계약작성
-          </NavLink>
-          <NavLink to="/escrow" className={navClass}>
-            에스크로
-          </NavLink>
-          <NavLink to="/contract-review" className={navClass}>
-            계약검토
-          </NavLink>
-          <NavLink to="/match" className={navClass}>
-            전문가매칭
-          </NavLink>
-          <NavLink to="/partners" className={navClass}>
-            파트너
-          </NavLink>
+          
+          {/* 계약관리 드롭다운 */}
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors outline-none">
+              <FileText className="w-4 h-4" />
+              계약관리
+              <ChevronDown className="w-4 h-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48 bg-white">
+              <DropdownMenuItem asChild>
+                <Link to="/contract/create" className="cursor-pointer">계약 작성</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/contract-review" className="cursor-pointer">계약 검토</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/escrow" className="cursor-pointer">에스크로</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* 전문가찾기 드롭다운 */}
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors outline-none">
+              <Users className="w-4 h-4" />
+              전문가찾기
+              <ChevronDown className="w-4 h-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48 bg-white">
+              <DropdownMenuItem asChild>
+                <Link to="/match" className="cursor-pointer">전문가 매칭</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/partners" className="cursor-pointer">파트너 목록</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/partner/apply" className="cursor-pointer">파트너 신청</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* 피해이력 드롭다운 */}
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors outline-none">
+              <AlertTriangle className="w-4 h-4" />
+              피해이력
+              <ChevronDown className="w-4 h-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48 bg-white">
+              <DropdownMenuItem asChild>
+                <Link to="/damage-history" className="cursor-pointer">피해이력 조회</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/damage-report" className="cursor-pointer">피해신고</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          {/* 커뮤니티 드롭다운 */}
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors outline-none">
+              <MessageSquare className="w-4 h-4" />
+              커뮤니티
+              <ChevronDown className="w-4 h-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48 bg-white">
+              <DropdownMenuItem asChild>
+                <Link to="/community/sad" className="cursor-pointer">속상해요</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/community/diy-tips" className="cursor-pointer">셀프인테리어 팁</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/community/jobs" className="cursor-pointer">구인구직</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/community/help" className="cursor-pointer">고수님 도와주세요</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </nav>
 
         {/* 우측 영역 */}
@@ -165,12 +236,12 @@ export default function Header() {
                   <button
                     onClick={() => {
                       setOpen(false);
-                      navigate("/escrow");
+                      navigate("/history");
                     }}
                     className="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-muted text-sm transition"
                   >
                     <FileText className="w-4 h-4" />
-                    내 계약서
+                    내역 조회
                   </button>
 
                   <button
@@ -181,7 +252,18 @@ export default function Header() {
                     className="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-muted text-sm transition"
                   >
                     <UserCircle2 className="w-4 h-4" />
-                    내 정보
+                    프로필
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setOpen(false);
+                      navigate("/admin");
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-muted text-sm transition"
+                  >
+                    <UserCircle2 className="w-4 h-4" />
+                    관리자
                   </button>
 
                   <div className="my-1 h-px bg-muted" />
