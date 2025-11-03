@@ -156,9 +156,6 @@ export default function Login() {
       <div className="w-full max-w-md bg-white border rounded-2xl p-8 shadow-lg">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold mb-2">새로고침</h1>
-          <p className="text-sm text-muted-foreground">
-            안전한 인테리어 계약 플랫폼
-          </p>
         </div>
 
         <Tabs defaultValue="login" className="w-full">
