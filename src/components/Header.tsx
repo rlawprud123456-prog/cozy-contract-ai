@@ -136,6 +136,9 @@ export default function Header() {
                 <Link to="/partners" className="cursor-pointer">파트너 목록</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
+                <Link to="/reviews" className="cursor-pointer">고객 리뷰</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
                 <Link to="/partner/apply" className="cursor-pointer">파트너 신청</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>

@@ -29,6 +29,8 @@ import Sad from "./pages/community/Sad";
 import DiyTips from "./pages/community/DiyTips";
 import Jobs from "./pages/community/Jobs";
 import Help from "./pages/community/Help";
+import Reviews from "./pages/Reviews";
+import ReviewWrite from "./pages/ReviewWrite";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -90,6 +92,8 @@ function AppContent() {
           <Route path="/community/diy-tips" element={<DiyTips />} />
           <Route path="/community/jobs" element={<Jobs />} />
           <Route path="/community/help" element={<Help />} />
+          <Route path="/reviews" element={<Reviews />} />
+          <Route path="/reviews/write" element={<ReviewWrite />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

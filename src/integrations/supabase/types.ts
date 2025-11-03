@@ -283,6 +283,45 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          content: string
+          contract_id: string | null
+          created_at: string
+          id: string
+          images: string[] | null
+          partner_id: string
+          rating: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          contract_id?: string | null
+          created_at?: string
+          id?: string
+          images?: string[] | null
+          partner_id: string
+          rating: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          contract_id?: string | null
+          created_at?: string
+          id?: string
+          images?: string[] | null
+          partner_id?: string
+          rating?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
