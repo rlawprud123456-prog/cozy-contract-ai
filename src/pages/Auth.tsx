@@ -9,6 +9,21 @@ import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import logo from "@/assets/logo.png";
 
+const KakaoIcon = () => (
+  <svg 
+    width="18" 
+    height="18" 
+    viewBox="0 0 24 24"
+    aria-label="카카오"
+  >
+    <circle cx="12" cy="12" r="10" fill="#FEE500"/>
+    <path 
+      d="M12 7c-3.313 0-6 2.134-6 4.767 0 1.7 1.126 3.185 2.835 3.997-.098.375-.355 1.355-.406 1.562-.064.258.095.255.2.186.083-.054 1.33-.905 1.872-1.27.478.07.972.108 1.498.108 3.313 0 6-2.134 6-4.767S15.313 7 12 7z" 
+      fill="#381E1F"
+    />
+  </svg>
+);
+
 const signupSchema = z.object({
   name: z.string().trim().min(2, "이름은 최소 2자 이상이어야 합니다").max(50, "이름은 최대 50자까지 입력 가능합니다"),
   email: z.string().trim().email("올바른 이메일 주소를 입력해주세요").max(255, "이메일은 최대 255자까지 입력 가능합니다"),
@@ -134,6 +149,27 @@ export default function Auth() {
     }
   };
 
+  const signInWithKakao = async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "kakao",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      
+      if (error) throw error;
+    } catch (e: any) {
+      toast({
+        title: "로그인 실패",
+        description: e?.message || "카카오 로그인 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-[calc(100vh-180px)] bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -181,6 +217,29 @@ export default function Auth() {
                   disabled={loading}
                 >
                   {loading ? "로그인 중..." : "로그인"}
+                </Button>
+                
+                {/* 구분선 */}
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-border" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">또는</span>
+                  </div>
+                </div>
+
+                {/* 카카오 로그인 버튼 */}
+                <Button 
+                  type="button"
+                  onClick={signInWithKakao} 
+                  disabled={loading}
+                  className="w-full h-14 rounded-full bg-[#FEE500] text-[#381E1F] hover:bg-[#FDD835] transition-colors disabled:opacity-50 shadow-[var(--shadow-md)]"
+                >
+                  <KakaoIcon />
+                  <span className="ml-2 font-semibold text-base">
+                    {loading ? "로그인 중..." : "카카오로 시작하기"}
+                  </span>
                 </Button>
               </form>
             </div>
@@ -233,6 +292,29 @@ export default function Auth() {
                   disabled={loading}
                 >
                   {loading ? "가입 중..." : "회원가입"}
+                </Button>
+                
+                {/* 구분선 */}
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-border" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">또는</span>
+                  </div>
+                </div>
+
+                {/* 카카오 간편 가입 버튼 */}
+                <Button 
+                  type="button"
+                  onClick={signInWithKakao} 
+                  disabled={loading}
+                  className="w-full h-14 rounded-full bg-[#FEE500] text-[#381E1F] hover:bg-[#FDD835] transition-colors disabled:opacity-50 shadow-[var(--shadow-md)]"
+                >
+                  <KakaoIcon />
+                  <span className="ml-2 font-semibold text-base">
+                    {loading ? "가입 중..." : "카카오로 간편가입"}
+                  </span>
                 </Button>
               </form>
             </div>
