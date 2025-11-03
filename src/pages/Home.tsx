@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Users } from "lucide-react";
+import Chatbot from "@/components/Chatbot";
 
 const styles = [
   {
@@ -209,6 +210,9 @@ export default function Home() {
           </Button>
         </div>
       </section>
+
+      {/* AI 챗봇 */}
+      <Chatbot />
     </div>
   );
 }
