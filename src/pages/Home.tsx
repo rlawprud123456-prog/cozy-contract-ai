@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, FileCheck, Users } from "lucide-react";
+import { Users } from "lucide-react";
 
 const styles = [
   {
@@ -44,25 +44,31 @@ const styles = [
   },
 ];
 
-const features = [
+const reasons = [
   {
-    icon: Shield,
     title: "안전한 에스크로",
-    desc: "단계별 결제로 고객과 전문가 모두를 보호합니다",
-    link: "/escrow",
+    desc: "선금·중도금·잔금을 단계별로 보관하고, 검수 완료 시에만 지급합니다."
   },
   {
-    icon: FileCheck,
-    title: "계약서 검토",
-    desc: "AI 기반 위험 요소 분석으로 안전한 계약",
-    link: "/contract-review",
+    title: "AI 계약서 검토",
+    desc: "과도한 위약금, 모호한 하자 책임 같은 위험 문구를 자동 표시합니다."
   },
   {
-    icon: Users,
+    title: "사기 이력 조회",
+    desc: "신고·판결·허가정보·리뷰를 한 화면에서 조회해 리스크를 낮춥니다."
+  },
+  {
     title: "검증된 전문가",
-    desc: "신뢰할 수 있는 인테리어 전문가와 매칭됩니다",
-    link: "/match",
+    desc: "사업자·면허·보험 여부와 실제 시공 사진으로 신뢰를 쌓습니다."
   },
+  {
+    title: "완전한 투명성",
+    desc: "견적 항목, 변경 내역, 일정 지연 사유까지 기록이 남습니다."
+  },
+  {
+    title: "분쟁 예방·대응",
+    desc: "표준 계약서 + 증빙 저장 + 중재 프로세스로 초기부터 대비합니다."
+  }
 ];
 
 export default function Home() {
@@ -138,30 +144,16 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 3 기능 카드 */}
-      <section className="container mx-auto px-4 py-16">
-        <h2 className="text-3xl font-bold text-center mb-12">
-          왜 새로고침인가요?
-        </h2>
-        <div className="grid md:grid-cols-3 gap-8">
-          {features.map((feature, idx) => {
-            const Icon = feature.icon;
-            return (
-              <Link
-                key={idx}
-                to={feature.link}
-                className="group border rounded-2xl p-8 hover:shadow-xl hover:border-primary/50 transition-all duration-300"
-              >
-                <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition">
-                  <Icon className="w-7 h-7 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {feature.desc}
-                </p>
-              </Link>
-            );
-          })}
+      {/* 왜 새로고침인가요? */}
+      <section className="container mx-auto px-4 py-12">
+        <h2 className="text-2xl md:text-3xl font-extrabold mb-6">왜 새로고침인가요?</h2>
+        <div className="grid md:grid-cols-3 gap-6">
+          {reasons.map((r) => (
+            <div key={r.title} className="border rounded-2xl p-6 hover:shadow-lg transition">
+              <h3 className="font-semibold mb-2">{r.title}</h3>
+              <p className="text-sm text-muted-foreground">{r.desc}</p>
+            </div>
+          ))}
         </div>
       </section>
 
