@@ -7,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, FileText, Users, User, MessageSquare } from "lucide-react";
+import { ChevronDown, FileText, Users, User, MessageSquare, AlertTriangle } from "lucide-react";
 
 interface HeaderProps {
   user: any;
@@ -66,7 +66,22 @@ export default function Header({ user, onLogout }: HeaderProps) {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <NavLink to="/scammer-search" className={navClass}>사기업체조회</NavLink>
+        {/* 피해이력 드롭다운 */}
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors outline-none text-sm">
+            <AlertTriangle className="w-4 h-4" />
+            피해이력
+            <ChevronDown className="w-4 h-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            <DropdownMenuItem asChild>
+              <Link to="/damage-history" className="cursor-pointer">피해이력 조회</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/damage-report" className="cursor-pointer">피해신고</Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         
         {/* 커뮤니티 드롭다운 */}
         <DropdownMenu>

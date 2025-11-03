@@ -134,6 +134,42 @@ export type Database = {
           },
         ]
       }
+      damage_reports: {
+        Row: {
+          amount: number | null
+          business_license: string | null
+          business_name: string
+          created_at: string
+          description: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number | null
+          business_license?: string | null
+          business_name: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number | null
+          business_license?: string | null
+          business_name?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       escrow_payments: {
         Row: {
           amount: number

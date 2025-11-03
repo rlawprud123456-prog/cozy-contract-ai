@@ -18,6 +18,8 @@ import Match from "./pages/Match";
 import Partners from "./pages/Partners";
 import PartnerList from "./pages/PartnerList";
 import ScammerSearch from "./pages/ScammerSearch";
+import DamageHistory from "./pages/DamageHistory";
+import DamageReport from "./pages/DamageReport";
 import ContractCreate from "./pages/ContractCreate";
 import Escrow from "./pages/Escrow";
 import PartnerApply from "./pages/PartnerApply";
@@ -75,6 +77,8 @@ function AppContent() {
           <Route path="/partners" element={<Partners />} />
           <Route path="/partners/:category" element={<PartnerList />} />
           <Route path="/scammer-search" element={<ScammerSearch />} />
+          <Route path="/damage-history" element={<DamageHistory />} />
+          <Route path="/damage-report" element={<DamageReport />} />
           <Route path="/profile" element={<ProtectedRoute user={user}><Profile user={user} /></ProtectedRoute>} />
           <Route path="/history" element={<ProtectedRoute user={user}><History /></ProtectedRoute>} />
           <Route path="/partner/apply" element={<PartnerApply />} />
