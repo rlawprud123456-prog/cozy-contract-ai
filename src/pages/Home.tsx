@@ -157,10 +157,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 오늘의 인테리어 */}
+      {/* 새로고침 인증 파트너 */}
       <section className="bg-gray-50 py-16">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-8">오늘의 인테리어</h2>
+          <h2 className="text-3xl font-bold mb-8">새로고침 인증 파트너</h2>
           <div className="grid md:grid-cols-3 gap-6">
             {styles.map((s) => (
               <Link
