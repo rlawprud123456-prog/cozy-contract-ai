@@ -144,9 +144,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 왜 새로고침인가요? */}
+      {/* 새로고침만의 차별성 */}
       <section className="container mx-auto px-4 py-12">
-        <h2 className="text-2xl md:text-3xl font-extrabold mb-6">왜 새로고침인가요?</h2>
+        <h2 className="text-2xl md:text-3xl font-extrabold mb-6">새로고침만의 차별성</h2>
         <div className="grid md:grid-cols-3 gap-6">
           {reasons.map((r) => (
             <div key={r.title} className="border rounded-2xl p-6 hover:shadow-lg transition">
