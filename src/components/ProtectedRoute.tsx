@@ -3,11 +3,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ProtectedRouteProps {
-  user: any;
   children: React.ReactNode;
 }
 
-export default function ProtectedRoute({ user, children }: ProtectedRouteProps) {
+export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
 
@@ -15,7 +14,7 @@ export default function ProtectedRoute({ user, children }: ProtectedRouteProps) 
     // 초기 세션 확인
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      setAuthenticated(!!session?.user || !!user);
+      setAuthenticated(!!session?.user);
       setLoading(false);
     };
 
@@ -29,12 +28,12 @@ export default function ProtectedRoute({ user, children }: ProtectedRouteProps) 
     );
 
     return () => subscription.unsubscribe();
-  }, [user]);
+  }, []);
 
   // 로딩 중일 때 스피너 표시
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-background to-secondary/30">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent" />
           <p className="text-muted-foreground">로딩 중...</p>
@@ -45,7 +44,7 @@ export default function ProtectedRoute({ user, children }: ProtectedRouteProps) 
 
   // 인증되지 않은 경우 로그인 페이지로 리다이렉트
   if (!authenticated) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return <>{children}</>;

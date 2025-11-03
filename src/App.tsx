@@ -10,6 +10,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
+import Login from "./pages/Login";
 import AuthCallback from "./pages/AuthCallback";
 import Admin from "./pages/Admin";
 import Profile from "./pages/Profile";
@@ -65,11 +66,12 @@ function AppContent() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header user={user} onLogout={logout} />
+      <Header />
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/contract/create" element={<ContractCreate user={user} />} />
@@ -81,8 +83,8 @@ function AppContent() {
           <Route path="/scammer-search" element={<ScammerSearch />} />
           <Route path="/damage-history" element={<DamageHistory />} />
           <Route path="/damage-report" element={<DamageReport />} />
-          <Route path="/profile" element={<ProtectedRoute user={user}><Profile user={user} /></ProtectedRoute>} />
-          <Route path="/history" element={<ProtectedRoute user={user}><History /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile user={user} /></ProtectedRoute>} />
+          <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
           <Route path="/partner/apply" element={<PartnerApply />} />
           <Route path="/community/sad" element={<Sad />} />
           <Route path="/community/diy-tips" element={<DiyTips />} />
