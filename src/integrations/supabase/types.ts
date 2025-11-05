@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          post_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          post_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_posts: {
         Row: {
           category: string
@@ -21,9 +56,11 @@ export type Database = {
           created_at: string
           id: string
           images: string[] | null
+          like_count: number | null
           title: string
           updated_at: string
           user_id: string
+          view_count: number | null
         }
         Insert: {
           category: string
@@ -31,9 +68,11 @@ export type Database = {
           created_at?: string
           id?: string
           images?: string[] | null
+          like_count?: number | null
           title: string
           updated_at?: string
           user_id: string
+          view_count?: number | null
         }
         Update: {
           category?: string
@@ -41,9 +80,11 @@ export type Database = {
           created_at?: string
           id?: string
           images?: string[] | null
+          like_count?: number | null
           title?: string
           updated_at?: string
           user_id?: string
+          view_count?: number | null
         }
         Relationships: []
       }
@@ -228,6 +269,7 @@ export type Database = {
           status: string
           updated_at: string
           user_id: string | null
+          verified: boolean | null
         }
         Insert: {
           business_license?: string | null
@@ -242,6 +284,7 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string | null
+          verified?: boolean | null
         }
         Update: {
           business_license?: string | null
@@ -256,6 +299,7 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string | null
+          verified?: boolean | null
         }
         Relationships: []
       }
