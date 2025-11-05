@@ -20,13 +20,9 @@ interface Post {
   like_count: number;
   created_at: string;
   user_id: string;
-  profiles?: {
-    name: string;
-  };
-  partners?: {
-    business_name: string;
-    verified: boolean;
-  };
+  user_name?: string;
+  business_name?: string;
+  verified?: boolean;
 }
 
 const categoryNames: Record<string, string> = {
@@ -54,11 +50,7 @@ export default function PostDetailPage() {
   const fetchPost = async () => {
     const { data, error } = await supabase
       .from("community_posts")
-      .select(`
-        *,
-        profiles:user_id (name),
-        partners:user_id (business_name, verified)
-      `)
+      .select("*")
       .eq("id", id)
       .single();
 
@@ -73,20 +65,36 @@ export default function PostDetailPage() {
       return;
     }
 
-    setPost(data);
+    // Fetch user profile
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("name")
+      .eq("id", data.user_id)
+      .single();
+
+    // Fetch partner info if exists
+    const { data: partner } = await supabase
+      .from("partners")
+      .select("business_name, verified")
+      .eq("user_id", data.user_id)
+      .single();
+
+    setPost({
+      ...data,
+      user_name: profile?.name,
+      business_name: partner?.business_name,
+      verified: partner?.verified,
+    });
     setLoading(false);
   };
 
   const incrementViewCount = async () => {
     if (!id) return;
     
-    const { error } = await supabase.rpc("increment_view_count", {
-      post_id: id,
-    });
-
-    if (error) {
-      console.error("조회수 증가 실패:", error);
-    }
+    await supabase
+      .from("community_posts")
+      .update({ view_count: (post?.view_count || 0) + 1 })
+      .eq("id", id);
   };
 
   if (loading) {
@@ -120,7 +128,7 @@ export default function PostDetailPage() {
               <Badge variant="secondary">
                 {categoryNames[post.category] || post.category}
               </Badge>
-              {post.partners?.verified && (
+              {post.verified && (
                 <Badge className="bg-primary/10 text-primary border-primary/20">
                   ✓ 인증업체
                 </Badge>
@@ -129,7 +137,7 @@ export default function PostDetailPage() {
             <h1 className="text-3xl font-bold mb-4">{post.title}</h1>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span className="font-medium">
-                {post.partners?.business_name || post.profiles?.name || "익명"}
+                {post.business_name || post.user_name || "익명"}
               </span>
               <span>
                 {formatDistanceToNow(new Date(post.created_at), {

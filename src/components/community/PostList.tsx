@@ -1,20 +1,11 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Trash2, Eye, MessageCircle } from "lucide-react";
 
 interface Post {
   id: string;
@@ -23,9 +14,11 @@ interface Post {
   content: string;
   images: string[];
   created_at: string;
-  profiles?: {
-    name: string;
-  };
+  view_count: number;
+  user_name?: string;
+  business_name?: string;
+  verified?: boolean;
+  comment_count?: number;
 }
 
 interface PostListProps {
@@ -38,6 +31,7 @@ export default function PostList({ category, refresh }: PostListProps) {
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchPosts();
@@ -59,20 +53,37 @@ export default function PostList({ category, refresh }: PostListProps) {
 
       if (error) throw error;
       
-      // Fetch user names separately
-      const postsWithProfiles = await Promise.all(
+      // Fetch additional data for each post
+      const postsWithDetails = await Promise.all(
         (data || []).map(async (post) => {
           const { data: profile } = await supabase
             .from('profiles')
             .select('name')
             .eq('id', post.user_id)
             .single();
+
+          const { data: partner } = await supabase
+            .from('partners')
+            .select('business_name, verified')
+            .eq('user_id', post.user_id)
+            .single();
+
+          const { count: commentCount } = await supabase
+            .from('comments')
+            .select('*', { count: 'exact', head: true })
+            .eq('post_id', post.id);
           
-          return { ...post, profiles: profile };
+          return {
+            ...post,
+            user_name: profile?.name,
+            business_name: partner?.business_name,
+            verified: partner?.verified,
+            comment_count: commentCount || 0,
+          };
         })
       );
       
-      setPosts(postsWithProfiles);
+      setPosts(postsWithDetails);
     } catch (error: any) {
       toast({
         title: "게시글 불러오기 실패",
@@ -117,37 +128,50 @@ export default function PostList({ category, refresh }: PostListProps) {
   return (
     <div className="space-y-4">
       {posts.map((post) => (
-        <Card key={post.id}>
+        <Card
+          key={post.id}
+          className="cursor-pointer hover:shadow-md transition"
+          onClick={() => navigate(`/community/post/${post.id}`)}
+        >
           <CardHeader>
             <div className="flex justify-between items-start">
-              <div>
-                <CardTitle>{post.title}</CardTitle>
-                <CardDescription>
-                  {post.profiles?.name || "익명"} · {new Date(post.created_at).toLocaleDateString('ko-KR')}
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  {post.verified && (
+                    <Badge className="bg-primary/10 text-primary border-primary/20">
+                      ✓ 인증업체
+                    </Badge>
+                  )}
+                </div>
+                <CardTitle className="hover:text-primary transition">
+                  {post.title}
+                </CardTitle>
+                <CardDescription className="flex items-center gap-2 mt-1">
+                  <span>{post.business_name || post.user_name || "익명"}</span>
+                  <span>·</span>
+                  <span>{new Date(post.created_at).toLocaleDateString('ko-KR')}</span>
+                  <span>·</span>
+                  <span className="flex items-center gap-1">
+                    <Eye className="w-3 h-3" />
+                    {post.view_count}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <MessageCircle className="w-3 h-3" />
+                    {post.comment_count}
+                  </span>
                 </CardDescription>
               </div>
               {currentUserId === post.user_id && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>게시글을 삭제하시겠습니까?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        이 작업은 되돌릴 수 없습니다.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>취소</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDelete(post.id)}>
-                        삭제
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(post.id);
+                  }}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
               )}
             </div>
           </CardHeader>

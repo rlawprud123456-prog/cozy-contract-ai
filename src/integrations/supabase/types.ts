@@ -431,6 +431,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_view_count: { Args: { post_id: string }; Returns: undefined }
       set_contract_status_completed_if_all_released: {
         Args: { p_contract_id: string }
         Returns: undefined

@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Users } from "lucide-react";
+import { Users, Eye, MessageCircle, TrendingUp } from "lucide-react";
 import Chatbot from "@/components/Chatbot";
 
 const styles = [
@@ -72,9 +74,30 @@ const reasons = [
   }
 ];
 
+interface PopularPost {
+  id: string;
+  title: string;
+  category: string;
+  created_at: string;
+  view_count: number;
+  comment_count: number;
+  user_name?: string;
+  business_name?: string;
+  verified?: boolean;
+}
+
+const categoryNames: Record<string, string> = {
+  sad: "속상해요",
+  unfair: "억울해요",
+  "diy-tips": "셀프인테리어 팁",
+  jobs: "구인구직",
+  help: "고수님 도와주세요",
+};
+
 export default function Home() {
   const [authed, setAuthed] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [popularPosts, setPopularPosts] = useState<PopularPost[]>([]);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -88,6 +111,7 @@ export default function Home() {
     };
 
     checkAuth();
+    fetchPopularPosts();
 
     const {
       data: { subscription },
@@ -97,6 +121,56 @@ export default function Home() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const fetchPopularPosts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("community_posts")
+        .select("*")
+        .order("view_count", { ascending: false })
+        .limit(6);
+
+      if (error) throw error;
+
+      // Fetch additional details for each post
+      const postsWithDetails = await Promise.all(
+        (data || []).map(async (post) => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("name")
+            .eq("id", post.user_id)
+            .single();
+
+          const { data: partner } = await supabase
+            .from("partners")
+            .select("business_name, verified")
+            .eq("user_id", post.user_id)
+            .single();
+
+          const { count: commentCount } = await supabase
+            .from("comments")
+            .select("*", { count: "exact", head: true })
+            .eq("post_id", post.id);
+
+          return {
+            id: post.id,
+            title: post.title,
+            category: post.category,
+            created_at: post.created_at,
+            view_count: post.view_count,
+            comment_count: commentCount || 0,
+            user_name: profile?.name,
+            business_name: partner?.business_name,
+            verified: partner?.verified,
+          };
+        })
+      );
+
+      setPopularPosts(postsWithDetails);
+    } catch (error) {
+      console.error("인기글 로드 실패:", error);
+    }
+  };
 
   const startContract = () => {
     if (!authed) {
@@ -184,6 +258,61 @@ export default function Home() {
               </Link>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* 커뮤니티 인기글 */}
+      <section className="container mx-auto px-4 py-16">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-6 h-6 text-primary" />
+            <h2 className="text-3xl font-bold">커뮤니티 인기글</h2>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => navigate("/community/sad")}
+          >
+            전체보기 →
+          </Button>
+        </div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {popularPosts.map((post) => (
+            <Card
+              key={post.id}
+              className="cursor-pointer hover:shadow-lg transition"
+              onClick={() => navigate(`/community/post/${post.id}`)}
+            >
+              <CardHeader>
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="secondary" className="text-xs">
+                    {categoryNames[post.category] || post.category}
+                  </Badge>
+                  {post.verified && (
+                    <Badge className="bg-primary/10 text-primary border-primary/20 text-xs">
+                      ✓ 인증업체
+                    </Badge>
+                  )}
+                </div>
+                <CardTitle className="line-clamp-2 hover:text-primary transition">
+                  {post.title}
+                </CardTitle>
+                <CardDescription className="flex items-center gap-2 mt-2">
+                  <span className="text-xs">
+                    {post.business_name || post.user_name || "익명"}
+                  </span>
+                  <span>·</span>
+                  <span className="flex items-center gap-1">
+                    <Eye className="w-3 h-3" />
+                    <span className="text-xs">{post.view_count}</span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <MessageCircle className="w-3 h-3" />
+                    <span className="text-xs">{post.comment_count}</span>
+                  </span>
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          ))}
         </div>
       </section>
 

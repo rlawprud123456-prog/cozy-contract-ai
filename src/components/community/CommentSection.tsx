@@ -12,9 +12,7 @@ interface Comment {
   user_id: string;
   content: string;
   created_at: string;
-  profiles?: {
-    name: string;
-  };
+  user_name?: string;
 }
 
 interface CommentSectionProps {
@@ -62,10 +60,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
   const fetchComments = async () => {
     const { data, error } = await supabase
       .from("comments")
-      .select(`
-        *,
-        profiles:user_id (name)
-      `)
+      .select("*")
       .eq("post_id", postId)
       .order("created_at", { ascending: true });
 
@@ -74,7 +69,20 @@ export default function CommentSection({ postId }: CommentSectionProps) {
       return;
     }
 
-    setComments(data || []);
+    // Fetch user names separately
+    const commentsWithNames = await Promise.all(
+      (data || []).map(async (comment) => {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("name")
+          .eq("id", comment.user_id)
+          .single();
+
+        return { ...comment, user_name: profile?.name };
+      })
+    );
+
+    setComments(commentsWithNames);
   };
 
   const handleSubmit = async () => {
@@ -162,7 +170,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-semibold text-sm">
-                    {comment.profiles?.name || "익명"}
+                    {comment.user_name || "익명"}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     {formatDistanceToNow(new Date(comment.created_at), {
