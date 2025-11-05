@@ -57,6 +57,7 @@ export type Database = {
           id: string
           images: string[] | null
           like_count: number | null
+          partner_id: string | null
           title: string
           updated_at: string
           user_id: string
@@ -69,6 +70,7 @@ export type Database = {
           id?: string
           images?: string[] | null
           like_count?: number | null
+          partner_id?: string | null
           title: string
           updated_at?: string
           user_id: string
@@ -81,12 +83,28 @@ export type Database = {
           id?: string
           images?: string[] | null
           like_count?: number | null
+          partner_id?: string | null
           title?: string
           updated_at?: string
           user_id?: string
           view_count?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "community_posts_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partner_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_posts_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contracts: {
         Row: {
@@ -303,8 +321,45 @@ export type Database = {
         }
         Relationships: []
       }
+      post_likes: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string
           email: string
           id: string
@@ -313,6 +368,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
           email: string
           id: string
@@ -321,6 +377,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
           email?: string
           id?: string
@@ -424,6 +481,7 @@ export type Database = {
       }
     }
     Functions: {
+      check_post_liked: { Args: { p_post_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -440,6 +498,7 @@ export type Database = {
         Args: { p_contract_id: string }
         Returns: undefined
       }
+      toggle_post_like: { Args: { p_post_id: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "partner" | "user"
