@@ -173,6 +173,9 @@ export default function Header() {
                 <Link to="/community/sad" className="cursor-pointer">속상해요</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
+                <Link to="/community/unfair" className="cursor-pointer">억울해요</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
                 <Link to="/community/diy-tips" className="cursor-pointer">셀프인테리어 팁</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
