@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Calculator, Send, Upload, X } from "lucide-react";
+import { Calculator, Send, Upload, X, Sparkles, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { compressImage } from "@/lib/imageCompression";
 import { useNavigate } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 
 const CATEGORIES = [
   { value: "full", label: "전체 리모델링" },
@@ -31,6 +32,8 @@ export default function EstimateRequestForm() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [compressing, setCompressing] = useState(false);
+  const [generatingAI, setGeneratingAI] = useState(false);
+  const [aiEstimate, setAiEstimate] = useState<any>(null);
   
   const [formData, setFormData] = useState({
     projectName: "",
@@ -162,10 +165,43 @@ export default function EstimateRequestForm() {
 
       if (error) throw error;
 
-      toast({
-        title: "견적 신청 완료!",
-        description: "전문가가 확인 후 연락드리겠습니다",
-      });
+      // AI 자동 견적 생성
+      const { data: estimateData } = await supabase
+        .from("estimate_requests")
+        .select("id")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (estimateData) {
+        setGeneratingAI(true);
+        
+        try {
+          const { data: aiData, error: aiError } = await supabase.functions.invoke('generate-estimate', {
+            body: { estimateRequestId: estimateData.id }
+          });
+
+          if (aiError) throw aiError;
+
+          if (aiData.success) {
+            setAiEstimate(aiData);
+            toast({
+              title: "AI 견적서 생성 완료!",
+              description: "자동으로 생성된 견적서를 확인하세요",
+            });
+          }
+        } catch (aiError) {
+          console.error("AI 견적 생성 오류:", aiError);
+          toast({
+            title: "AI 견적 생성 실패",
+            description: "관리자가 수동으로 견적서를 발송해드립니다",
+            variant: "destructive",
+          });
+        } finally {
+          setGeneratingAI(false);
+        }
+      }
 
       // 폼 초기화
       setFormData({
@@ -194,17 +230,133 @@ export default function EstimateRequestForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Card className="shadow-[var(--shadow-card)]">
-        <CardHeader>
-          <CardTitle className="text-2xl flex items-center gap-2">
-            <Calculator className="w-6 h-6" />
-            견적 신청
-          </CardTitle>
-          <p className="text-sm text-muted-foreground mt-2">
-            인테리어 견적을 신청하시면 전문가가 확인 후 연락드립니다
-          </p>
-        </CardHeader>
+    <div className="space-y-6">
+      {/* AI 견적서 결과 */}
+      {aiEstimate && (
+        <Card className="border-primary bg-primary/5 shadow-lg">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-6 h-6 text-primary" />
+                <h2 className="text-2xl font-bold">AI 자동 견적서</h2>
+              </div>
+              <Badge variant="default" className="gap-1">
+                <CheckCircle className="w-3 h-3" />
+                생성 완료
+              </Badge>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <p className="font-semibold text-xl mb-2">
+                  {aiEstimate.estimateRequest.project_name}
+                </p>
+                <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+                  <Badge variant="outline">{aiEstimate.estimateRequest.category}</Badge>
+                  <Badge variant="outline">{aiEstimate.estimateRequest.area}평</Badge>
+                  <Badge variant="outline">{aiEstimate.estimateRequest.location}</Badge>
+                </div>
+              </div>
+
+              <div className="bg-background p-6 rounded-lg">
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">총 예상 금액</p>
+                  <p className="text-4xl font-bold text-primary">
+                    {aiEstimate.estimate.total_amount.toLocaleString()}원
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    예상 작업 기간: <span className="font-semibold">{aiEstimate.estimate.duration_days}일</span>
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-lg mb-3">항목별 비용</h3>
+                <div className="space-y-2">
+                  {aiEstimate.estimate.items.map((item: any, idx: number) => (
+                    <div key={idx} className="flex justify-between items-start p-3 bg-background rounded-lg">
+                      <div className="flex-1">
+                        <p className="font-medium">{item.name}</p>
+                        {item.description && (
+                          <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
+                        )}
+                      </div>
+                      <p className="font-semibold text-lg ml-4">{item.amount.toLocaleString()}원</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-lg mb-3">작업 일정</h3>
+                <div className="space-y-3">
+                  {aiEstimate.estimate.schedule.map((stage: any, idx: number) => (
+                    <div key={idx} className="p-4 bg-background rounded-lg">
+                      <div className="flex justify-between items-start mb-2">
+                        <p className="font-semibold text-base">{stage.stage}</p>
+                        <Badge variant="secondary">{stage.duration}</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{stage.tasks}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {aiEstimate.recommendedPartner && (
+                <div>
+                  <h3 className="font-semibold text-lg mb-3">추천 파트너</h3>
+                  <div className="p-4 bg-background rounded-lg border-2 border-primary/20">
+                    <p className="font-semibold text-lg">{aiEstimate.recommendedPartner.business_name}</p>
+                    <Badge variant="outline" className="mt-2">{aiEstimate.recommendedPartner.category}</Badge>
+                    {aiEstimate.recommendedPartner.description && (
+                      <p className="text-sm text-muted-foreground mt-2">{aiEstimate.recommendedPartner.description}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <h3 className="font-semibold text-lg mb-3">추천사항 및 주의사항</h3>
+                <div className="p-4 bg-background rounded-lg">
+                  <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
+                    {aiEstimate.estimate.recommendations}
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t">
+                <p className="text-sm text-muted-foreground text-center">
+                  견적서가 문의사항이 있으시면 <span className="font-semibold">{aiEstimate.estimateRequest.phone}</span>로 연락주시기 바랍니다.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* AI 견적 생성 중 */}
+      {generatingAI && (
+        <Card className="border-primary">
+          <CardContent className="p-8 text-center">
+            <Sparkles className="w-12 h-12 text-primary mx-auto mb-4 animate-pulse" />
+            <h3 className="text-xl font-semibold mb-2">AI가 견적서를 생성하고 있습니다</h3>
+            <p className="text-muted-foreground">잠시만 기다려주세요...</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 견적 신청 폼 */}
+      <form onSubmit={handleSubmit}>
+        <Card className="shadow-[var(--shadow-card)]">
+          <CardHeader>
+            <CardTitle className="text-2xl flex items-center gap-2">
+              <Calculator className="w-6 h-6" />
+              AI 자동 견적 신청
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-2">
+              정보를 입력하시면 AI가 자동으로 견적서를 생성해드립니다
+            </p>
+          </CardHeader>
 
         <CardContent className="space-y-6">
           {/* 프로젝트 정보 */}
@@ -381,15 +533,16 @@ export default function EstimateRequestForm() {
             <Button
               type="submit"
               size="lg"
-              disabled={loading || compressing}
-              className="min-w-[200px]"
+              disabled={loading || compressing || generatingAI}
+              className="min-w-[200px] gap-2"
             >
-              <Send className="w-5 h-5 mr-2" />
-              {loading ? "신청 중..." : "견적 신청하기"}
+              <Sparkles className="w-5 h-5" />
+              {loading ? "신청 중..." : "AI 견적서 받기"}
             </Button>
           </div>
         </CardContent>
       </Card>
     </form>
+    </div>
   );
 }
