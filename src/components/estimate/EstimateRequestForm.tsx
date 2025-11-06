@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Calculator, Send, Upload, X, Sparkles, CheckCircle, FileText } from "lucide-react";
+import { Calculator, Send, Upload, X, Sparkles, CheckCircle, FileText, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { compressImage } from "@/lib/imageCompression";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import jsPDF from "jspdf";
 
 const CATEGORIES = [
   { value: "full", label: "전체 리모델링" },
@@ -98,6 +99,195 @@ export default function EstimateRequestForm() {
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const downloadPDF = () => {
+    if (!aiEstimate) return;
+
+    try {
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 15;
+      let yPosition = margin;
+
+      // 제목
+      pdf.setFontSize(20);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('AI 자동 견적서', pageWidth / 2, yPosition, { align: 'center' });
+      yPosition += 15;
+
+      // 프로젝트 정보
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`프로젝트: ${aiEstimate.estimateRequest.project_name}`, margin, yPosition);
+      yPosition += 7;
+      pdf.text(`카테고리: ${aiEstimate.estimateRequest.category}`, margin, yPosition);
+      yPosition += 7;
+      pdf.text(`위치: ${aiEstimate.estimateRequest.location}`, margin, yPosition);
+      yPosition += 7;
+      pdf.text(`면적: ${aiEstimate.estimateRequest.area}평`, margin, yPosition);
+      yPosition += 7;
+      pdf.text(`의뢰인: ${aiEstimate.estimateRequest.client_name}`, margin, yPosition);
+      yPosition += 7;
+      pdf.text(`연락처: ${aiEstimate.estimateRequest.phone}`, margin, yPosition);
+      yPosition += 12;
+
+      // 총 금액
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`총 예상 금액: ${aiEstimate.estimate.total_amount.toLocaleString()}원`, margin, yPosition);
+      yPosition += 7;
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`예상 작업 기간: ${aiEstimate.estimate.duration_days}일`, margin, yPosition);
+      yPosition += 12;
+
+      // 항목별 비용
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('항목별 비용', margin, yPosition);
+      yPosition += 8;
+      
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      aiEstimate.estimate.items.forEach((item: any) => {
+        if (yPosition > pageHeight - 30) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        
+        pdf.text(`- ${item.name}`, margin + 2, yPosition);
+        pdf.text(`${item.amount.toLocaleString()}원`, pageWidth - margin - 35, yPosition);
+        yPosition += 5;
+        
+        if (item.description) {
+          pdf.setFontSize(9);
+          pdf.setTextColor(100);
+          const descLines = pdf.splitTextToSize(`  ${item.description}`, pageWidth - margin * 2 - 5);
+          descLines.forEach((line: string) => {
+            if (yPosition > pageHeight - 30) {
+              pdf.addPage();
+              yPosition = margin;
+            }
+            pdf.text(line, margin + 4, yPosition);
+            yPosition += 4;
+          });
+          pdf.setFontSize(10);
+          pdf.setTextColor(0);
+        }
+      });
+      yPosition += 8;
+
+      // 작업 일정
+      if (yPosition > pageHeight - 80) {
+        pdf.addPage();
+        yPosition = margin;
+      }
+      
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('작업 일정', margin, yPosition);
+      yPosition += 8;
+      
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      aiEstimate.estimate.schedule.forEach((stage: any) => {
+        if (yPosition > pageHeight - 30) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(`${stage.stage} (${stage.duration})`, margin + 2, yPosition);
+        yPosition += 5;
+        
+        pdf.setFont('helvetica', 'normal');
+        const taskLines = pdf.splitTextToSize(stage.tasks, pageWidth - margin * 2 - 5);
+        taskLines.forEach((line: string) => {
+          if (yPosition > pageHeight - 30) {
+            pdf.addPage();
+            yPosition = margin;
+          }
+          pdf.text(line, margin + 4, yPosition);
+          yPosition += 4;
+        });
+        yPosition += 3;
+      });
+      yPosition += 8;
+
+      // 추천 파트너
+      if (aiEstimate.recommendedPartner) {
+        if (yPosition > pageHeight - 40) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        
+        pdf.setFontSize(14);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('추천 파트너', margin, yPosition);
+        yPosition += 8;
+        
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`업체명: ${aiEstimate.recommendedPartner.business_name}`, margin + 2, yPosition);
+        yPosition += 5;
+        pdf.text(`카테고리: ${aiEstimate.recommendedPartner.category}`, margin + 2, yPosition);
+        yPosition += 5;
+        
+        if (aiEstimate.recommendedPartner.description) {
+          const descLines = pdf.splitTextToSize(aiEstimate.recommendedPartner.description, pageWidth - margin * 2 - 5);
+          descLines.forEach((line: string) => {
+            if (yPosition > pageHeight - 30) {
+              pdf.addPage();
+              yPosition = margin;
+            }
+            pdf.text(line, margin + 2, yPosition);
+            yPosition += 4;
+          });
+        }
+        yPosition += 8;
+      }
+
+      // 추천사항
+      if (yPosition > pageHeight - 60) {
+        pdf.addPage();
+        yPosition = margin;
+      }
+      
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('추천사항 및 주의사항', margin, yPosition);
+      yPosition += 8;
+      
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      const recLines = pdf.splitTextToSize(aiEstimate.estimate.recommendations, pageWidth - margin * 2);
+      recLines.forEach((line: string) => {
+        if (yPosition > pageHeight - 30) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        pdf.text(line, margin, yPosition);
+        yPosition += 4;
+      });
+
+      // 저장
+      const fileName = `견적서_${aiEstimate.estimateRequest.project_name}_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+
+      toast({
+        title: "PDF 다운로드 완료",
+        description: "견적서가 PDF로 저장되었습니다",
+      });
+    } catch (error) {
+      console.error('PDF 생성 오류:', error);
+      toast({
+        title: "PDF 생성 실패",
+        description: "PDF 생성 중 오류가 발생했습니다",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -240,10 +430,21 @@ export default function EstimateRequestForm() {
                 <Sparkles className="w-6 h-6 text-primary" />
                 <h2 className="text-2xl font-bold">AI 자동 견적서</h2>
               </div>
-              <Badge variant="default" className="gap-1">
-                <CheckCircle className="w-3 h-3" />
-                생성 완료
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={downloadPDF}
+                  className="gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  PDF 다운로드
+                </Button>
+                <Badge variant="default" className="gap-1">
+                  <CheckCircle className="w-3 h-3" />
+                  생성 완료
+                </Badge>
+              </div>
             </div>
 
             <div className="space-y-6">
