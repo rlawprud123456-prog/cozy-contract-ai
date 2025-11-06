@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Briefcase, FileText, Shield } from "lucide-react";
+import { Users, Briefcase, FileText, Shield, Calculator } from "lucide-react";
 
 export default function Admin() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -14,6 +14,7 @@ export default function Admin() {
   const [users, setUsers] = useState<any[]>([]);
   const [partners, setPartners] = useState<any[]>([]);
   const [contracts, setContracts] = useState<any[]>([]);
+  const [estimateRequests, setEstimateRequests] = useState<any[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -59,15 +60,17 @@ export default function Admin() {
 
   const loadData = async () => {
     try {
-      const [usersRes, partnersRes, contractsRes] = await Promise.all([
+      const [usersRes, partnersRes, contractsRes, estimatesRes] = await Promise.all([
         supabase.from("profiles").select("*"),
         supabase.from("partners").select("*"),
-        supabase.from("contracts").select("*")
+        supabase.from("contracts").select("*"),
+        supabase.from("estimate_requests").select("*").order("created_at", { ascending: false })
       ]);
 
       if (usersRes.data) setUsers(usersRes.data);
       if (partnersRes.data) setPartners(partnersRes.data);
       if (contractsRes.data) setContracts(contractsRes.data);
+      if (estimatesRes.data) setEstimateRequests(estimatesRes.data);
     } catch (error) {
       console.error("Data loading error:", error);
     }
@@ -85,6 +88,30 @@ export default function Admin() {
       toast({
         title: "상태 업데이트 완료",
         description: `파트너 상태가 ${status}로 변경되었습니다.`
+      });
+
+      await loadData();
+    } catch (error: any) {
+      toast({
+        title: "업데이트 실패",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const updateEstimateStatus = async (id: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from("estimate_requests")
+        .update({ status })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "상태 업데이트 완료",
+        description: `견적 신청 상태가 ${status}로 변경되었습니다.`
       });
 
       await loadData();
@@ -121,7 +148,7 @@ export default function Admin() {
         </div>
 
         {/* Stats */}
-        <div className="grid md:grid-cols-3 gap-4 mb-8">
+        <div className="grid md:grid-cols-4 gap-4 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">총 사용자</CardTitle>
@@ -142,6 +169,15 @@ export default function Admin() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">견적 신청</CardTitle>
+              <Calculator className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{estimateRequests.length}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">계약</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -151,12 +187,98 @@ export default function Admin() {
           </Card>
         </div>
 
-        <Tabs defaultValue="users" className="w-full">
+        <Tabs defaultValue="estimates" className="w-full">
           <TabsList className="mb-6">
+            <TabsTrigger value="estimates">견적 신청</TabsTrigger>
+            <TabsTrigger value="partners">파트너 신청</TabsTrigger>
             <TabsTrigger value="users">사용자 관리</TabsTrigger>
-            <TabsTrigger value="partners">파트너 관리</TabsTrigger>
             <TabsTrigger value="contracts">계약 관리</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="estimates" className="space-y-4">
+            {estimateRequests.map((estimate) => (
+              <Card key={estimate.id}>
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <p className="font-semibold text-foreground">{estimate.project_name}</p>
+                        <Badge variant={
+                          estimate.status === 'approved' ? 'default' : 
+                          estimate.status === 'rejected' ? 'destructive' : 
+                          'secondary'
+                        }>
+                          {estimate.status === 'approved' ? '승인됨' : 
+                           estimate.status === 'rejected' ? '거절됨' : '대기중'}
+                        </Badge>
+                      </div>
+                      <div className="space-y-1 text-sm">
+                        <p className="text-muted-foreground">
+                          <span className="font-medium">의뢰인:</span> {estimate.client_name}
+                        </p>
+                        <p className="text-muted-foreground">
+                          <span className="font-medium">연락처:</span> {estimate.phone}
+                        </p>
+                        <p className="text-muted-foreground">
+                          <span className="font-medium">위치:</span> {estimate.location}
+                        </p>
+                        <p className="text-muted-foreground">
+                          <span className="font-medium">카테고리:</span> {estimate.category}
+                        </p>
+                        <p className="text-muted-foreground">
+                          <span className="font-medium">평수:</span> {estimate.area}평
+                        </p>
+                        {estimate.estimated_budget && (
+                          <p className="text-muted-foreground">
+                            <span className="font-medium">예산:</span> {Number(estimate.estimated_budget).toLocaleString()}원
+                          </p>
+                        )}
+                        {estimate.description && (
+                          <p className="text-muted-foreground mt-2">
+                            <span className="font-medium">설명:</span> {estimate.description}
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-2">
+                          신청일: {new Date(estimate.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      {estimate.status === 'pending' && (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => updateEstimateStatus(estimate.id, 'approved')}
+                          >
+                            승인
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => updateEstimateStatus(estimate.id, 'rejected')}
+                          >
+                            거절
+                          </Button>
+                        </>
+                      )}
+                      {estimate.status === 'approved' && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateEstimateStatus(estimate.id, 'pending')}
+                        >
+                          대기로 변경
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {estimateRequests.length === 0 && (
+              <p className="text-center text-muted-foreground py-12">등록된 견적 신청이 없습니다</p>
+            )}
+          </TabsContent>
 
           <TabsContent value="users" className="space-y-4">
             {users.map((user) => (
