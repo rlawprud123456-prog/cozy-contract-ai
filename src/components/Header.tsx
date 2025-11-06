@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, LogOut, FileText, UserCircle2, ChevronDown, Users, AlertTriangle, MessageSquare } from "lucide-react";
+import { Menu, LogOut, FileText, UserCircle2, ChevronDown, Users, AlertTriangle, MessageSquare, Calculator } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 type SBUser = {
@@ -101,6 +101,20 @@ export default function Header() {
             홈
           </NavLink>
           
+          {/* 견적 드롭다운 */}
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors outline-none">
+              <Calculator className="w-4 h-4" />
+              견적
+              <ChevronDown className="w-4 h-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48 bg-white">
+              <DropdownMenuItem asChild>
+                <Link to="/estimate" className="cursor-pointer">견적서 작성</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           {/* 계약관리 드롭다운 */}
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors outline-none">
@@ -109,9 +123,6 @@ export default function Header() {
               <ChevronDown className="w-4 h-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-48 bg-white">
-              <DropdownMenuItem asChild>
-                <Link to="/estimate" className="cursor-pointer">견적서 작성</Link>
-              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/contract/create" className="cursor-pointer">계약 작성</Link>
               </DropdownMenuItem>
