@@ -110,6 +110,9 @@ export default function Header() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-48 bg-white">
               <DropdownMenuItem asChild>
+                <Link to="/estimate" className="cursor-pointer">견적서 작성</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
                 <Link to="/contract/create" className="cursor-pointer">계약 작성</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
