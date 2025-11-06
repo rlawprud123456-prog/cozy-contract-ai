@@ -79,7 +79,7 @@ function AppContent() {
           <Route path="/login" element={<Login />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/admin" element={<Admin />} />
-          <Route path="/contract/create" element={<ContractCreate user={user} />} />
+          <Route path="/contract-create" element={<ContractCreate user={user} />} />
           <Route path="/escrow" element={<Escrow user={user} />} />
           <Route path="/contract-review" element={<ContractReview user={user} />} />
           <Route path="/estimate" element={<EstimatePage />} />
