@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Briefcase, FileText, Shield, Calculator } from "lucide-react";
+import { Users, Briefcase, FileText, Shield, Calculator, Sparkles } from "lucide-react";
 
 export default function Admin() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -15,6 +15,8 @@ export default function Admin() {
   const [partners, setPartners] = useState<any[]>([]);
   const [contracts, setContracts] = useState<any[]>([]);
   const [estimateRequests, setEstimateRequests] = useState<any[]>([]);
+  const [generatingEstimate, setGeneratingEstimate] = useState<string | null>(null);
+  const [aiEstimate, setAiEstimate] = useState<any>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -124,6 +126,38 @@ export default function Admin() {
     }
   };
 
+  const generateAIEstimate = async (estimateId: string) => {
+    setGeneratingEstimate(estimateId);
+    setAiEstimate(null);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-estimate', {
+        body: { estimateRequestId: estimateId }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setAiEstimate(data);
+        toast({
+          title: "AI 견적서 생성 완료",
+          description: "상세 견적서가 생성되었습니다.",
+        });
+      } else {
+        throw new Error(data.error || 'AI 견적 생성 실패');
+      }
+    } catch (error: any) {
+      console.error('AI estimate generation error:', error);
+      toast({
+        title: "AI 견적 생성 실패",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingEstimate(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -196,6 +230,98 @@ export default function Admin() {
           </TabsList>
 
           <TabsContent value="estimates" className="space-y-4">
+            {aiEstimate && (
+              <Card className="border-primary bg-primary/5">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-primary" />
+                      <h3 className="text-lg font-semibold">AI 생성 견적서</h3>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setAiEstimate(null)}
+                    >
+                      닫기
+                    </Button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <p className="font-semibold text-lg mb-1">
+                        프로젝트: {aiEstimate.estimateRequest.project_name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {aiEstimate.estimateRequest.category} | {aiEstimate.estimateRequest.area}평 | {aiEstimate.estimateRequest.location}
+                      </p>
+                    </div>
+
+                    <div className="bg-background p-4 rounded-lg">
+                      <p className="text-2xl font-bold text-primary">
+                        총 예상 금액: {aiEstimate.estimate.total_amount.toLocaleString()}원
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        예상 작업 기간: {aiEstimate.estimate.duration_days}일
+                      </p>
+                    </div>
+
+                    <div>
+                      <h4 className="font-semibold mb-2">항목별 비용</h4>
+                      <div className="space-y-2">
+                        {aiEstimate.estimate.items.map((item: any, idx: number) => (
+                          <div key={idx} className="flex justify-between items-start p-2 bg-background rounded">
+                            <div className="flex-1">
+                              <p className="font-medium">{item.name}</p>
+                              {item.description && (
+                                <p className="text-xs text-muted-foreground">{item.description}</p>
+                              )}
+                            </div>
+                            <p className="font-semibold">{item.amount.toLocaleString()}원</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="font-semibold mb-2">작업 일정</h4>
+                      <div className="space-y-2">
+                        {aiEstimate.estimate.schedule.map((stage: any, idx: number) => (
+                          <div key={idx} className="p-3 bg-background rounded">
+                            <div className="flex justify-between items-start mb-1">
+                              <p className="font-medium">{stage.stage}</p>
+                              <Badge variant="outline">{stage.duration}</Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{stage.tasks}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {aiEstimate.recommendedPartner && (
+                      <div>
+                        <h4 className="font-semibold mb-2">추천 파트너</h4>
+                        <div className="p-3 bg-background rounded">
+                          <p className="font-medium">{aiEstimate.recommendedPartner.business_name}</p>
+                          <p className="text-sm text-muted-foreground">{aiEstimate.recommendedPartner.category}</p>
+                          {aiEstimate.recommendedPartner.description && (
+                            <p className="text-xs text-muted-foreground mt-1">{aiEstimate.recommendedPartner.description}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <h4 className="font-semibold mb-2">추천사항 및 주의사항</h4>
+                      <p className="text-sm text-muted-foreground whitespace-pre-line">
+                        {aiEstimate.estimate.recommendations}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {estimateRequests.map((estimate) => (
               <Card key={estimate.id}>
                 <CardContent className="p-6">
@@ -244,6 +370,16 @@ export default function Admin() {
                       </div>
                     </div>
                     <div className="flex flex-col gap-2">
+                      <Button
+                        size="sm"
+                        variant="default"
+                        className="gap-2"
+                        onClick={() => generateAIEstimate(estimate.id)}
+                        disabled={generatingEstimate === estimate.id}
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        {generatingEstimate === estimate.id ? 'AI 분석 중...' : 'AI 견적 생성'}
+                      </Button>
                       {estimate.status === 'pending' && (
                         <>
                           <Button

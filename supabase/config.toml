@@ -1,1 +1,4 @@
 project_id = "vnptajdhkxooqyfownau"
+
+[functions.generate-estimate]
+verify_jwt = false
