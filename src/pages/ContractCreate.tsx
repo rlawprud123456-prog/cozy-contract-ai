@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,6 +18,7 @@ interface ContractCreateProps {
 export default function ContractCreate({ user }: ContractCreateProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showPreview, setShowPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -34,6 +35,37 @@ export default function ContractCreate({ user }: ContractCreateProps) {
     endDate: "",
     description: "",
   });
+
+  // AI 견적서에서 전달된 데이터로 폼 초기화
+  useEffect(() => {
+    const estimateData = location.state?.estimateData;
+    if (estimateData) {
+      const today = new Date();
+      const startDate = new Date(today);
+      startDate.setDate(startDate.getDate() + 3); // 3일 후 시작
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + (estimateData.estimate?.duration_days || 30));
+
+      setFormData({
+        partnerName: estimateData.recommendedPartner?.business_name || "",
+        partnerPhone: "",
+        projectName: estimateData.estimateRequest?.project_name || "",
+        location: estimateData.estimateRequest?.location || "",
+        totalAmount: String(estimateData.estimate?.total_amount || ""),
+        depositAmount: String(Math.floor((estimateData.estimate?.total_amount || 0) * 0.3)),
+        midAmount: String(Math.floor((estimateData.estimate?.total_amount || 0) * 0.4)),
+        finalAmount: String(Math.floor((estimateData.estimate?.total_amount || 0) * 0.3)),
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
+        description: estimateData.estimate?.recommendations || "",
+      });
+
+      toast({
+        title: "AI 견적서 불러오기 완료",
+        description: "견적 정보가 자동으로 입력되었습니다. 필요시 수정해주세요.",
+      });
+    }
+  }, [location.state]);
 
   // 숫자 안전 파싱/합계 유틸
   const parseIntSafe = (v: string) => Number(v || 0);

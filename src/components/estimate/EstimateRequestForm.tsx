@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Calculator, Send, Upload, X, Sparkles, CheckCircle } from "lucide-react";
+import { Calculator, Send, Upload, X, Sparkles, CheckCircle, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { compressImage } from "@/lib/imageCompression";
@@ -324,10 +324,20 @@ export default function EstimateRequestForm() {
                 </div>
               </div>
 
-              <div className="pt-4 border-t">
+              <div className="pt-4 border-t space-y-3">
                 <p className="text-sm text-muted-foreground text-center">
-                  견적서가 문의사항이 있으시면 <span className="font-semibold">{aiEstimate.estimateRequest.phone}</span>로 연락주시기 바랍니다.
+                  견적서에 문의사항이 있으시면 <span className="font-semibold">{aiEstimate.estimateRequest.phone}</span>로 연락주시기 바랍니다.
                 </p>
+                <div className="flex justify-center">
+                  <Button
+                    size="lg"
+                    onClick={() => navigate("/contract-create", { state: { estimateData: aiEstimate } })}
+                    className="gap-2"
+                  >
+                    <FileText className="w-5 h-5" />
+                    이 견적으로 계약서 작성하기
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>
