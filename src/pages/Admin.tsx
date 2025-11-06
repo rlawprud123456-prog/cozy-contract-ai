@@ -305,34 +305,102 @@ export default function Admin() {
             {partners.map((partner) => (
               <Card key={partner.id}>
                 <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <p className="font-semibold text-foreground">{partner.business_name}</p>
-                        <Badge variant={partner.status === 'approved' ? 'default' : 'secondary'}>
-                          {partner.status === 'approved' ? '승인됨' : partner.status === 'rejected' ? '거절됨' : '대기중'}
+                      <div className="flex items-center gap-2 mb-3">
+                        <p className="font-semibold text-lg text-foreground">{partner.business_name}</p>
+                        <Badge variant={
+                          partner.status === 'approved' ? 'default' : 
+                          partner.status === 'rejected' ? 'destructive' : 
+                          'secondary'
+                        }>
+                          {partner.status === 'approved' ? '승인됨' : 
+                           partner.status === 'rejected' ? '거절됨' : '대기중'}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">{partner.email}</p>
-                      <p className="text-sm text-muted-foreground">{partner.phone}</p>
-                      <p className="text-xs text-muted-foreground mt-1">카테고리: {partner.category}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      {partner.status !== 'approved' && (
-                        <Button
-                          size="sm"
-                          onClick={() => updatePartnerStatus(partner.id, 'approved')}
-                        >
-                          승인
-                        </Button>
+                      
+                      <div className="space-y-2 text-sm">
+                        <p className="text-muted-foreground">
+                          <span className="font-medium">이메일:</span> {partner.email}
+                        </p>
+                        <p className="text-muted-foreground">
+                          <span className="font-medium">전화번호:</span> {partner.phone}
+                        </p>
+                        <p className="text-muted-foreground">
+                          <span className="font-medium">카테고리:</span> {partner.category}
+                        </p>
+                        {partner.description && (
+                          <p className="text-muted-foreground">
+                            <span className="font-medium">설명:</span> {partner.description}
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          신청일: {new Date(partner.created_at).toLocaleString()}
+                        </p>
+                      </div>
+
+                      {partner.business_license && (
+                        <div className="mt-4">
+                          <p className="text-sm font-medium mb-2">사업자등록증</p>
+                          <a 
+                            href={partner.business_license} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary hover:underline"
+                          >
+                            파일 보기
+                          </a>
+                        </div>
                       )}
-                      {partner.status !== 'rejected' && (
+
+                      {partner.portfolio_images && partner.portfolio_images.length > 0 && (
+                        <div className="mt-4">
+                          <p className="text-sm font-medium mb-2">포트폴리오 ({partner.portfolio_images.length}장)</p>
+                          <div className="grid grid-cols-3 gap-2">
+                            {partner.portfolio_images.map((img: string, idx: number) => (
+                              <a 
+                                key={idx}
+                                href={img}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <img 
+                                  src={img} 
+                                  alt={`포트폴리오 ${idx + 1}`}
+                                  className="w-full h-24 object-cover rounded border border-border hover:opacity-80 transition-opacity"
+                                />
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      {partner.status === 'pending' && (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => updatePartnerStatus(partner.id, 'approved')}
+                          >
+                            승인
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => updatePartnerStatus(partner.id, 'rejected')}
+                          >
+                            거절
+                          </Button>
+                        </>
+                      )}
+                      {partner.status !== 'pending' && (
                         <Button
                           size="sm"
-                          variant="destructive"
-                          onClick={() => updatePartnerStatus(partner.id, 'rejected')}
+                          variant="outline"
+                          onClick={() => updatePartnerStatus(partner.id, 'pending')}
                         >
-                          거절
+                          대기로 변경
                         </Button>
                       )}
                     </div>
@@ -341,7 +409,7 @@ export default function Admin() {
               </Card>
             ))}
             {partners.length === 0 && (
-              <p className="text-center text-muted-foreground py-12">등록된 파트너가 없습니다</p>
+              <p className="text-center text-muted-foreground py-12">등록된 파트너 신청이 없습니다</p>
             )}
           </TabsContent>
 
