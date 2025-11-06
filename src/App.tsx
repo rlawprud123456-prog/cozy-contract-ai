@@ -33,7 +33,7 @@ import Help from "./pages/community/Help";
 import PostDetailPage from "./pages/community/PostDetailPage";
 import Reviews from "./pages/Reviews";
 import ReviewWrite from "./pages/ReviewWrite";
-import Estimate from "./pages/Estimate";
+import EstimatePage from "./pages/EstimatePage";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -82,7 +82,7 @@ function AppContent() {
           <Route path="/contract/create" element={<ContractCreate user={user} />} />
           <Route path="/escrow" element={<Escrow user={user} />} />
           <Route path="/contract-review" element={<ContractReview user={user} />} />
-          <Route path="/estimate" element={<Estimate />} />
+          <Route path="/estimate" element={<EstimatePage />} />
           <Route path="/match" element={<Match />} />
           <Route path="/partners" element={<Partners />} />
           <Route path="/partners/:category" element={<PartnerList />} />
