@@ -273,6 +273,57 @@ export type Database = {
           },
         ]
       }
+      estimate_requests: {
+        Row: {
+          area: number
+          category: string
+          client_name: string
+          created_at: string
+          description: string | null
+          estimated_budget: number | null
+          id: string
+          images: string[] | null
+          location: string
+          phone: string
+          project_name: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          area: number
+          category: string
+          client_name: string
+          created_at?: string
+          description?: string | null
+          estimated_budget?: number | null
+          id?: string
+          images?: string[] | null
+          location: string
+          phone: string
+          project_name: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          area?: number
+          category?: string
+          client_name?: string
+          created_at?: string
+          description?: string | null
+          estimated_budget?: number | null
+          id?: string
+          images?: string[] | null
+          location?: string
+          phone?: string
+          project_name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       partners: {
         Row: {
           business_license: string | null
