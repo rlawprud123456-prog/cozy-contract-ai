@@ -181,7 +181,7 @@ export default function Home() {
       navigate("/login");
       return;
     }
-    navigate("/contract/create");
+    navigate("/contract-create");
   };
 
   return (

@@ -139,7 +139,7 @@ export default function Escrow({ user }: EscrowProps) {
           <p className="text-muted-foreground mb-4">
             안전한 단계별 결제 시스템으로 프로젝트를 진행하세요
           </p>
-          <Link to="/contract/create">
+          <Link to="/contract-create">
             <Button className="bg-accent hover:bg-accent/90">
               새 계약 생성하기
             </Button>
@@ -151,7 +151,7 @@ export default function Escrow({ user }: EscrowProps) {
             <CardContent className="py-12 text-center">
               <Shield className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
               <p className="text-muted-foreground mb-4">등록된 계약이 없습니다</p>
-              <Link to="/contract/create">
+              <Link to="/contract-create">
                 <Button variant="outline">계약 생성하기</Button>
               </Link>
             </CardContent>
