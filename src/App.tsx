@@ -34,6 +34,7 @@ import PostDetailPage from "./pages/community/PostDetailPage";
 import Reviews from "./pages/Reviews";
 import ReviewWrite from "./pages/ReviewWrite";
 import EstimatePage from "./pages/EstimatePage";
+import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -100,6 +101,7 @@ function AppContent() {
           <Route path="/community/post/:id" element={<PostDetailPage />} />
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/reviews/write" element={<ReviewWrite />} />
+          <Route path="/install" element={<Install />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
