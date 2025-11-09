@@ -2,6 +2,15 @@ import { useState } from "react";
 import { MessageCircle, X, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+
+const quickQuestions = [
+  "선금 비율은 얼마가 적정한가요?",
+  "중도금은 언제 지급하나요?",
+  "위약금 조항은 어떻게 되나요?",
+  "하자보수 기간은?",
+  "계약서 검토 받고 싶어요"
+];
 
 export default function Chatbot() {
   const [open, setOpen] = useState(false);
@@ -9,16 +18,19 @@ export default function Chatbot() {
     { role: "bot", text: "안녕하세요 👋 새로고침 AI 계약 도우미입니다.\n궁금한 계약 내용을 물어보세요." }
   ]);
   const [input, setInput] = useState("");
+  const [showQuickButtons, setShowQuickButtons] = useState(true);
 
-  const send = () => {
-    if (!input.trim()) return;
-    const newMsg = { role: "user", text: input };
+  const send = (text?: string) => {
+    const messageText = text || input;
+    if (!messageText.trim()) return;
+    const newMsg = { role: "user", text: messageText };
     setMessages((m) => [...m, newMsg]);
     setInput("");
+    setShowQuickButtons(false);
 
     // 더미 응답 로직 (AI 시뮬레이션)
     setTimeout(() => {
-      const lower = input.toLowerCase();
+      const lower = messageText.toLowerCase();
       let reply =
         "계약 관련 도움을 드릴게요. 예: '선금 비율', '위약금 조항', '하자보수 기간' 등으로 물어보세요.";
       if (lower.includes("선금")) reply = "선금은 총 금액의 10~30% 수준이 적정합니다. 너무 높으면 위험해요.";
@@ -69,6 +81,21 @@ export default function Chatbot() {
                 {m.text}
               </div>
             ))}
+            
+            {showQuickButtons && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {quickQuestions.map((q, i) => (
+                  <Badge
+                    key={i}
+                    variant="outline"
+                    className="cursor-pointer hover:bg-primary/10 transition-colors text-xs py-1"
+                    onClick={() => send(q)}
+                  >
+                    {q}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center border-t border-border px-2 py-1 bg-muted/30">
@@ -79,7 +106,7 @@ export default function Chatbot() {
               className="text-sm flex-1 border-0 focus-visible:ring-0 bg-transparent"
               onKeyDown={(e) => e.key === "Enter" && send()}
             />
-            <Button size="icon" variant="ghost" onClick={send}>
+            <Button size="icon" variant="ghost" onClick={() => send()}>
               <Send className="w-4 h-4" />
             </Button>
           </div>
