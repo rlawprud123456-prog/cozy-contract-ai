@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calculator, Send, Upload, X, Sparkles, CheckCircle, FileText, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +27,15 @@ const CATEGORIES = [
   { value: "restaurant", label: "식당" },
   { value: "office", label: "사무실" },
   { value: "retail", label: "매장" },
+];
+
+const BUDGET_RANGES = [
+  { value: "5000000", label: "500만원 이하" },
+  { value: "10000000", label: "500만원 ~ 1,000만원" },
+  { value: "20000000", label: "1,000만원 ~ 2,000만원" },
+  { value: "30000000", label: "2,000만원 ~ 3,000만원" },
+  { value: "50000000", label: "3,000만원 ~ 5,000만원" },
+  { value: "100000000", label: "5,000만원 이상" },
 ];
 
 export default function EstimateRequestForm() {
@@ -640,16 +650,22 @@ export default function EstimateRequestForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="estimatedBudget">예상 금액 (원)</Label>
-                <Input
-                  id="estimatedBudget"
-                  type="number"
-                  step="1000000"
-                  min="0"
-                  placeholder="예: 30000000"
+                <Label htmlFor="estimatedBudget">예상 금액</Label>
+                <Select
                   value={formData.estimatedBudget}
-                  onChange={(e) => handleInputChange("estimatedBudget", e.target.value)}
-                />
+                  onValueChange={(value) => handleInputChange("estimatedBudget", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="금액 범위를 선택하세요" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BUDGET_RANGES.map((range) => (
+                      <SelectItem key={range.value} value={range.value}>
+                        {range.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <p className="text-xs text-muted-foreground">선택 사항입니다</p>
               </div>
             </div>
