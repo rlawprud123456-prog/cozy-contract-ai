@@ -286,6 +286,7 @@ export type Database = {
           location: string
           phone: string
           project_name: string
+          rejection_reason: string | null
           status: string
           updated_at: string
           user_id: string
@@ -302,6 +303,7 @@ export type Database = {
           location: string
           phone: string
           project_name: string
+          rejection_reason?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -318,6 +320,7 @@ export type Database = {
           location?: string
           phone?: string
           project_name?: string
+          rejection_reason?: string | null
           status?: string
           updated_at?: string
           user_id?: string

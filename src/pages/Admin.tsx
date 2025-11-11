@@ -7,6 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Users, Briefcase, FileText, Shield, Calculator, Sparkles } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 export default function Admin() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -17,6 +20,9 @@ export default function Admin() {
   const [estimateRequests, setEstimateRequests] = useState<any[]>([]);
   const [generatingEstimate, setGeneratingEstimate] = useState<string | null>(null);
   const [aiEstimate, setAiEstimate] = useState<any>(null);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [selectedEstimateId, setSelectedEstimateId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -102,11 +108,16 @@ export default function Admin() {
     }
   };
 
-  const updateEstimateStatus = async (id: string, status: string) => {
+  const updateEstimateStatus = async (id: string, status: string, reason?: string) => {
     try {
+      const updateData: any = { status };
+      if (status === 'rejected' && reason) {
+        updateData.rejection_reason = reason;
+      }
+
       const { error } = await supabase
         .from("estimate_requests")
-        .update({ status })
+        .update(updateData)
         .eq("id", id);
 
       if (error) throw error;
@@ -124,6 +135,24 @@ export default function Admin() {
         variant: "destructive"
       });
     }
+  };
+
+  const handleRejectWithReason = async () => {
+    if (!selectedEstimateId) return;
+    
+    if (!rejectReason.trim()) {
+      toast({
+        title: "거절 사유 필요",
+        description: "거절 사유를 입력해주세요.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    await updateEstimateStatus(selectedEstimateId, 'rejected', rejectReason);
+    setRejectDialogOpen(false);
+    setRejectReason("");
+    setSelectedEstimateId(null);
   };
 
   const generateAIEstimate = async (estimateId: string) => {
@@ -272,7 +301,14 @@ export default function Admin() {
                         {aiEstimate.estimate.items.map((item: any, idx: number) => (
                           <div key={idx} className="flex justify-between items-start p-2 bg-background rounded">
                             <div className="flex-1">
-                              <p className="font-medium">{item.name}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium">{item.name}</p>
+                                {item.category && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {item.category}
+                                  </Badge>
+                                )}
+                              </div>
                               {item.description && (
                                 <p className="text-xs text-muted-foreground">{item.description}</p>
                               )}
@@ -388,13 +424,55 @@ export default function Admin() {
                           >
                             승인
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => updateEstimateStatus(estimate.id, 'rejected')}
-                          >
-                            거절
-                          </Button>
+                          <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+                            <DialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => {
+                                  setSelectedEstimateId(estimate.id);
+                                  setRejectReason("");
+                                }}
+                              >
+                                거절
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>견적 신청 거절</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor="reject-reason">거절 사유</Label>
+                                  <Textarea
+                                    id="reject-reason"
+                                    placeholder="거절 사유를 입력해주세요..."
+                                    value={rejectReason}
+                                    onChange={(e) => setRejectReason(e.target.value)}
+                                    rows={4}
+                                  />
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                      setRejectDialogOpen(false);
+                                      setRejectReason("");
+                                      setSelectedEstimateId(null);
+                                    }}
+                                  >
+                                    취소
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    onClick={handleRejectWithReason}
+                                  >
+                                    거절 확정
+                                  </Button>
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
                         </>
                       )}
                       {estimate.status === 'approved' && (

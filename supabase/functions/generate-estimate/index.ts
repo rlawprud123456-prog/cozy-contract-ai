@@ -59,12 +59,16 @@ serve(async (req) => {
 
 다음 형식으로 견적서를 생성해주세요:
 1. 총 예상 금액 (원 단위)
-2. 항목별 비용 (최소 5개 항목, 각 항목은 이름과 금액 포함)
+2. 항목별 비용 (최소 7개 항목, 각 항목은 이름, 금액, 카테고리(자재비/인건비/설계비/기타) 포함)
+   - 자재비: 바닥재, 벽지, 조명, 가구 등
+   - 인건비: 철거, 목공, 전기, 도배 등
+   - 설계비: 설계 및 감리
+   - 기타: 폐기물 처리, 운반비 등
 3. 예상 작업 기간 (일 단위)
 4. 작업 일정 단계별 설명 (최소 3단계)
 5. 추천 사항 및 주의사항
 
-평수와 카테고리를 고려하여 현실적인 금액을 산정해주세요.`;
+평수와 카테고리를 고려하여 현실적인 금액을 산정해주세요. 자재비와 인건비를 명확히 구분해주세요.`;
 
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -105,9 +109,10 @@ serve(async (req) => {
                       properties: {
                         name: { type: 'string', description: '항목명' },
                         amount: { type: 'number', description: '금액 (원)' },
+                        category: { type: 'string', description: '비용 구분', enum: ['자재비', '인건비', '설계비', '기타'] },
                         description: { type: 'string', description: '항목 설명' }
                       },
-                      required: ['name', 'amount']
+                      required: ['name', 'amount', 'category']
                     }
                   },
                   duration_days: {

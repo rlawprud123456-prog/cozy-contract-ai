@@ -157,7 +157,7 @@ export default function EstimateRequestForm() {
           yPosition = margin;
         }
         
-        pdf.text(`- ${item.name}`, margin + 2, yPosition);
+        pdf.text(`- ${item.name}${item.category ? ` [${item.category}]` : ''}`, margin + 2, yPosition);
         pdf.text(`${item.amount.toLocaleString()}원`, pageWidth - margin - 35, yPosition);
         yPosition += 5;
         
@@ -477,7 +477,14 @@ export default function EstimateRequestForm() {
                   {aiEstimate.estimate.items.map((item: any, idx: number) => (
                     <div key={idx} className="flex justify-between items-start p-3 bg-background rounded-lg">
                       <div className="flex-1">
-                        <p className="font-medium">{item.name}</p>
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-medium">{item.name}</p>
+                          {item.category && (
+                            <Badge variant="outline" className="text-xs">
+                              {item.category}
+                            </Badge>
+                          )}
+                        </div>
                         {item.description && (
                           <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
                         )}
