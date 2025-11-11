@@ -8,6 +8,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Menu, LogOut, FileText, UserCircle2, ChevronDown, Users, AlertTriangle, MessageSquare, Calculator } from "lucide-react";
 import logo from "@/assets/logo.png";
 
@@ -32,6 +37,7 @@ export default function Header() {
   const navigate = useNavigate();
   const [user, setUser] = useState<SBUser | null>(null);
   const [open, setOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     // 초기 사용자 정보 가져오기
@@ -89,6 +95,166 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
       <div className="container mx-auto flex items-center justify-between py-3 px-4">
+        {/* 모바일 메뉴 버튼 */}
+        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+          <SheetTrigger asChild className="md:hidden">
+            <Button variant="ghost" size="icon">
+              <Menu className="w-5 h-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[280px] sm:w-[350px]">
+            <nav className="flex flex-col gap-4 mt-8">
+              <Link 
+                to="/" 
+                className="text-lg font-semibold hover:text-primary transition"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                홈
+              </Link>
+              
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                  <Calculator className="w-4 h-4" />
+                  견적
+                </div>
+                <Link 
+                  to="/estimate" 
+                  className="block pl-6 text-base hover:text-primary transition"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  견적서 작성
+                </Link>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                  <FileText className="w-4 h-4" />
+                  계약관리
+                </div>
+                <Link 
+                  to="/contract-create" 
+                  className="block pl-6 text-base hover:text-primary transition"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  계약 작성
+                </Link>
+                <Link 
+                  to="/contract-review" 
+                  className="block pl-6 text-base hover:text-primary transition"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  계약 검토
+                </Link>
+                <Link 
+                  to="/escrow" 
+                  className="block pl-6 text-base hover:text-primary transition"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  에스크로
+                </Link>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                  <Users className="w-4 h-4" />
+                  전문가찾기
+                </div>
+                <Link 
+                  to="/match" 
+                  className="block pl-6 text-base hover:text-primary transition"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  전문가 매칭
+                </Link>
+                <Link 
+                  to="/partners" 
+                  className="block pl-6 text-base hover:text-primary transition"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  파트너 목록
+                </Link>
+                <Link 
+                  to="/reviews" 
+                  className="block pl-6 text-base hover:text-primary transition"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  고객 리뷰
+                </Link>
+                <Link 
+                  to="/partner/apply" 
+                  className="block pl-6 text-base hover:text-primary transition"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  파트너 신청
+                </Link>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                  <AlertTriangle className="w-4 h-4" />
+                  피해이력
+                </div>
+                <Link 
+                  to="/damage-history" 
+                  className="block pl-6 text-base hover:text-primary transition"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  피해이력 조회
+                </Link>
+                <Link 
+                  to="/damage-report" 
+                  className="block pl-6 text-base hover:text-primary transition"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  피해신고
+                </Link>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                  <MessageSquare className="w-4 h-4" />
+                  커뮤니티
+                </div>
+                <Link 
+                  to="/community/sad" 
+                  className="block pl-6 text-base hover:text-primary transition"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  속상해요
+                </Link>
+                <Link 
+                  to="/community/unfair" 
+                  className="block pl-6 text-base hover:text-primary transition"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  억울해요
+                </Link>
+                <Link 
+                  to="/community/diy-tips" 
+                  className="block pl-6 text-base hover:text-primary transition"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  셀프인테리어 팁
+                </Link>
+                <Link 
+                  to="/community/jobs" 
+                  className="block pl-6 text-base hover:text-primary transition"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  구인구직
+                </Link>
+                <Link 
+                  to="/community/help" 
+                  className="block pl-6 text-base hover:text-primary transition"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  고수님 도와주세요
+                </Link>
+              </div>
+            </nav>
+          </SheetContent>
+        </Sheet>
+
         {/* 로고 */}
         <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition">
           <img src={logo} alt="새로고침" className="w-7 h-7" />
