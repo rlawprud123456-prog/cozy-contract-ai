@@ -30,12 +30,36 @@ const CATEGORIES = [
 ];
 
 const BUDGET_RANGES = [
-  { value: "5000000", label: "500만원 이하" },
-  { value: "10000000", label: "500만원 ~ 1,000만원" },
-  { value: "20000000", label: "1,000만원 ~ 2,000만원" },
-  { value: "30000000", label: "2,000만원 ~ 3,000만원" },
-  { value: "50000000", label: "3,000만원 ~ 5,000만원" },
-  { value: "100000000", label: "5,000만원 이상" },
+  { 
+    value: "5000000", 
+    label: "500만원 이하",
+    preview: "소규모 수리, 도배/장판, 부분 인테리어에 적합합니다"
+  },
+  { 
+    value: "10000000", 
+    label: "500만원 ~ 1,000만원",
+    preview: "욕실/주방 부분 리모델링, 중규모 인테리어 공사 가능합니다"
+  },
+  { 
+    value: "20000000", 
+    label: "1,000만원 ~ 2,000만원",
+    preview: "20평대 부분 리모델링, 상가 인테리어 등이 가능합니다"
+  },
+  { 
+    value: "30000000", 
+    label: "2,000만원 ~ 3,000만원",
+    preview: "30평대 전체 리모델링, 고급 자재 사용이 가능합니다"
+  },
+  { 
+    value: "50000000", 
+    label: "3,000만원 ~ 5,000만원",
+    preview: "40평 이상 전체 리모델링, 프리미엄 자재와 설계 포함"
+  },
+  { 
+    value: "100000000", 
+    label: "5,000만원 이상",
+    preview: "대규모 리모델링, 럭셔리 인테리어, 특수 설계 공사 가능"
+  },
 ];
 
 export default function EstimateRequestForm() {
@@ -481,6 +505,32 @@ export default function EstimateRequestForm() {
                 </div>
               </div>
 
+              {/* 카테고리별 비용 요약 */}
+              <div>
+                <h3 className="font-semibold text-lg mb-3">카테고리별 비용 요약</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {(() => {
+                    const categories = ['자재비', '인건비', '설계비', '기타'];
+                    const categorySums = categories.map(cat => {
+                      const sum = aiEstimate.estimate.items
+                        .filter((item: any) => item.category === cat)
+                        .reduce((acc: number, item: any) => acc + item.amount, 0);
+                      return { name: cat, amount: sum };
+                    });
+                    
+                    return categorySums.map((cat, idx) => (
+                      <div key={idx} className="p-4 bg-background rounded-lg border-2 border-primary/10">
+                        <p className="text-sm text-muted-foreground mb-1">{cat.name}</p>
+                        <p className="text-xl font-bold text-primary">{cat.amount.toLocaleString()}원</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {((cat.amount / aiEstimate.estimate.total_amount) * 100).toFixed(1)}%
+                        </p>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
+
               <div>
                 <h3 className="font-semibold text-lg mb-3">항목별 비용</h3>
                 <div className="space-y-2">
@@ -666,6 +716,14 @@ export default function EstimateRequestForm() {
                     ))}
                   </SelectContent>
                 </Select>
+                {formData.estimatedBudget && (
+                  <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                    <p className="text-sm font-medium text-primary mb-1">💡 이 금액대 예상 견적</p>
+                    <p className="text-sm text-muted-foreground">
+                      {BUDGET_RANGES.find(r => r.value === formData.estimatedBudget)?.preview}
+                    </p>
+                  </div>
+                )}
                 <p className="text-xs text-muted-foreground">선택 사항입니다</p>
               </div>
             </div>
