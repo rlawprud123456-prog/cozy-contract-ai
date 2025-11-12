@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Briefcase, FileText, Shield, Calculator, Sparkles } from "lucide-react";
+import { Users, Briefcase, FileText, Shield, Calculator, Sparkles, DollarSign } from "lucide-react";
+import { approvePayment, rejectApproval, getPaymentsByContract } from "@/services/escrow";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -23,6 +24,7 @@ export default function Admin() {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [selectedEstimateId, setSelectedEstimateId] = useState<string | null>(null);
+  const [pendingPayments, setPendingPayments] = useState<any[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -68,17 +70,19 @@ export default function Admin() {
 
   const loadData = async () => {
     try {
-      const [usersRes, partnersRes, contractsRes, estimatesRes] = await Promise.all([
+      const [usersRes, partnersRes, contractsRes, estimatesRes, paymentsRes] = await Promise.all([
         supabase.from("profiles").select("*"),
         supabase.from("partners").select("*"),
         supabase.from("contracts").select("*"),
-        supabase.from("estimate_requests").select("*").order("created_at", { ascending: false })
+        supabase.from("estimate_requests").select("*").order("created_at", { ascending: false }),
+        supabase.from("escrow_payments").select("*, contracts(*)").eq("status", "pending_approval")
       ]);
 
       if (usersRes.data) setUsers(usersRes.data);
       if (partnersRes.data) setPartners(partnersRes.data);
       if (contractsRes.data) setContracts(contractsRes.data);
       if (estimatesRes.data) setEstimateRequests(estimatesRes.data);
+      if (paymentsRes.data) setPendingPayments(paymentsRes.data);
     } catch (error) {
       console.error("Data loading error:", error);
     }
@@ -187,6 +191,49 @@ export default function Admin() {
     }
   };
 
+  const handleApprovePayment = async (paymentId: string, contractId: string) => {
+    try {
+      await approvePayment(paymentId, contractId);
+      toast({
+        title: "승인 완료",
+        description: "전문가에게 대금이 지급되었습니다."
+      });
+      await loadData();
+    } catch (error: any) {
+      toast({
+        title: "승인 실패",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleRejectPayment = async (paymentId: string) => {
+    try {
+      await rejectApproval(paymentId);
+      toast({
+        title: "거절 완료",
+        description: "지급 요청이 거절되었습니다."
+      });
+      await loadData();
+    } catch (error: any) {
+      toast({
+        title: "거절 실패",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const getPaymentTypeLabel = (type: string) => {
+    switch (type) {
+      case "deposit": return "선금";
+      case "mid": return "중도금";
+      case "final": return "잔금";
+      default: return type;
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -253,6 +300,12 @@ export default function Admin() {
         <Tabs defaultValue="estimates" className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="estimates">견적 신청</TabsTrigger>
+            <TabsTrigger value="escrow">
+              에스크로 승인
+              {pendingPayments.length > 0 && (
+                <Badge variant="destructive" className="ml-2">{pendingPayments.length}</Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="partners">파트너 신청</TabsTrigger>
             <TabsTrigger value="users">사용자 관리</TabsTrigger>
             <TabsTrigger value="contracts">계약 관리</TabsTrigger>
@@ -491,6 +544,69 @@ export default function Admin() {
             ))}
             {estimateRequests.length === 0 && (
               <p className="text-center text-muted-foreground py-12">등록된 견적 신청이 없습니다</p>
+            )}
+          </TabsContent>
+
+          <TabsContent value="escrow" className="space-y-4">
+            {pendingPayments.map((payment) => (
+              <Card key={payment.id}>
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-3">
+                        <DollarSign className="w-5 h-5 text-primary" />
+                        <p className="font-semibold text-lg text-foreground">
+                          {getPaymentTypeLabel(payment.type)} 승인 요청
+                        </p>
+                        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                          승인 대기중
+                        </Badge>
+                      </div>
+                      
+                      <div className="space-y-2 text-sm">
+                        <p className="text-muted-foreground">
+                          <span className="font-medium">계약명:</span> {payment.contracts?.project_name || "프로젝트"}
+                        </p>
+                        <p className="text-muted-foreground">
+                          <span className="font-medium">전문가:</span> {payment.contracts?.partner_name || "미정"}
+                        </p>
+                        <p className="text-foreground font-semibold text-lg">
+                          <span className="font-medium">금액:</span> {payment.amount.toLocaleString()}원
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          요청일: {new Date(payment.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleApprovePayment(payment.id, payment.contract_id)}
+                        className="gap-2"
+                      >
+                        <DollarSign className="w-4 h-4" />
+                        승인
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleRejectPayment(payment.id)}
+                      >
+                        거절
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {pendingPayments.length === 0 && (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <DollarSign className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground">승인 대기 중인 지급 요청이 없습니다</p>
+                </CardContent>
+              </Card>
             )}
           </TabsContent>
 

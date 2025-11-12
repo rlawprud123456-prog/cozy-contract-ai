@@ -39,7 +39,21 @@ export async function getPaymentsByContract(contract_id: string) {
   return data || [];
 }
 
-export async function releasePayment(payment_id: string, contract_id: string) {
+export async function requestApproval(payment_id: string) {
+  const { data, error } = await supabase
+    .from("escrow_payments")
+    .update({
+      status: "pending_approval",
+    })
+    .eq("id", payment_id)
+    .select("*")
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+export async function approvePayment(payment_id: string, contract_id: string) {
   const { data, error } = await supabase
     .from("escrow_payments")
     .update({
@@ -57,6 +71,20 @@ export async function releasePayment(payment_id: string, contract_id: string) {
     p_contract_id: contract_id,
   });
 
+  return data;
+}
+
+export async function rejectApproval(payment_id: string) {
+  const { data, error } = await supabase
+    .from("escrow_payments")
+    .update({
+      status: "held",
+    })
+    .eq("id", payment_id)
+    .select("*")
+    .single();
+  
+  if (error) throw error;
   return data;
 }
 

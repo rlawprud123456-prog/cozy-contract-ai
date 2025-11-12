@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { listContracts, updateContractStatus } from "@/services/contract";
-import { depositPayment, getPaymentsByContract, releasePayment } from "@/services/escrow";
+import { depositPayment, getPaymentsByContract, requestApproval } from "@/services/escrow";
 import { Shield, CheckCircle2, Clock, Ban, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Tables } from "@/integrations/supabase/types";
@@ -68,20 +68,20 @@ export default function Escrow({ user }: EscrowProps) {
     }
   };
 
-  const handleRelease = async (paymentId: string, contractId: string) => {
+  const handleRequestApproval = async (paymentId: string) => {
     setLoading(true);
     try {
-      await releasePayment(paymentId, contractId);
+      await requestApproval(paymentId);
       toast({
-        title: "지급 완료",
-        description: "전문가에게 대금이 지급되었습니다",
+        title: "승인 요청 완료",
+        description: "관리자 승인 후 전문가에게 대금이 지급됩니다",
       });
 
       await loadContracts();
     } catch (error) {
       toast({
         title: "오류 발생",
-        description: error instanceof Error ? error.message : "지급에 실패했습니다",
+        description: error instanceof Error ? error.message : "승인 요청에 실패했습니다",
         variant: "destructive",
       });
     } finally {
@@ -108,6 +108,8 @@ export default function Escrow({ user }: EscrowProps) {
     switch (status) {
       case "held":
         return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">보관중</Badge>;
+      case "pending_approval":
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">승인 대기중</Badge>;
       case "released":
         return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">지급완료</Badge>;
       case "refunded":
@@ -201,14 +203,13 @@ export default function Escrow({ user }: EscrowProps) {
                                   variant="outline"
                                   className="w-full"
                                   onClick={() =>
-                                    handleRelease(
-                                      contractPayments.find((p) => p.type === "deposit")!.id,
-                                      contract.id
+                                    handleRequestApproval(
+                                      contractPayments.find((p) => p.type === "deposit")!.id
                                     )
                                   }
                                   disabled={loading}
                                 >
-                                  지급하기
+                                  승인 요청
                                 </Button>
                               )}
                             </div>
@@ -247,14 +248,13 @@ export default function Escrow({ user }: EscrowProps) {
                                   variant="outline"
                                   className="w-full"
                                   onClick={() =>
-                                    handleRelease(
-                                      contractPayments.find((p) => p.type === "mid")!.id,
-                                      contract.id
+                                    handleRequestApproval(
+                                      contractPayments.find((p) => p.type === "mid")!.id
                                     )
                                   }
                                   disabled={loading}
                                 >
-                                  지급하기
+                                  승인 요청
                                 </Button>
                               )}
                             </div>
@@ -293,14 +293,13 @@ export default function Escrow({ user }: EscrowProps) {
                                   variant="outline"
                                   className="w-full"
                                   onClick={() =>
-                                    handleRelease(
-                                      contractPayments.find((p) => p.type === "final")!.id,
-                                      contract.id
+                                    handleRequestApproval(
+                                      contractPayments.find((p) => p.type === "final")!.id
                                     )
                                   }
                                   disabled={loading}
                                 >
-                                  지급하기
+                                  승인 요청
                                 </Button>
                               )}
                             </div>
