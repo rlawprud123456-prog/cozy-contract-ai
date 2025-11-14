@@ -94,10 +94,20 @@ const categoryNames: Record<string, string> = {
   help: "고수님 도와주세요",
 };
 
+interface FeaturedPartner {
+  id: string;
+  business_name: string;
+  category: string;
+  description: string | null;
+  portfolio_images: string[] | null;
+  verified: boolean;
+}
+
 export default function Home() {
   const [authed, setAuthed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [popularPosts, setPopularPosts] = useState<PopularPost[]>([]);
+  const [featuredPartners, setFeaturedPartners] = useState<FeaturedPartner[]>([]);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -112,6 +122,7 @@ export default function Home() {
 
     checkAuth();
     fetchPopularPosts();
+    fetchFeaturedPartners();
 
     const {
       data: { subscription },
@@ -172,6 +183,22 @@ export default function Home() {
     }
   };
 
+  const fetchFeaturedPartners = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("partners")
+        .select("id, business_name, category, description, portfolio_images, verified")
+        .eq("status", "approved")
+        .eq("verified", true)
+        .limit(4);
+
+      if (error) throw error;
+      setFeaturedPartners(data || []);
+    } catch (error) {
+      console.error("이달의 전문가 조회 실패:", error);
+    }
+  };
+
   const startContract = () => {
     if (!authed) {
       toast({
@@ -229,6 +256,60 @@ export default function Home() {
               <p className="text-sm text-muted-foreground">{r.desc}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* 이달의 전문가 */}
+      <section className="py-16 px-4 bg-muted/30">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <Badge className="mb-4 bg-accent text-accent-foreground">이달의 추천</Badge>
+            <h2 className="text-3xl font-bold mb-4 text-foreground">
+              이달의 인테리어 전문가
+            </h2>
+            <p className="text-muted-foreground">
+              검증된 전문가들이 여러분의 공간을 새롭게 만들어드립니다
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {featuredPartners.map((partner) => (
+              <Link
+                key={partner.id}
+                to={`/partners`}
+                className="group block"
+              >
+                <Card className="h-full transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-card-hover)]">
+                  <div className="relative overflow-hidden h-48 bg-muted">
+                    {partner.portfolio_images && partner.portfolio_images.length > 0 ? (
+                      <img
+                        src={partner.portfolio_images[0]}
+                        alt={partner.business_name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Users className="w-16 h-16 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      {partner.business_name}
+                      {partner.verified && (
+                        <Badge variant="secondary" className="text-xs">인증</Badge>
+                      )}
+                    </CardTitle>
+                    <CardDescription>{partner.category}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {partner.description || "믿을 수 있는 전문가입니다"}
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
