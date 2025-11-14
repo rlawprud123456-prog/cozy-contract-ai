@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Briefcase, FileText, Shield, Calculator, Sparkles, DollarSign, Star } from "lucide-react";
+import { Users, Briefcase, FileText, Shield, Calculator, Sparkles, DollarSign, Star, History } from "lucide-react";
 import { approvePayment, rejectApproval, getPaymentsByContract } from "@/services/escrow";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -114,15 +114,51 @@ export default function Admin() {
 
   const togglePartnerFeatured = async (id: string, currentFeatured: boolean) => {
     try {
-      const { error } = await supabase
-        .from("partners")
-        .update({ 
-          featured: !currentFeatured,
-          featured_at: !currentFeatured ? new Date().toISOString() : null
-        })
-        .eq("id", id);
+      if (!currentFeatured) {
+        // 선정하는 경우: partners 테이블 업데이트 + 히스토리에 새 레코드 추가
+        const now = new Date().toISOString();
+        
+        const { error: partnerError } = await supabase
+          .from("partners")
+          .update({ 
+            featured: true,
+            featured_at: now
+          })
+          .eq("id", id);
 
-      if (error) throw error;
+        if (partnerError) throw partnerError;
+
+        const { error: historyError } = await supabase
+          .from("featured_history")
+          .insert({
+            partner_id: id,
+            featured_at: now
+          });
+
+        if (historyError) throw historyError;
+      } else {
+        // 해제하는 경우: partners 테이블 업데이트 + 히스토리의 unfeatured_at 업데이트
+        const { error: partnerError } = await supabase
+          .from("partners")
+          .update({ 
+            featured: false,
+            featured_at: null
+          })
+          .eq("id", id);
+
+        if (partnerError) throw partnerError;
+
+        // 가장 최근의 미해제된 히스토리 레코드를 찾아서 업데이트
+        const { error: historyError } = await supabase
+          .from("featured_history")
+          .update({ unfeatured_at: new Date().toISOString() })
+          .eq("partner_id", id)
+          .is("unfeatured_at", null)
+          .order("featured_at", { ascending: false })
+          .limit(1);
+
+        if (historyError) throw historyError;
+      }
 
       toast({
         title: currentFeatured ? "이달의 전문가 해제" : "이달의 전문가 선정",
@@ -324,6 +360,17 @@ export default function Admin() {
               <div className="text-2xl font-bold">{contracts.length}</div>
             </CardContent>
           </Card>
+        </div>
+
+        <div className="mb-6">
+          <Button
+            variant="outline"
+            onClick={() => navigate("/featured-history")}
+            className="gap-2"
+          >
+            <History className="w-4 h-4" />
+            이달의 전문가 히스토리
+          </Button>
         </div>
 
         <Tabs defaultValue="estimates" className="w-full">
