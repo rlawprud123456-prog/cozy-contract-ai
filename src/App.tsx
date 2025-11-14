@@ -36,6 +36,7 @@ import ReviewWrite from "./pages/ReviewWrite";
 import EstimatePage from "./pages/EstimatePage";
 import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
+import FeaturedHistory from "./pages/FeaturedHistory";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -102,6 +103,7 @@ function AppContent() {
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/reviews/write" element={<ReviewWrite />} />
           <Route path="/install" element={<Install />} />
+          <Route path="/featured-history" element={<ProtectedRoute><FeaturedHistory /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
