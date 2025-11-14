@@ -13,6 +13,9 @@ import Auth from "./pages/Auth";
 import Login from "./pages/Login";
 import AuthCallback from "./pages/AuthCallback";
 import Admin from "./pages/Admin";
+import AdminLayout from "./pages/admin/AdminLayout";
+import Dashboard from "./pages/admin/Dashboard";
+import Contracts from "./pages/admin/Contracts";
 import Profile from "./pages/Profile";
 import ContractReview from "./pages/ContractReview";
 import History from "./pages/History";
@@ -80,7 +83,11 @@ function AppContent() {
           <Route path="/auth" element={<Auth />} />
           <Route path="/login" element={<Login />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin-old" element={<Admin />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="contracts" element={<Contracts />} />
+          </Route>
           <Route path="/contract-create" element={<ContractCreate user={user} />} />
           <Route path="/escrow" element={<Escrow user={user} />} />
           <Route path="/contract-review" element={<ContractReview user={user} />} />
