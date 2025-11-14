@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Briefcase, FileText, Shield, Calculator, Sparkles, DollarSign } from "lucide-react";
+import { Users, Briefcase, FileText, Shield, Calculator, Sparkles, DollarSign, Star } from "lucide-react";
 import { approvePayment, rejectApproval, getPaymentsByContract } from "@/services/escrow";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -100,6 +100,35 @@ export default function Admin() {
       toast({
         title: "상태 업데이트 완료",
         description: `파트너 상태가 ${status}로 변경되었습니다.`
+      });
+
+      await loadData();
+    } catch (error: any) {
+      toast({
+        title: "업데이트 실패",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const togglePartnerFeatured = async (id: string, currentFeatured: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("partners")
+        .update({ 
+          featured: !currentFeatured,
+          featured_at: !currentFeatured ? new Date().toISOString() : null
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: currentFeatured ? "이달의 전문가 해제" : "이달의 전문가 선정",
+        description: currentFeatured 
+          ? "이달의 전문가에서 해제되었습니다."
+          : "이달의 전문가로 선정되었습니다."
       });
 
       await loadData();
@@ -647,6 +676,12 @@ export default function Admin() {
                           {partner.status === 'approved' ? '승인됨' : 
                            partner.status === 'rejected' ? '거절됨' : '대기중'}
                         </Badge>
+                        {partner.featured && (
+                          <Badge variant="secondary" className="gap-1">
+                            <Star className="w-3 h-3 fill-current" />
+                            이달의 전문가
+                          </Badge>
+                        )}
                       </div>
                       
                       <div className="space-y-2 text-sm">
@@ -707,6 +742,17 @@ export default function Admin() {
                     </div>
 
                     <div className="flex flex-col gap-2">
+                      {partner.status === 'approved' && (
+                        <Button
+                          size="sm"
+                          variant={partner.featured ? "secondary" : "default"}
+                          className="gap-2"
+                          onClick={() => togglePartnerFeatured(partner.id, partner.featured)}
+                        >
+                          <Star className={`w-4 h-4 ${partner.featured ? 'fill-current' : ''}`} />
+                          {partner.featured ? '이달의 전문가 해제' : '이달의 전문가 선정'}
+                        </Button>
+                      )}
                       {partner.status === 'pending' && (
                         <>
                           <Button

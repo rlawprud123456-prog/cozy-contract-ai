@@ -189,7 +189,7 @@ export default function Home() {
         .from("partners")
         .select("id, business_name, category, description, portfolio_images, verified")
         .eq("status", "approved")
-        .eq("verified", true)
+        .eq("featured", true)
         .limit(4);
 
       if (error) throw error;
