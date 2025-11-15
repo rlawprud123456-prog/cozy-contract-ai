@@ -327,6 +327,45 @@ export type Database = {
         }
         Relationships: []
       }
+      featured_history: {
+        Row: {
+          created_at: string
+          featured_at: string
+          id: string
+          partner_id: string
+          unfeatured_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          featured_at?: string
+          id?: string
+          partner_id: string
+          unfeatured_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          featured_at?: string
+          id?: string
+          partner_id?: string
+          unfeatured_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "featured_history_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partner_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "featured_history_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partners: {
         Row: {
           business_license: string | null
@@ -335,6 +374,8 @@ export type Database = {
           created_at: string
           description: string | null
           email: string
+          featured: boolean | null
+          featured_at: string | null
           id: string
           phone: string
           portfolio_images: string[] | null
@@ -350,6 +391,8 @@ export type Database = {
           created_at?: string
           description?: string | null
           email: string
+          featured?: boolean | null
+          featured_at?: string | null
           id?: string
           phone: string
           portfolio_images?: string[] | null
@@ -365,6 +408,8 @@ export type Database = {
           created_at?: string
           description?: string | null
           email?: string
+          featured?: boolean | null
+          featured_at?: string | null
           id?: string
           phone?: string
           portfolio_images?: string[] | null

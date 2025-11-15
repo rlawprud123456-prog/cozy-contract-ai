@@ -47,6 +47,8 @@ import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
 import FeaturedHistory from "./pages/FeaturedHistory";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AIInterior from "./pages/AIInterior";
+import CommunityManagement from "./pages/admin/Community";
 
 const queryClient = new QueryClient();
 
@@ -99,13 +101,15 @@ function AppContent() {
             <Route path="payments" element={<Payments />} />
             <Route path="damage-reports" element={<DamageReports />} />
             <Route path="featured" element={<Featured />} />
+            <Route path="community" element={<CommunityManagement />} />
           </Route>
           <Route path="/contract-create" element={<ContractCreate user={user} />} />
           <Route path="/escrow" element={<Escrow user={user} />} />
           <Route path="/contract-review" element={<ContractReview user={user} />} />
-          <Route path="/estimate" element={<EstimatePage />} />
-          <Route path="/match" element={<Match />} />
-          <Route path="/partners" element={<Partners />} />
+        <Route path="/estimate" element={<EstimatePage />} />
+        <Route path="/match" element={<Match />} />
+        <Route path="/partners" element={<Partners />} />
+        <Route path="/ai-interior" element={<AIInterior />} />
           <Route path="/partners/:category" element={<PartnerList />} />
           <Route path="/scammer-search" element={<ScammerSearch />} />
           <Route path="/damage-history" element={<DamageHistory />} />
