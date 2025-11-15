@@ -4,6 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Upload, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import beforeImage from "@/assets/ai-interior-before.jpg";
+import afterImage from "@/assets/ai-interior-after.jpg";
 
 export default function AIInterior() {
   const [images, setImages] = useState<File[]>([]);
@@ -73,6 +75,36 @@ export default function AIInterior() {
           <p className="text-sm text-muted-foreground">
             아키스케치로 만든 렌더링 이미지를 사용할 수 있습니다.
           </p>
+        </div>
+
+        {/* Before/After 예시 섹션 */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold text-center mb-6">나보다 나를 더 잘 아는 AI 인테리어, 지금 경험해 보세요.</h2>
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <Card className="overflow-hidden">
+              <div className="relative">
+                <img src={beforeImage} alt="Before" className="w-full h-64 object-cover" />
+                <div className="absolute top-4 left-4 bg-background/90 px-4 py-2 rounded-lg">
+                  <span className="font-semibold">Before</span>
+                </div>
+              </div>
+            </Card>
+            <Card className="overflow-hidden">
+              <div className="relative">
+                <img src={afterImage} alt="After" className="w-full h-64 object-cover" />
+                <div className="absolute top-4 left-4 bg-background/90 px-4 py-2 rounded-lg">
+                  <span className="font-semibold">After</span>
+                </div>
+                <div className="absolute bottom-4 right-4 flex gap-2">
+                  <span className="bg-background/90 px-3 py-1 rounded-full text-sm">Living room</span>
+                  <span className="bg-background/90 px-3 py-1 rounded-full text-sm">Bohemian</span>
+                </div>
+                <div className="absolute top-4 right-4 bg-primary/90 px-3 py-1 rounded-lg">
+                  <span className="font-semibold text-primary-foreground">Redesign</span>
+                </div>
+              </div>
+            </Card>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
