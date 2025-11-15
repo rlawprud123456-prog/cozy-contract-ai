@@ -69,12 +69,6 @@ export default function AIInterior() {
           <p className="text-muted-foreground">
             인테리어를 해드립니다.
           </p>
-          <p className="text-sm text-muted-foreground mt-4">
-            *인테리어가 필요한 사진이 없는 경우,
-          </p>
-          <p className="text-sm text-muted-foreground">
-            아키스케치로 만든 렌더링 이미지를 사용할 수 있습니다.
-          </p>
         </div>
 
         {/* Before/After 예시 섹션 */}
