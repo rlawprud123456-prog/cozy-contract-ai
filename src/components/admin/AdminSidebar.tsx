@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Briefcase, FileText, Calculator, DollarSign, Shield, Star } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, FileText, Calculator, DollarSign, Shield, Star, MessageSquare } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -20,6 +20,7 @@ const menuItems = [
   { title: "에스크로 결제", url: "/admin/payments", icon: DollarSign },
   { title: "피해 신고", url: "/admin/damage-reports", icon: Shield },
   { title: "이달의 전문가", url: "/admin/featured", icon: Star },
+  { title: "커뮤니티 관리", url: "/admin/community", icon: MessageSquare },
 ];
 
 export function AdminSidebar() {

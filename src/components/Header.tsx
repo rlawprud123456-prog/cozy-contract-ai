@@ -366,6 +366,11 @@ export default function Header() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          
+          {/* AI 인테리어 */}
+          <Link to="/ai-interior" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            AI 인테리어
+          </Link>
         </nav>
 
         {/* 우측 영역 */}
