@@ -102,8 +102,8 @@ export default function Header() {
               <Menu className="w-5 h-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-[280px] sm:w-[350px]">
-            <nav className="flex flex-col gap-4 mt-8">
+          <SheetContent side="left" className="w-[280px] sm:w-[350px] overflow-y-auto">
+            <nav className="flex flex-col gap-4 mt-8 pb-8">
               <Link 
                 to="/" 
                 className="text-lg font-semibold hover:text-primary transition"
