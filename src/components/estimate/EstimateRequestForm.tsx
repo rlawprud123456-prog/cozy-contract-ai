@@ -458,48 +458,48 @@ export default function EstimateRequestForm() {
       {/* AI 견적서 결과 */}
       {aiEstimate && (
         <Card className="border-primary bg-primary/5 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-start justify-between mb-4">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0 mb-4">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-6 h-6 text-primary" />
-                <h2 className="text-2xl font-bold">AI 자동 견적서</h2>
+                <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+                <h2 className="text-xl sm:text-2xl font-bold">AI 자동 견적서</h2>
               </div>
               <div className="flex items-center gap-2">
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={downloadPDF}
-                  className="gap-2"
+                  className="gap-2 text-xs sm:text-sm"
                 >
-                  <Download className="w-4 h-4" />
+                  <Download className="w-3 h-3 sm:w-4 sm:h-4" />
                   PDF 다운로드
                 </Button>
-                <Badge variant="default" className="gap-1">
+                <Badge variant="default" className="gap-1 text-xs">
                   <CheckCircle className="w-3 h-3" />
                   생성 완료
                 </Badge>
               </div>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               <div>
-                <p className="font-semibold text-xl mb-2">
+                <p className="font-semibold text-lg sm:text-xl mb-2">
                   {aiEstimate.estimateRequest.project_name}
                 </p>
-                <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+                <div className="flex flex-wrap gap-2 text-xs sm:text-sm text-muted-foreground">
                   <Badge variant="outline">{aiEstimate.estimateRequest.category}</Badge>
                   <Badge variant="outline">{aiEstimate.estimateRequest.area}평</Badge>
                   <Badge variant="outline">{aiEstimate.estimateRequest.location}</Badge>
                 </div>
               </div>
 
-              <div className="bg-background p-6 rounded-lg">
+              <div className="bg-background p-4 sm:p-6 rounded-lg">
                 <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">총 예상 금액</p>
-                  <p className="text-4xl font-bold text-primary">
+                  <p className="text-xs sm:text-sm text-muted-foreground">총 예상 금액</p>
+                  <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary">
                     {aiEstimate.estimate.total_amount.toLocaleString()}원
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     예상 작업 기간: <span className="font-semibold">{aiEstimate.estimate.duration_days}일</span>
                   </p>
                 </div>
@@ -626,35 +626,36 @@ export default function EstimateRequestForm() {
       {/* 견적 신청 폼 */}
       <form onSubmit={handleSubmit}>
         <Card className="shadow-[var(--shadow-card)]">
-          <CardHeader>
-            <CardTitle className="text-2xl flex items-center gap-2">
-              <Calculator className="w-6 h-6" />
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="text-xl sm:text-2xl flex items-center gap-2">
+              <Calculator className="w-5 h-5 sm:w-6 sm:h-6" />
               AI 자동 견적 신청
             </CardTitle>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-2">
               정보를 입력하시면 AI가 자동으로 견적서를 생성해드립니다
             </p>
           </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
           {/* 프로젝트 정보 */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-lg">프로젝트 정보</h3>
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="font-semibold text-base sm:text-lg">프로젝트 정보</h3>
             
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="projectName">프로젝트명 *</Label>
+                <Label htmlFor="projectName" className="text-sm">프로젝트명 *</Label>
                 <Input
                   id="projectName"
                   placeholder="예: 강남구 아파트 32평 리모델링"
                   value={formData.projectName}
                   onChange={(e) => handleInputChange("projectName", e.target.value)}
                   required
+                  className="text-sm"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="category">공사 종류 *</Label>
+                <Label htmlFor="category" className="text-sm">공사 종류 *</Label>
                 <select
                   id="category"
                   className="w-full border border-input bg-background rounded-md h-10 px-3 text-sm"
@@ -673,19 +674,20 @@ export default function EstimateRequestForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="location">시공 위치 *</Label>
+              <Label htmlFor="location" className="text-sm">시공 위치 *</Label>
               <Input
                 id="location"
                 placeholder="예: 서울시 강남구 테헤란로 123"
                 value={formData.location}
                 onChange={(e) => handleInputChange("location", e.target.value)}
                 required
+                className="text-sm"
               />
             </div>
 
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="area">면적 (평) *</Label>
+                <Label htmlFor="area" className="text-sm">면적 (평) *</Label>
                 <Input
                   id="area"
                   type="number"
@@ -695,22 +697,23 @@ export default function EstimateRequestForm() {
                   value={formData.area}
                   onChange={(e) => handleInputChange("area", e.target.value)}
                   required
+                  className="text-sm"
                 />
                 <p className="text-xs text-muted-foreground">1평 ≈ 3.3㎡</p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="estimatedBudget">예상 금액</Label>
+                <Label htmlFor="estimatedBudget" className="text-sm">예상 금액</Label>
                 <Select
                   value={formData.estimatedBudget}
                   onValueChange={(value) => handleInputChange("estimatedBudget", value)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="text-sm">
                     <SelectValue placeholder="금액 범위를 선택하세요" />
                   </SelectTrigger>
                   <SelectContent>
                     {BUDGET_RANGES.map((range) => (
-                      <SelectItem key={range.value} value={range.value}>
+                      <SelectItem key={range.value} value={range.value} className="text-sm">
                         {range.label}
                       </SelectItem>
                     ))}
@@ -799,20 +802,20 @@ export default function EstimateRequestForm() {
 
             {/* 이미지 미리보기 */}
             {imagePreviews.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
                 {imagePreviews.map((preview, index) => (
                   <div key={index} className="relative group">
                     <img
                       src={preview}
                       alt={`미리보기 ${index + 1}`}
-                      className="w-full h-48 object-cover rounded-lg border"
+                      className="w-full h-32 sm:h-40 md:h-48 object-cover rounded-lg border"
                     />
                     <button
                       type="button"
                       onClick={() => removeImage(index)}
-                      className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
+                      className="absolute top-1 right-1 sm:top-2 sm:right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
                     >
-                      <X className="w-4 h-4" />
+                      <X className="w-3 h-3 sm:w-4 sm:h-4" />
                     </button>
                   </div>
                 ))}
@@ -821,14 +824,14 @@ export default function EstimateRequestForm() {
           </div>
 
           {/* 제출 버튼 */}
-          <div className="flex justify-end pt-4">
+          <div className="flex justify-end pt-3 sm:pt-4">
             <Button
               type="submit"
               size="lg"
               disabled={loading || compressing || generatingAI}
-              className="min-w-[200px] gap-2"
+              className="w-full sm:w-auto sm:min-w-[200px] gap-2 text-sm sm:text-base"
             >
-              <Sparkles className="w-5 h-5" />
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
               {loading ? "신청 중..." : "AI 견적서 받기"}
             </Button>
           </div>

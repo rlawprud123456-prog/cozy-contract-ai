@@ -96,18 +96,18 @@ export default function ContractReview({ user }: ContractReviewProps) {
   };
 
   return (
-    <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-background to-secondary/30 p-4">
-      <div className="container mx-auto max-w-5xl py-8">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold text-primary mb-3">
+    <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-background to-secondary/30 p-3 sm:p-4">
+      <div className="container mx-auto max-w-5xl py-4 sm:py-6 md:py-8">
+        <div className="mb-6 sm:mb-8 text-center px-2">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-2 sm:mb-3">
             계약서 검토 서비스
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             인테리어 계약서를 분석하여 위험 요소를 찾아드립니다
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
           <Card className="shadow-[var(--shadow-card)]">
             <CardHeader>
               <CardTitle>계약서 내용 입력</CardTitle>

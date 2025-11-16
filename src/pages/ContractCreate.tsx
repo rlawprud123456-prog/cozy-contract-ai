@@ -262,40 +262,40 @@ export default function ContractCreate({ user }: ContractCreateProps) {
   };
 
   return (
-    <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-background to-secondary/30 p-4">
-      <div className="container mx-auto max-w-4xl py-8">
-        <div className="mb-8 text-center">
+    <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-background to-secondary/30 p-3 sm:p-4">
+      <div className="container mx-auto max-w-4xl py-4 sm:py-6 md:py-8">
+        <div className="mb-6 sm:mb-8 text-center px-2">
           <div className="flex items-center justify-center gap-2 mb-3">
-            <FileText className="w-8 h-8 text-accent" />
-            <h1 className="text-3xl md:text-4xl font-bold text-primary">
+            <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-accent" />
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary">
               안전한 인테리어 계약
             </h1>
           </div>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             에스크로 결제로 안전하게 보호되는 계약을 시작하세요
           </p>
         </div>
 
         <Card className="shadow-[var(--shadow-card)]">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="w-5 h-5 text-accent" />
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+              <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
               계약서 작성
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-xs sm:text-sm">
               모든 정보를 정확하게 입력해주세요. 계약 완료 후 에스크로 결제가 진행됩니다.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <CardContent className="p-4 sm:p-6">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               {/* 파트너 정보 */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground border-b pb-2">
+              <div className="space-y-3 sm:space-y-4">
+                <h3 className="text-base sm:text-lg font-semibold text-foreground border-b pb-2">
                   전문가 정보
                 </h3>
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="partnerName">전문가 이름 *</Label>
+                    <Label htmlFor="partnerName" className="text-sm">전문가 이름 *</Label>
                     <Input
                       id="partnerName"
                       name="partnerName"
@@ -303,10 +303,11 @@ export default function ContractCreate({ user }: ContractCreateProps) {
                       onChange={handleChange}
                       required
                       placeholder="홍길동"
+                      className="text-sm"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="partnerPhone">연락처 *</Label>
+                    <Label htmlFor="partnerPhone" className="text-sm">연락처 *</Label>
                     <Input
                       id="partnerPhone"
                       name="partnerPhone"
@@ -315,19 +316,20 @@ export default function ContractCreate({ user }: ContractCreateProps) {
                       required
                       maxLength={13}
                       placeholder="010-1234-5678"
+                      className="text-sm"
                     />
                   </div>
                 </div>
               </div>
 
               {/* 프로젝트 정보 */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground border-b pb-2">
+              <div className="space-y-3 sm:space-y-4">
+                <h3 className="text-base sm:text-lg font-semibold text-foreground border-b pb-2">
                   프로젝트 정보
                 </h3>
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="projectName">프로젝트명 *</Label>
+                    <Label htmlFor="projectName" className="text-sm">프로젝트명 *</Label>
                     <Input
                       id="projectName"
                       name="projectName"
@@ -335,10 +337,11 @@ export default function ContractCreate({ user }: ContractCreateProps) {
                       onChange={handleChange}
                       required
                       placeholder="거실 및 주방 리모델링"
+                      className="text-sm"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="location">시공 장소 *</Label>
+                    <Label htmlFor="location" className="text-sm">시공 장소 *</Label>
                     <Input
                       id="location"
                       name="location"
@@ -346,6 +349,7 @@ export default function ContractCreate({ user }: ContractCreateProps) {
                       onChange={handleChange}
                       required
                       placeholder="서울시 강남구 테헤란로 123"
+                      className="text-sm"
                     />
                   </div>
                   <div className="grid md:grid-cols-2 gap-4">
