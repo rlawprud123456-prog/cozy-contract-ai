@@ -216,20 +216,20 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-blue-50 to-indigo-100 overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1920&q=80')] bg-cover bg-center opacity-20" />
-        <div className="relative container mx-auto px-4 py-20 md:py-32">
+        <div className="relative container mx-auto px-4 py-12 sm:py-20 md:py-32">
           <div className="max-w-3xl">
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-4 text-gray-900">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight mb-3 sm:mb-4 text-gray-900">
               당신의 공간을
               <br />
               <span className="text-primary">새롭게</span>
             </h1>
-            <p className="text-lg md:text-xl text-gray-700 mb-8">
+            <p className="text-base sm:text-lg md:text-xl text-gray-700 mb-6 sm:mb-8">
               전문가와 함께하는 안전한 인테리어 계약
             </p>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <Button
                 size="lg"
-                className="bg-primary text-white hover:bg-primary/90 transition"
+                className="bg-primary text-white hover:bg-primary/90 transition w-full sm:w-auto"
                 onClick={startContract}
               >
                 계약 시작하기
@@ -237,6 +237,7 @@ export default function Home() {
               <Button
                 size="lg"
                 variant="outline"
+                className="w-full sm:w-auto"
                 onClick={() => navigate("/match")}
               >
                 전문가 찾기
@@ -247,27 +248,27 @@ export default function Home() {
       </section>
 
       {/* 새로고침만의 차별성 */}
-      <section className="container mx-auto px-4 py-12">
-        <h2 className="text-2xl md:text-3xl font-extrabold mb-6">새로고침만의 차별성</h2>
-        <div className="grid md:grid-cols-3 gap-6">
+      <section className="container mx-auto px-4 py-8 sm:py-12">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold mb-4 sm:mb-6">새로고침만의 차별성</h2>
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
           {reasons.map((r) => (
-            <div key={r.title} className="border rounded-2xl p-6 hover:shadow-lg transition">
-              <h3 className="font-semibold mb-2">{r.title}</h3>
-              <p className="text-sm text-muted-foreground">{r.desc}</p>
+            <div key={r.title} className="border rounded-2xl p-4 sm:p-6 hover:shadow-lg transition">
+              <h3 className="font-semibold mb-2 text-sm sm:text-base">{r.title}</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">{r.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* 이달의 전문가 */}
-      <section className="py-16 px-4 bg-muted/30">
+      <section className="py-8 sm:py-12 md:py-16 px-4 bg-muted/30">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <Badge className="mb-4 bg-accent text-accent-foreground">이달의 추천</Badge>
-            <h2 className="text-3xl font-bold mb-4 text-foreground">
+          <div className="text-center mb-8 sm:mb-12">
+            <Badge className="mb-3 sm:mb-4 bg-accent text-accent-foreground text-xs sm:text-sm">이달의 추천</Badge>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4 text-foreground">
               이달의 인테리어 전문가
             </h2>
-            <p className="text-muted-foreground">
+            <p className="text-sm sm:text-base text-muted-foreground px-4">
               검증된 전문가들이 여러분의 공간을 새롭게 만들어드립니다
             </p>
           </div>
@@ -314,10 +315,10 @@ export default function Home() {
       </section>
 
       {/* 새로고침 인증 파트너 */}
-      <section className="bg-gray-50 py-16">
+      <section className="bg-gray-50 py-8 sm:py-12 md:py-16">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-8">새로고침 인증 파트너</h2>
-          <div className="grid md:grid-cols-3 gap-6">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8">새로고침 인증 파트너</h2>
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
             {styles.map((s) => (
               <Link
                 key={s.q}
@@ -343,20 +344,22 @@ export default function Home() {
       </section>
 
       {/* 커뮤니티 인기글 */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="flex items-center justify-between mb-8">
+      <section className="container mx-auto px-4 py-8 sm:py-12 md:py-16">
+        <div className="flex items-center justify-between mb-6 sm:mb-8">
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-6 h-6 text-primary" />
-            <h2 className="text-3xl font-bold">커뮤니티 인기글</h2>
+            <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold">커뮤니티 인기글</h2>
           </div>
           <Button
             variant="outline"
+            size="sm"
+            className="text-xs sm:text-sm"
             onClick={() => navigate("/community/sad")}
           >
             전체보기 →
           </Button>
         </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {popularPosts.map((post) => (
             <Card
               key={post.id}
@@ -398,8 +401,8 @@ export default function Home() {
       </section>
 
       {/* 전문가 CTA */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="rounded-3xl border-2 border-primary/20 p-10 md:p-16 text-center bg-gradient-to-br from-primary/5 to-primary/10">
+      <section className="container mx-auto px-4 py-8 sm:py-12 md:py-16">
+        <div className="rounded-2xl sm:rounded-3xl border-2 border-primary/20 p-6 sm:p-10 md:p-16 text-center bg-gradient-to-br from-primary/5 to-primary/10">
           <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center mb-4">
             <Users className="w-8 h-8 text-primary" />
           </div>
