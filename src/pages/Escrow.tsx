@@ -129,20 +129,20 @@ export default function Escrow({ user }: EscrowProps) {
   };
 
   return (
-    <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-background to-secondary/30 p-4">
-      <div className="container mx-auto max-w-6xl py-8">
-        <div className="mb-8 text-center">
+    <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-background to-secondary/30 p-3 sm:p-4">
+      <div className="container mx-auto max-w-6xl py-4 sm:py-6 md:py-8">
+        <div className="mb-6 sm:mb-8 text-center px-2">
           <div className="flex items-center justify-center gap-2 mb-3">
-            <Shield className="w-8 h-8 text-accent" />
-            <h1 className="text-3xl md:text-4xl font-bold text-primary">
+            <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-accent" />
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary">
               에스크로 결제 관리
             </h1>
           </div>
-          <p className="text-muted-foreground mb-4">
+          <p className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4">
             안전한 단계별 결제 시스템으로 프로젝트를 진행하세요
           </p>
           <Link to="/contract-create">
-            <Button className="bg-accent hover:bg-accent/90">
+            <Button className="bg-accent hover:bg-accent/90 text-sm sm:text-base">
               새 계약 생성하기
             </Button>
           </Link>
@@ -150,16 +150,16 @@ export default function Escrow({ user }: EscrowProps) {
 
         {contracts.length === 0 ? (
           <Card className="shadow-[var(--shadow-card)]">
-            <CardContent className="py-12 text-center">
-              <Shield className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground mb-4">등록된 계약이 없습니다</p>
+            <CardContent className="py-8 sm:py-12 text-center px-4">
+              <Shield className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 text-muted-foreground" />
+              <p className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4">등록된 계약이 없습니다</p>
               <Link to="/contract-create">
-                <Button variant="outline">계약 생성하기</Button>
+                <Button variant="outline" className="text-sm sm:text-base">계약 생성하기</Button>
               </Link>
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {contracts.map((contract) => {
               const contractPayments = payments[contract.id] || [];
               const hasDeposit = contractPayments.some(p => p.type === "deposit");
@@ -168,11 +168,11 @@ export default function Escrow({ user }: EscrowProps) {
 
               return (
                 <Card key={contract.id} className="shadow-[var(--shadow-card)]">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
+                  <CardHeader className="p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                       <div>
-                        <CardTitle className="text-xl">{contract.project_name || "프로젝트"}</CardTitle>
-                        <CardDescription>
+                        <CardTitle className="text-lg sm:text-xl">{contract.project_name || "프로젝트"}</CardTitle>
+                        <CardDescription className="text-xs sm:text-sm">
                           전문가: {contract.partner_name || "미정"} | 총액:{" "}
                           {(contract.total_amount || 0).toLocaleString()}원
                         </CardDescription>
@@ -180,18 +180,18 @@ export default function Escrow({ user }: EscrowProps) {
                       {getStatusBadge(contract.status)}
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6">
                     {/* 결제 단계 */}
-                    <div className="grid md:grid-cols-3 gap-4">
+                    <div className="grid gap-3 sm:gap-4 md:grid-cols-3">
                       {/* 선금 */}
                       <Card className="bg-secondary/30">
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-sm">선금</CardTitle>
-                          <CardDescription className="text-lg font-bold text-foreground">
+                        <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-6">
+                          <CardTitle className="text-xs sm:text-sm">선금</CardTitle>
+                          <CardDescription className="text-base sm:text-lg font-bold text-foreground">
                             {(contract.deposit_amount || 0).toLocaleString()}원
                           </CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="p-3 sm:p-6">
                           {hasDeposit ? (
                             <div className="space-y-2">
                               {getPaymentStatusBadge(

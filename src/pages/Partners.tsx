@@ -12,22 +12,22 @@ const categories = [
 
 export default function Partners() {
   return (
-    <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-background to-secondary/30 p-4">
-      <div className="container mx-auto max-w-6xl py-8">
-        <h1 className="text-3xl font-bold text-primary mb-2">파트너 찾기</h1>
-        <p className="text-muted-foreground mb-8">카테고리별 인테리어 전문가를 찾아보세요</p>
+    <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-background to-secondary/30 p-3 sm:p-4">
+      <div className="container mx-auto max-w-6xl py-4 sm:py-6 md:py-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-primary mb-1 sm:mb-2">파트너 찾기</h1>
+        <p className="text-sm sm:text-base text-muted-foreground mb-6 sm:mb-8">카테고리별 인테리어 전문가를 찾아보세요</p>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {categories.map((cat) => (
             <Link key={cat.id} to={`/partners/${encodeURIComponent(cat.name)}`}>
               <Card className="shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-hover)] transition-all cursor-pointer h-full">
-                <CardHeader>
-                  <div className="text-4xl mb-2">{cat.icon}</div>
-                  <CardTitle>{cat.name}</CardTitle>
-                  <CardDescription>{cat.desc}</CardDescription>
+                <CardHeader className="p-4 sm:p-6">
+                  <div className="text-3xl sm:text-4xl mb-2">{cat.icon}</div>
+                  <CardTitle className="text-base sm:text-lg">{cat.name}</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">{cat.desc}</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-accent font-medium">전문가 보기 →</p>
+                <CardContent className="p-4 sm:p-6">
+                  <p className="text-xs sm:text-sm text-accent font-medium">전문가 보기 →</p>
                 </CardContent>
               </Card>
             </Link>

@@ -251,6 +251,14 @@ export default function Header() {
                   고수님 도와주세요
                 </Link>
               </div>
+
+              <Link 
+                to="/ai-interior" 
+                className="text-lg font-semibold hover:text-primary transition"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                AI 인테리어
+              </Link>
             </nav>
           </SheetContent>
         </Sheet>

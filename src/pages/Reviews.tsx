@@ -72,42 +72,42 @@ export default function Reviews() {
 
   return (
     <div className="min-h-[calc(100vh-180px)] bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-3xl font-bold mb-2">고객 리뷰</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">고객 리뷰</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
               실제 고객들의 솔직한 후기를 확인하세요
             </p>
           </div>
-          <Button onClick={() => navigate("/reviews/write")}>
+          <Button onClick={() => navigate("/reviews/write")} className="text-sm sm:text-base w-full sm:w-auto">
             리뷰 작성하기
           </Button>
         </div>
 
         {reviews.length === 0 ? (
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <p className="text-muted-foreground mb-4">
+            <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12 px-4">
+              <p className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4">
                 아직 작성된 리뷰가 없습니다
               </p>
-              <Button onClick={() => navigate("/reviews/write")}>
+              <Button onClick={() => navigate("/reviews/write")} className="text-sm sm:text-base">
                 첫 리뷰 작성하기
               </Button>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
             {reviews.map((review) => (
               <Card key={review.id} className="hover:shadow-lg transition">
-                <CardHeader>
+                <CardHeader className="p-4 sm:p-6">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                        <User className="w-6 h-6 text-gray-600" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                        <User className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
                       </div>
                       <div>
-                        <p className="font-semibold text-sm">익명</p>
+                        <p className="font-semibold text-xs sm:text-sm">익명</p>
                         <p className="text-xs text-muted-foreground">
                           {new Date(review.created_at).toLocaleDateString()}
                         </p>
@@ -115,7 +115,7 @@ export default function Reviews() {
                     </div>
                     {renderStars(review.rating)}
                   </div>
-                  <CardTitle className="text-lg">{review.title}</CardTitle>
+                  <CardTitle className="text-base sm:text-lg">{review.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground line-clamp-3">
