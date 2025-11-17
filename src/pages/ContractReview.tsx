@@ -3,12 +3,27 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, CheckCircle2, AlertTriangle } from "lucide-react";
-import { contracts } from "@/services/api";
+import { AlertCircle, CheckCircle2, AlertTriangle, Lightbulb } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
-type RiskLevel = "low" | "medium" | "high" | null;
+interface Issue {
+  clause_hint: string;
+  type: string;
+  severity: "낮음" | "보통" | "높음" | "매우 높음";
+  excerpt: string;
+  reason: string;
+  recommendation: string;
+}
+
+interface AnalysisResult {
+  risk_score: number;
+  risk_level: "낮음" | "보통" | "높음" | "매우 높음";
+  issues: Issue[];
+  summary: string;
+  safe_tips: string[];
+}
 
 interface ContractReviewProps {
   user: any;
@@ -17,79 +32,100 @@ interface ContractReviewProps {
 export default function ContractReview({ user }: ContractReviewProps) {
   const { toast } = useToast();
   const [contractText, setContractText] = useState("");
-  const [riskLevel, setRiskLevel] = useState<RiskLevel>(null);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const analyzeContract = async () => {
+    if (!contractText.trim() || contractText.trim().length < 50) {
+      toast({
+        title: "입력 오류",
+        description: "계약서 내용을 최소 50자 이상 입력해주세요.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsAnalyzing(true);
-    
-    // 간단한 키워드 기반 위험도 분석 시뮬레이션
-    setTimeout(async () => {
-      const text = contractText.toLowerCase();
-      let risk: RiskLevel = "low";
-      const newSuggestions: string[] = [];
+    setAnalysisResult(null);
 
-      if (text.includes("위약금") || text.includes("손해배상")) {
-        risk = "high";
-        newSuggestions.push("위약금 조항이 과도하지 않은지 확인이 필요합니다.");
-      }
-      
-      if (text.includes("일방적") || text.includes("임의로")) {
-        if (risk !== "high") risk = "medium";
-        newSuggestions.push("일방적인 계약 변경 조항이 포함되어 있습니다.");
+    try {
+      const { data, error } = await supabase.functions.invoke('contract-review', {
+        body: { contractText }
+      });
+
+      if (error) {
+        console.error("Edge function error:", error);
+        throw error;
       }
 
-      if (!text.includes("하자") && !text.includes("보증")) {
-        if (risk === "low") risk = "medium";
-        newSuggestions.push("하자 보수 및 보증 기간에 대한 명시가 부족합니다.");
+      if (data.error) {
+        throw new Error(data.error);
       }
 
-      if (newSuggestions.length === 0) {
-        newSuggestions.push("전반적으로 안전한 계약서입니다.");
-        newSuggestions.push("추가로 전문가 검토를 받으시면 더욱 좋습니다.");
-      }
+      setAnalysisResult(data);
+      toast({ 
+        title: "분석 완료", 
+        description: "계약서 검토가 완료되었습니다." 
+      });
 
-      setRiskLevel(risk);
-      setSuggestions(newSuggestions);
+    } catch (error: any) {
+      console.error("Analysis error:", error);
+      toast({
+        title: "분석 실패",
+        description: error.message || "계약서 분석 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+    } finally {
       setIsAnalyzing(false);
-
-      // 로그인한 경우 검토 이력 저장
-      if (user) {
-        const riskText = risk === "low" ? "낮음" : risk === "medium" ? "보통" : "높음";
-        await contracts.saveAnalysis({
-          text: contractText,
-          risk: riskText,
-          suggestions: newSuggestions.join(" "),
-        });
-        toast({ title: "저장 완료", description: "검토 이력이 저장되었습니다" });
-      }
-    }, 1500);
+    }
   };
 
-  const getRiskBadge = () => {
+  const getRiskBadge = (level?: string) => {
+    const riskLevel = level || analysisResult?.risk_level;
     switch (riskLevel) {
-      case "low":
+      case "낮음":
         return (
           <Badge className="bg-green-500 hover:bg-green-600 text-white">
             <CheckCircle2 className="w-4 h-4 mr-1" />
             낮음
           </Badge>
         );
-      case "medium":
+      case "보통":
         return (
           <Badge className="bg-yellow-500 hover:bg-yellow-600 text-white">
             <AlertTriangle className="w-4 h-4 mr-1" />
             보통
           </Badge>
         );
-      case "high":
+      case "높음":
         return (
-          <Badge className="bg-red-500 hover:bg-red-600 text-white">
+          <Badge className="bg-orange-500 hover:bg-orange-600 text-white">
             <AlertCircle className="w-4 h-4 mr-1" />
             높음
           </Badge>
         );
+      case "매우 높음":
+        return (
+          <Badge className="bg-red-500 hover:bg-red-600 text-white">
+            <AlertCircle className="w-4 h-4 mr-1" />
+            매우 높음
+          </Badge>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const getSeverityBadge = (severity: string) => {
+    switch (severity) {
+      case "낮음":
+        return <Badge variant="outline" className="text-green-600 border-green-600">낮음</Badge>;
+      case "보통":
+        return <Badge variant="outline" className="text-yellow-600 border-yellow-600">보통</Badge>;
+      case "높음":
+        return <Badge variant="outline" className="text-orange-600 border-orange-600">높음</Badge>;
+      case "매우 높음":
+        return <Badge variant="outline" className="text-red-600 border-red-600">매우 높음</Badge>;
       default:
         return null;
     }
@@ -134,49 +170,98 @@ export default function ContractReview({ user }: ContractReviewProps) {
 
           <Card className="shadow-[var(--shadow-card)]">
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                분석 결과
-                {riskLevel && getRiskBadge()}
+              <CardTitle className="flex items-center justify-between flex-wrap gap-2">
+                <span className="text-base sm:text-lg md:text-xl">분석 결과</span>
+                {analysisResult && getRiskBadge()}
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-xs sm:text-sm">
                 AI 기반 위험도 평가 및 개선 제안
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {!riskLevel ? (
-                <div className="flex items-center justify-center min-h-[300px] text-muted-foreground">
+              {!analysisResult ? (
+                <div className="flex items-center justify-center min-h-[300px] text-muted-foreground text-sm sm:text-base text-center px-4">
                   계약서를 입력하고 분석을 시작해주세요
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-4 sm:space-y-6">
+                  {/* 위험도 점수 */}
+                  <div className="p-3 sm:p-4 bg-muted rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold text-foreground text-sm sm:text-base">위험도 점수</h3>
+                      <span className="text-xl sm:text-2xl font-bold text-primary">{analysisResult.risk_score}/100</span>
+                    </div>
+                    <div className="w-full bg-secondary rounded-full h-2">
+                      <div 
+                        className="bg-primary h-2 rounded-full transition-all"
+                        style={{ width: `${analysisResult.risk_score}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* 요약 */}
                   <div>
-                    <h3 className="font-semibold text-foreground mb-2">위험도 평가</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {riskLevel === "low" && "계약서가 비교적 안전합니다."}
-                      {riskLevel === "medium" && "일부 검토가 필요한 조항이 있습니다."}
-                      {riskLevel === "high" && "주의가 필요한 조항이 발견되었습니다."}
+                    <h3 className="font-semibold text-foreground mb-2 text-sm sm:text-base">종합 평가</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                      {analysisResult.summary}
                     </p>
                   </div>
                   
-                  <div>
-                    <h3 className="font-semibold text-foreground mb-2">개선 제안</h3>
-                    <ul className="space-y-2">
-                      {suggestions.map((suggestion, idx) => (
-                        <li key={idx} className="flex items-start space-x-2">
-                          <span className="text-accent mt-1">•</span>
-                          <span className="text-sm text-muted-foreground">{suggestion}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                  {/* 발견된 문제점 */}
+                  {analysisResult.issues.length > 0 && (
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-3 text-sm sm:text-base">발견된 문제점 ({analysisResult.issues.length}개)</h3>
+                      <Accordion type="single" collapsible className="w-full">
+                        {analysisResult.issues.map((issue, idx) => (
+                          <AccordionItem key={idx} value={`item-${idx}`}>
+                            <AccordionTrigger className="text-left text-xs sm:text-sm hover:no-underline">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full pr-2">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  {getSeverityBadge(issue.severity)}
+                                  <span className="font-medium">{issue.type}</span>
+                                </div>
+                                <span className="text-xs text-muted-foreground">
+                                  {issue.clause_hint}
+                                </span>
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="text-xs sm:text-sm space-y-3 pt-2">
+                              <div>
+                                <p className="text-muted-foreground font-medium mb-1">📄 발췌:</p>
+                                <p className="text-muted-foreground italic pl-3 border-l-2 border-muted">
+                                  "{issue.excerpt}"
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-muted-foreground font-medium mb-1">⚠️ 문제점:</p>
+                                <p className="text-foreground">{issue.reason}</p>
+                              </div>
+                              <div>
+                                <p className="text-muted-foreground font-medium mb-1">💡 권고사항:</p>
+                                <p className="text-foreground">{issue.recommendation}</p>
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        ))}
+                      </Accordion>
+                    </div>
+                  )}
 
-                  {user && (
-                    <div className="pt-4 border-t">
-                      <Link to="/history">
-                        <Button variant="outline" className="w-full">
-                          검토 이력 보기
-                        </Button>
-                      </Link>
+                  {/* 안전 팁 */}
+                  {analysisResult.safe_tips.length > 0 && (
+                    <div className="bg-blue-50 dark:bg-blue-950/30 p-3 sm:p-4 rounded-lg">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Lightbulb className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
+                        <h3 className="font-semibold text-foreground text-sm sm:text-base">안전한 계약을 위한 팁</h3>
+                      </div>
+                      <ul className="space-y-2">
+                        {analysisResult.safe_tips.map((tip, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm">
+                            <span className="text-blue-600 dark:text-blue-400 mt-1 shrink-0">✓</span>
+                            <span className="text-muted-foreground">{tip}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   )}
                 </div>
