@@ -13,7 +13,12 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Menu, LogOut, FileText, UserCircle2, ChevronDown, Users, AlertTriangle, MessageSquare, Calculator } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Menu, LogOut, FileText, UserCircle2, ChevronDown, ChevronRight, Users, AlertTriangle, MessageSquare, Calculator } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 type SBUser = {
@@ -38,6 +43,13 @@ export default function Header() {
   const [user, setUser] = useState<SBUser | null>(null);
   const [open, setOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // 모바일 메뉴 섹션 상태
+  const [estimateOpen, setEstimateOpen] = useState(false);
+  const [contractOpen, setContractOpen] = useState(false);
+  const [expertOpen, setExpertOpen] = useState(false);
+  const [damageOpen, setDamageOpen] = useState(false);
+  const [communityOpen, setCommunityOpen] = useState(false);
 
   useEffect(() => {
     // 초기 사용자 정보 가져오기
@@ -112,145 +124,170 @@ export default function Header() {
                 홈
               </Link>
               
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                  <Calculator className="w-4 h-4" />
-                  견적
-                </div>
-                <Link 
-                  to="/estimate" 
-                  className="block pl-6 text-base hover:text-primary transition"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  견적서 작성
-                </Link>
-              </div>
+              <Collapsible open={estimateOpen} onOpenChange={setEstimateOpen}>
+                <CollapsibleTrigger className="flex items-center justify-between w-full text-lg font-semibold hover:text-primary transition">
+                  <div className="flex items-center gap-2">
+                    <Calculator className="w-5 h-5" />
+                    견적
+                  </div>
+                  {estimateOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-2 mt-2 pl-7">
+                  <Link 
+                    to="/estimate" 
+                    className="block text-base hover:text-primary transition"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    견적서 작성
+                  </Link>
+                </CollapsibleContent>
+              </Collapsible>
 
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                  <FileText className="w-4 h-4" />
-                  계약관리
-                </div>
-                <Link 
-                  to="/contract-create" 
-                  className="block pl-6 text-base hover:text-primary transition"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  계약 작성
-                </Link>
-                <Link 
-                  to="/contract-review" 
-                  className="block pl-6 text-base hover:text-primary transition"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  계약 검토
-                </Link>
-                <Link 
-                  to="/escrow" 
-                  className="block pl-6 text-base hover:text-primary transition"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  에스크로
-                </Link>
-              </div>
+              <Collapsible open={contractOpen} onOpenChange={setContractOpen}>
+                <CollapsibleTrigger className="flex items-center justify-between w-full text-lg font-semibold hover:text-primary transition">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-5 h-5" />
+                    계약관리
+                  </div>
+                  {contractOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-2 mt-2 pl-7">
+                  <Link 
+                    to="/contract-create" 
+                    className="block text-base hover:text-primary transition"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    계약 작성
+                  </Link>
+                  <Link 
+                    to="/contract-review" 
+                    className="block text-base hover:text-primary transition"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    계약 검토
+                  </Link>
+                  <Link 
+                    to="/escrow" 
+                    className="block text-base hover:text-primary transition"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    에스크로
+                  </Link>
+                </CollapsibleContent>
+              </Collapsible>
 
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                  <Users className="w-4 h-4" />
-                  전문가찾기
-                </div>
-                <Link 
-                  to="/match" 
-                  className="block pl-6 text-base hover:text-primary transition"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  전문가 매칭
-                </Link>
-                <Link 
-                  to="/partners" 
-                  className="block pl-6 text-base hover:text-primary transition"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  파트너 목록
-                </Link>
-                <Link 
-                  to="/reviews" 
-                  className="block pl-6 text-base hover:text-primary transition"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  고객 리뷰
-                </Link>
-                <Link 
-                  to="/partner/apply" 
-                  className="block pl-6 text-base hover:text-primary transition"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  파트너 신청
-                </Link>
-              </div>
+              <Collapsible open={expertOpen} onOpenChange={setExpertOpen}>
+                <CollapsibleTrigger className="flex items-center justify-between w-full text-lg font-semibold hover:text-primary transition">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    전문가찾기
+                  </div>
+                  {expertOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-2 mt-2 pl-7">
+                  <Link 
+                    to="/match" 
+                    className="block text-base hover:text-primary transition"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    전문가 매칭
+                  </Link>
+                  <Link 
+                    to="/partners" 
+                    className="block text-base hover:text-primary transition"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    파트너 목록
+                  </Link>
+                  <Link 
+                    to="/reviews" 
+                    className="block text-base hover:text-primary transition"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    고객 리뷰
+                  </Link>
+                  <Link 
+                    to="/partner/apply" 
+                    className="block text-base hover:text-primary transition"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    파트너 신청
+                  </Link>
+                </CollapsibleContent>
+              </Collapsible>
 
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                  <AlertTriangle className="w-4 h-4" />
-                  피해이력
-                </div>
-                <Link 
-                  to="/damage-history" 
-                  className="block pl-6 text-base hover:text-primary transition"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  피해이력 조회
-                </Link>
-                <Link 
-                  to="/damage-report" 
-                  className="block pl-6 text-base hover:text-primary transition"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  피해신고
-                </Link>
-              </div>
+              <Collapsible open={damageOpen} onOpenChange={setDamageOpen}>
+                <CollapsibleTrigger className="flex items-center justify-between w-full text-lg font-semibold hover:text-primary transition">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5" />
+                    피해이력
+                  </div>
+                  {damageOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-2 mt-2 pl-7">
+                  <Link 
+                    to="/damage-history" 
+                    className="block text-base hover:text-primary transition"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    피해이력 조회
+                  </Link>
+                  <Link 
+                    to="/damage-report" 
+                    className="block text-base hover:text-primary transition"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    피해신고
+                  </Link>
+                </CollapsibleContent>
+              </Collapsible>
 
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                  <MessageSquare className="w-4 h-4" />
-                  커뮤니티
-                </div>
-                <Link 
-                  to="/community/sad" 
-                  className="block pl-6 text-base hover:text-primary transition"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  속상해요
-                </Link>
-                <Link 
-                  to="/community/unfair" 
-                  className="block pl-6 text-base hover:text-primary transition"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  억울해요
-                </Link>
-                <Link 
-                  to="/community/diy-tips" 
-                  className="block pl-6 text-base hover:text-primary transition"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  셀프인테리어 팁
-                </Link>
-                <Link 
-                  to="/community/jobs" 
-                  className="block pl-6 text-base hover:text-primary transition"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  구인구직
-                </Link>
-                <Link 
-                  to="/community/help" 
-                  className="block pl-6 text-base hover:text-primary transition"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  고수님 도와주세요
-                </Link>
-              </div>
+              <Collapsible open={communityOpen} onOpenChange={setCommunityOpen}>
+                <CollapsibleTrigger className="flex items-center justify-between w-full text-lg font-semibold hover:text-primary transition">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5" />
+                    커뮤니티
+                  </div>
+                  {communityOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-2 mt-2 pl-7">
+                  <Link 
+                    to="/community/sad" 
+                    className="block text-base hover:text-primary transition"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    속상해요
+                  </Link>
+                  <Link 
+                    to="/community/unfair" 
+                    className="block text-base hover:text-primary transition"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    억울해요
+                  </Link>
+                  <Link 
+                    to="/community/diy-tips" 
+                    className="block text-base hover:text-primary transition"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    셀프인테리어 팁
+                  </Link>
+                  <Link 
+                    to="/community/jobs" 
+                    className="block text-base hover:text-primary transition"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    구인구직
+                  </Link>
+                  <Link 
+                    to="/community/help" 
+                    className="block text-base hover:text-primary transition"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    고수님 도와주세요
+                  </Link>
+                </CollapsibleContent>
+              </Collapsible>
 
               <Link 
                 to="/ai-interior" 
