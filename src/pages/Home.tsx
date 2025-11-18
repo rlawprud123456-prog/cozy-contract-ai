@@ -216,20 +216,20 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-blue-50 to-indigo-100 overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1920&q=80')] bg-cover bg-center opacity-20" />
-        <div className="relative container mx-auto px-4 py-12 sm:py-20 md:py-32">
+        <div className="relative container mx-auto px-3 sm:px-4 py-8 sm:py-12 md:py-20 lg:py-32">
           <div className="max-w-3xl">
-            <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight mb-3 sm:mb-4 text-gray-900">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-extrabold tracking-tight mb-2 sm:mb-3 md:mb-4 text-gray-900">
               당신의 공간을
               <br />
               <span className="text-primary">새롭게</span>
             </h1>
-            <p className="text-base sm:text-lg md:text-xl text-gray-700 mb-6 sm:mb-8">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-700 mb-4 sm:mb-6 md:mb-8">
               전문가와 함께하는 안전한 인테리어 계약
             </p>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <Button
                 size="lg"
-                className="bg-primary text-white hover:bg-primary/90 transition w-full sm:w-auto"
+                className="bg-primary text-white hover:bg-primary/90 transition w-full sm:w-auto h-11 sm:h-12 text-sm sm:text-base"
                 onClick={startContract}
               >
                 계약 시작하기
@@ -237,7 +237,7 @@ export default function Home() {
               <Button
                 size="lg"
                 variant="outline"
-                className="w-full sm:w-auto"
+                className="w-full sm:w-auto h-11 sm:h-12 text-sm sm:text-base"
                 onClick={() => navigate("/match")}
               >
                 전문가 찾기
@@ -248,12 +248,12 @@ export default function Home() {
       </section>
 
       {/* 새로고침만의 차별성 */}
-      <section className="container mx-auto px-4 py-8 sm:py-12">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold mb-4 sm:mb-6">새로고침만의 차별성</h2>
-        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+      <section className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold mb-4 sm:mb-6 px-2">새로고침만의 차별성</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
           {reasons.map((r) => (
-            <div key={r.title} className="border rounded-2xl p-4 sm:p-6 hover:shadow-lg transition">
-              <h3 className="font-semibold mb-2 text-sm sm:text-base">{r.title}</h3>
+            <div key={r.title} className="border rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 hover:shadow-lg transition">
+              <h3 className="font-semibold mb-1.5 sm:mb-2 text-sm sm:text-base">{r.title}</h3>
               <p className="text-xs sm:text-sm text-muted-foreground">{r.desc}</p>
             </div>
           ))}
@@ -261,18 +261,18 @@ export default function Home() {
       </section>
 
       {/* 이달의 전문가 */}
-      <section className="py-8 sm:py-12 md:py-16 px-4 bg-muted/30">
+      <section className="py-6 sm:py-8 md:py-12 lg:py-16 px-3 sm:px-4 bg-muted/30">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-8 sm:mb-12">
-            <Badge className="mb-3 sm:mb-4 bg-accent text-accent-foreground text-xs sm:text-sm">이달의 추천</Badge>
-            <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4 text-foreground">
+          <div className="text-center mb-6 sm:mb-8 md:mb-12">
+            <Badge className="mb-2 sm:mb-3 md:mb-4 bg-accent text-accent-foreground text-xs sm:text-sm">이달의 추천</Badge>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 sm:mb-3 md:mb-4 text-foreground px-2">
               이달의 인테리어 전문가
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground px-4">
               검증된 전문가들이 여러분의 공간을 새롭게 만들어드립니다
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
             {featuredPartners.map((partner) => (
               <Link
                 key={partner.id}

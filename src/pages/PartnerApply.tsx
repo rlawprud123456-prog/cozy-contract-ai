@@ -63,40 +63,40 @@ export default function PartnerApply() {
   ];
 
   return (
-    <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-background to-secondary/30 p-4">
-      <div className="container mx-auto max-w-4xl py-8">
-        <div className="mb-8 text-center">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <Briefcase className="w-8 h-8 text-accent" />
-            <h1 className="text-3xl md:text-4xl font-bold text-primary">
+    <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-background to-secondary/30 p-3 sm:p-4">
+      <div className="container mx-auto max-w-4xl py-4 sm:py-6 md:py-8">
+        <div className="mb-6 sm:mb-8 text-center">
+          <div className="flex items-center justify-center gap-2 mb-2 sm:mb-3">
+            <Briefcase className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-accent" />
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary">
               전문가 파트너 신청
             </h1>
           </div>
-          <p className="text-muted-foreground mb-6">
+          <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6 px-2">
             새로고침과 함께 성장하는 인테리어 전문가가 되어보세요
           </p>
 
           {/* 파트너 혜택 */}
-          <div className="grid md:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
             <Card className="bg-gradient-to-br from-accent/5 to-accent/10 border-accent/20">
-              <CardContent className="pt-6 text-center">
-                <Star className="w-8 h-8 mx-auto mb-2 text-accent" />
-                <h3 className="font-semibold mb-1">고객 연결</h3>
-                <p className="text-sm text-muted-foreground">검증된 고객 매칭</p>
+              <CardContent className="pt-4 sm:pt-6 text-center">
+                <Star className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 mx-auto mb-1.5 sm:mb-2 text-accent" />
+                <h3 className="font-semibold mb-1 text-sm sm:text-base">고객 연결</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">검증된 고객 매칭</p>
               </CardContent>
             </Card>
             <Card className="bg-gradient-to-br from-accent/5 to-accent/10 border-accent/20">
-              <CardContent className="pt-6 text-center">
-                <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-accent" />
-                <h3 className="font-semibold mb-1">안전한 계약</h3>
-                <p className="text-sm text-muted-foreground">에스크로 결제 보호</p>
+              <CardContent className="pt-4 sm:pt-6 text-center">
+                <CheckCircle2 className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 mx-auto mb-1.5 sm:mb-2 text-accent" />
+                <h3 className="font-semibold mb-1 text-sm sm:text-base">안전한 계약</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">에스크로 결제 보호</p>
               </CardContent>
             </Card>
             <Card className="bg-gradient-to-br from-accent/5 to-accent/10 border-accent/20">
-              <CardContent className="pt-6 text-center">
-                <Briefcase className="w-8 h-8 mx-auto mb-2 text-accent" />
-                <h3 className="font-semibold mb-1">비즈니스 성장</h3>
-                <p className="text-sm text-muted-foreground">마케팅 지원</p>
+              <CardContent className="pt-4 sm:pt-6 text-center">
+                <Briefcase className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 mx-auto mb-1.5 sm:mb-2 text-accent" />
+                <h3 className="font-semibold mb-1 text-sm sm:text-base">비즈니스 성장</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">마케팅 지원</p>
               </CardContent>
             </Card>
           </div>

@@ -65,11 +65,11 @@ export default function DamageHistory() {
   const displayReports = searched ? filteredReports : reports;
 
   return (
-    <div className="min-h-[calc(100vh-180px)] bg-background p-4">
-      <div className="container mx-auto max-w-4xl py-12">
-        <div className="mb-10 text-center">
-          <h1 className="text-3xl font-bold text-foreground mb-3">피해이력 조회</h1>
-          <p className="text-muted-foreground">등록된 피해 신고 내역을 확인하세요</p>
+    <div className="min-h-[calc(100vh-180px)] bg-background p-3 sm:p-4">
+      <div className="container mx-auto max-w-4xl py-6 sm:py-8 md:py-12">
+        <div className="mb-6 sm:mb-8 md:mb-10 text-center">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 sm:mb-3">피해이력 조회</h1>
+          <p className="text-sm sm:text-base text-muted-foreground px-2">등록된 피해 신고 내역을 확인하세요</p>
         </div>
 
         <Card className="rounded-3xl border border-border p-8 mb-8">

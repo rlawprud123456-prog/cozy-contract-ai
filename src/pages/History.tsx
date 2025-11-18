@@ -32,9 +32,9 @@ export default function History() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-background to-secondary/30 p-4">
-      <div className="container mx-auto max-w-4xl py-8">
-        <h1 className="text-3xl font-bold text-primary mb-6">계약 검토 이력</h1>
+    <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-background to-secondary/30 p-3 sm:p-4">
+      <div className="container mx-auto max-w-4xl py-4 sm:py-6 md:py-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-primary mb-4 sm:mb-6">계약 검토 이력</h1>
         
         {items.length === 0 ? (
           <Card className="shadow-[var(--shadow-card)]">

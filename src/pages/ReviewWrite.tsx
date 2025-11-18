@@ -138,17 +138,17 @@ export default function ReviewWrite() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-180px)] bg-gray-50 py-8">
-      <div className="container mx-auto px-4 max-w-2xl">
+    <div className="min-h-[calc(100vh-180px)] bg-gray-50 py-4 sm:py-6 md:py-8">
+      <div className="container mx-auto px-3 sm:px-4 max-w-2xl">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">리뷰 작성하기</CardTitle>
-            <p className="text-sm text-muted-foreground">
+          <CardHeader className="p-4 sm:p-5 md:p-6">
+            <CardTitle className="text-xl sm:text-2xl">리뷰 작성하기</CardTitle>
+            <p className="text-xs sm:text-sm text-muted-foreground">
               파트너와의 경험을 공유해주세요
             </p>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <CardContent className="p-4 sm:p-5 md:p-6">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 md:space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="partner">파트너 선택 *</Label>
                 <Select value={partnerId} onValueChange={setPartnerId}>

@@ -41,15 +41,15 @@ export default function PartnerList() {
   }, [category, toast]);
 
   return (
-    <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-background to-secondary/30 p-4">
-      <div className="container mx-auto max-w-4xl py-8">
-        <Link to="/partners" className="inline-flex items-center gap-2 text-accent mb-4 hover:underline">
+    <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-background to-secondary/30 p-3 sm:p-4">
+      <div className="container mx-auto max-w-4xl py-4 sm:py-6 md:py-8">
+        <Link to="/partners" className="inline-flex items-center gap-2 text-accent mb-3 sm:mb-4 hover:underline text-sm sm:text-base">
           <ArrowLeft className="h-4 w-4" />
           카테고리 목록으로
         </Link>
         
-        <h1 className="text-3xl font-bold text-primary mb-2">{category}</h1>
-        <p className="text-muted-foreground mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-primary mb-2">{category}</h1>
+        <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6 md:mb-8">
           {loading ? "로딩 중..." : `전문가 ${items.length}명`}
         </p>
 

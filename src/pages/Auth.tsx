@@ -171,22 +171,22 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-180px)] bg-background flex items-center justify-center p-4">
+    <div className="min-h-[calc(100vh-180px)] bg-background flex items-center justify-center p-3 sm:p-4">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <img src={logo} alt="새로고침 로고" className="w-40 h-40 mx-auto mb-4 object-contain" />
-          <p className="text-muted-foreground">안전한 인테리어 계약 플랫폼</p>
+        <div className="text-center mb-6 sm:mb-8">
+          <img src={logo} alt="새로고침 로고" className="w-32 h-32 sm:w-40 sm:h-40 mx-auto mb-3 sm:mb-4 object-contain" />
+          <p className="text-sm sm:text-base text-muted-foreground">안전한 인테리어 계약 플랫폼</p>
         </div>
 
         <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="login">로그인</TabsTrigger>
-            <TabsTrigger value="signup">회원가입</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6 h-10 sm:h-12">
+            <TabsTrigger value="login" className="text-sm sm:text-base">로그인</TabsTrigger>
+            <TabsTrigger value="signup" className="text-sm sm:text-base">회원가입</TabsTrigger>
           </TabsList>
 
           <TabsContent value="login">
-            <div className="rounded-3xl bg-card border border-border p-8">
-              <form onSubmit={handleLogin} className="space-y-5">
+            <div className="rounded-2xl sm:rounded-3xl bg-card border border-border p-4 sm:p-6 md:p-8">
+              <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="login-email" className="text-sm font-medium">이메일</Label>
                   <Input
@@ -195,7 +195,7 @@ export default function Auth() {
                     placeholder="example@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="h-12 rounded-2xl"
+                    className="h-10 sm:h-12 rounded-xl sm:rounded-2xl text-sm sm:text-base"
                     required
                   />
                 </div>
@@ -207,13 +207,13 @@ export default function Auth() {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="h-12 rounded-2xl"
+                    className="h-10 sm:h-12 rounded-xl sm:rounded-2xl text-sm sm:text-base"
                     required
                   />
                 </div>
                 <Button 
                   type="submit" 
-                  className="w-full h-14 rounded-full text-base shadow-[var(--shadow-md)]"
+                  className="w-full h-11 sm:h-12 md:h-14 rounded-full text-sm sm:text-base shadow-[var(--shadow-md)]"
                   disabled={loading}
                 >
                   {loading ? "로그인 중..." : "로그인"}
