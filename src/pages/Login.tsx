@@ -152,16 +152,16 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center bg-gray-50 px-4 py-8">
-      <div className="w-full max-w-md bg-white border rounded-2xl p-8 shadow-lg">
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold mb-2">새로고침</h1>
+    <div className="min-h-[70vh] flex items-center justify-center bg-gray-50 px-3 sm:px-4 py-4 sm:py-6 md:py-8">
+      <div className="w-full max-w-md bg-white border rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 shadow-lg">
+        <div className="text-center mb-4 sm:mb-5 md:mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2">새로고침</h1>
         </div>
 
         <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="login">로그인</TabsTrigger>
-            <TabsTrigger value="signup">회원가입</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-5 md:mb-6 h-10 sm:h-11 md:h-12">
+            <TabsTrigger value="login" className="text-sm sm:text-base">로그인</TabsTrigger>
+            <TabsTrigger value="signup" className="text-sm sm:text-base">회원가입</TabsTrigger>
           </TabsList>
 
           <TabsContent value="login">

@@ -150,20 +150,20 @@ export default function DamageReport() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-180px)] bg-background p-4">
-      <div className="container mx-auto max-w-2xl py-12">
-        <div className="mb-10 text-center">
-          <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="w-8 h-8 text-destructive" />
+    <div className="min-h-[calc(100vh-180px)] bg-background p-3 sm:p-4">
+      <div className="container mx-auto max-w-2xl py-6 sm:py-8 md:py-12">
+        <div className="mb-6 sm:mb-8 md:mb-10 text-center">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-3 sm:mb-4">
+            <AlertCircle className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-destructive" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground mb-3">피해신고</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 sm:mb-3 px-2">피해신고</h1>
+          <p className="text-sm sm:text-base text-muted-foreground px-4">
             인테리어 관련 피해를 당하셨나요? 아래 양식을 작성하여 신고해주세요.
           </p>
         </div>
 
-        <Card className="rounded-3xl border border-border p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <Card className="rounded-2xl sm:rounded-3xl border border-border p-4 sm:p-6 md:p-8">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 md:space-y-6">
             <div className="space-y-2">
               <Label htmlFor="businessName" className="text-sm font-medium">
                 업체명 <span className="text-destructive">*</span>
@@ -173,7 +173,7 @@ export default function DamageReport() {
                 placeholder="피해를 입힌 업체명을 입력하세요"
                 value={businessName}
                 onChange={(e) => setBusinessName(e.target.value)}
-                className="h-12 rounded-2xl"
+                className="h-10 sm:h-11 md:h-12 rounded-xl sm:rounded-2xl text-sm sm:text-base"
                 required
               />
             </div>
