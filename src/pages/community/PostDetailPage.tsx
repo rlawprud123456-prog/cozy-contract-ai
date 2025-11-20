@@ -110,20 +110,20 @@ export default function PostDetailPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-180px)] bg-background p-4">
-      <div className="container mx-auto max-w-4xl py-8">
+    <div className="min-h-[calc(100vh-180px)] bg-background p-3 sm:p-4">
+      <div className="container mx-auto max-w-4xl py-4 sm:py-6 md:py-8">
         <Button
           variant="ghost"
           onClick={() => navigate(-1)}
-          className="mb-4"
+          className="mb-3 sm:mb-4 text-sm sm:text-base h-8 sm:h-9 px-2 sm:px-3"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
           목록으로
         </Button>
 
-        <Card className="rounded-3xl border border-border p-8">
+        <Card className="rounded-2xl sm:rounded-3xl border border-border p-4 sm:p-6 md:p-8">
           {/* 헤더 */}
-          <div className="mb-6 pb-6 border-b">
+          <div className="mb-4 sm:mb-6 pb-4 sm:pb-6 border-b">
             <div className="flex items-center gap-2 mb-3">
               <Badge variant="secondary">
                 {categoryNames[post.category] || post.category}
@@ -159,28 +159,28 @@ export default function PostDetailPage() {
           </div>
 
           {/* 본문 */}
-          <div className="mb-8">
-            <p className="text-foreground whitespace-pre-line leading-relaxed">
+          <div className="mb-4 sm:mb-6 md:mb-8">
+            <p className="text-sm sm:text-base text-foreground whitespace-pre-line leading-relaxed break-words">
               {post.content}
             </p>
           </div>
 
           {/* 이미지 */}
           {post.images && post.images.length > 0 && (
-            <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="mb-4 sm:mb-6 md:mb-8 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {post.images.map((img, idx) => (
                 <img
                   key={idx}
                   src={img}
                   alt={`이미지 ${idx + 1}`}
-                  className="w-full rounded-xl object-cover"
+                  className="w-full rounded-lg sm:rounded-xl object-cover"
                 />
               ))}
             </div>
           )}
 
           {/* 댓글 섹션 */}
-          <div className="mt-8 pt-8 border-t">
+          <div className="mt-4 sm:mt-6 md:mt-8 pt-4 sm:pt-6 md:pt-8 border-t">
             <CommentSection postId={post.id} />
           </div>
         </Card>
