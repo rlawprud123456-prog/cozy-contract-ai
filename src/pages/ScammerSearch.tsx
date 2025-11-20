@@ -21,46 +21,46 @@ export default function ScammerSearch() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-180px)] bg-background p-4">
-      <div className="container mx-auto max-w-2xl py-12">
-        <div className="mb-10 text-center">
-          <h1 className="text-3xl font-bold text-foreground mb-3">사기업체 조회</h1>
-          <p className="text-muted-foreground">의심되는 업체 정보를 검색하세요</p>
+    <div className="min-h-[calc(100vh-180px)] bg-background p-3 sm:p-4">
+      <div className="container mx-auto max-w-2xl py-6 sm:py-8 md:py-12">
+        <div className="mb-6 sm:mb-8 md:mb-10 text-center px-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 sm:mb-3">사기업체 조회</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">의심되는 업체 정보를 검색하세요</p>
         </div>
         
-        <div className="rounded-3xl bg-card border border-border p-8 mb-6">
-          <div className="space-y-5">
+        <div className="rounded-2xl sm:rounded-3xl bg-card border border-border p-4 sm:p-6 md:p-8 mb-4 sm:mb-6">
+          <div className="space-y-3 sm:space-y-4 md:space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-sm font-medium">업체명 또는 담당자명</Label>
+              <Label htmlFor="name" className="text-xs sm:text-sm font-medium">업체명 또는 담당자명</Label>
               <Input
                 id="name"
                 placeholder="예: 홍길동"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="h-12 rounded-2xl"
+                className="h-10 sm:h-11 md:h-12 rounded-xl sm:rounded-2xl text-sm sm:text-base"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone" className="text-sm font-medium">전화번호</Label>
+              <Label htmlFor="phone" className="text-xs sm:text-sm font-medium">전화번호</Label>
               <Input
                 id="phone"
                 placeholder="예: 010-1234-5678"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="h-12 rounded-2xl"
+                className="h-10 sm:h-11 md:h-12 rounded-xl sm:rounded-2xl text-sm sm:text-base"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="license" className="text-sm font-medium">사업자등록번호</Label>
+              <Label htmlFor="license" className="text-xs sm:text-sm font-medium">사업자등록번호</Label>
               <Input
                 id="license"
                 placeholder="예: 123-45-67890"
                 value={license}
                 onChange={(e) => setLicense(e.target.value)}
-                className="h-12 rounded-2xl"
+                className="h-10 sm:h-11 md:h-12 rounded-xl sm:rounded-2xl text-sm sm:text-base"
               />
             </div>
-            <Button onClick={handleSearch} className="w-full h-14 rounded-full text-base shadow-[var(--shadow-md)]">
+            <Button onClick={handleSearch} className="w-full h-11 sm:h-12 md:h-14 rounded-full text-sm sm:text-base shadow-[var(--shadow-md)]">
               조회하기
             </Button>
           </div>
