@@ -3,10 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, CheckCircle2, AlertTriangle, Lightbulb } from "lucide-react";
+import { AlertCircle, CheckCircle2, AlertTriangle, Lightbulb, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CONTRACT_PATTERN_EXAMPLES } from "@/constants/contractPatterns";
 
 interface Issue {
   clause_hint: string;
@@ -143,7 +145,14 @@ export default function ContractReview({ user }: ContractReviewProps) {
           </p>
         </div>
 
-        <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
+        <Tabs defaultValue="review" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="review">계약서 검토</TabsTrigger>
+            <TabsTrigger value="examples">예시 보기</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="review">
+            <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
           <Card className="shadow-[var(--shadow-card)]">
             <CardHeader>
               <CardTitle>계약서 내용 입력</CardTitle>
@@ -268,7 +277,63 @@ export default function ContractReview({ user }: ContractReviewProps) {
               )}
             </CardContent>
           </Card>
-        </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="examples">
+            <div className="space-y-6">
+              <Card className="shadow-[var(--shadow-card)]">
+                <CardHeader>
+                  <CardTitle>문제계약서 vs 정상계약서 비교</CardTitle>
+                  <CardDescription>
+                    실제 사례를 바탕으로 한 문제계약서와 정상계약서 예시입니다
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              <div className="grid gap-4 sm:gap-6">
+                {CONTRACT_PATTERN_EXAMPLES.map((example) => (
+                  <Card key={example.id} className="shadow-[var(--shadow-card)]">
+                    <CardHeader>
+                      <CardTitle className="text-base sm:text-lg md:text-xl flex items-center gap-2">
+                        <span className="text-primary">{example.title}</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {/* 문제계약서 */}
+                        <div className="p-4 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-900">
+                          <div className="flex items-center gap-2 mb-3">
+                            <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 dark:text-red-400" />
+                            <h4 className="font-semibold text-red-900 dark:text-red-300 text-sm sm:text-base">
+                              {example.problemLabel}
+                            </h4>
+                          </div>
+                          <pre className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap font-sans">
+                            {example.problemText}
+                          </pre>
+                        </div>
+
+                        {/* 정상계약서 */}
+                        <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900">
+                          <div className="flex items-center gap-2 mb-3">
+                            <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400" />
+                            <h4 className="font-semibold text-green-900 dark:text-green-300 text-sm sm:text-base">
+                              {example.normalLabel}
+                            </h4>
+                          </div>
+                          <pre className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap font-sans">
+                            {example.normalText}
+                          </pre>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
