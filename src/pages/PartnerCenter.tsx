@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Users, Wallet, Bell, ArrowRight, CheckCircle2, Clock, Ban, RefreshCw } from "lucide-react";
+import { AppPage } from "@/components/layout/AppPage";
+import { SectionCard } from "@/components/layout/SectionCard";
+import { StatsGrid, StatItem } from "@/components/layout/StatsGrid";
 
 interface PartnerCenterProps {
   user: any;
@@ -234,103 +236,85 @@ export default function PartnerCenter({ user }: PartnerCenterProps) {
     });
   }, [settlementItems, toast]);
 
+  // 통계 데이터
+  const statsItems: StatItem[] = useMemo(() => [
+    {
+      label: "전체 프로젝트",
+      value: stats.totalProjects,
+      subText: `진행중 ${stats.activeProjects} · 완료 ${stats.completedProjects}`,
+      icon: <Users className="w-5 h-5" />
+    },
+    {
+      label: "예상 매출(총 계약금액)",
+      value: `${formatMoney(stats.expectedRevenue)}원`,
+      icon: <Wallet className="w-5 h-5" />
+    },
+    {
+      label: "지급 완료 정산액",
+      value: `${formatMoney(stats.releasedRevenue)}원`,
+      icon: <CheckCircle2 className="w-5 h-5" />
+    },
+  ], [stats]);
+
   // 로딩 상태
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-background to-secondary/30 p-4">
-        <div className="container mx-auto max-w-6xl py-6">
-          <div className="flex items-center justify-center h-64">
-            <RefreshCw className="w-8 h-8 animate-spin text-accent" />
-            <span className="ml-3 text-muted-foreground">데이터 불러오는 중…</span>
-          </div>
+      <AppPage
+        title="파트너 센터"
+        description="데이터를 불러오는 중입니다."
+        icon={<User className="w-6 h-6 text-accent" />}
+        maxWidth="xl"
+      >
+        <div className="flex items-center justify-center h-64">
+          <RefreshCw className="w-8 h-8 animate-spin text-accent" />
+          <span className="ml-3 text-muted-foreground">데이터 불러오는 중…</span>
         </div>
-      </div>
+      </AppPage>
     );
   }
 
   return (
-    <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-background to-secondary/30 p-4">
-      <div className="container mx-auto max-w-6xl py-6 space-y-6">
-        {/* 상단 인사 / 요약 */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <User className="w-5 h-5 text-accent" />
-              <span className="text-sm text-muted-foreground">인테리어 파트너 센터</span>
-            </div>
-            <h1 className="text-2xl md:text-3xl font-bold">
-              {user?.user_metadata?.name ? `${user.user_metadata.name} 파트너님` : "파트너님"}의 작업 현황
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              고객 공사 진행 상황을 확인하고, 정산·고객 관리를 한 곳에서 관리하세요.
-            </p>
-          </div>
-          <div className="flex gap-2 justify-end">
-            <Button 
-              variant={activeTab === "clients" ? "default" : "outline"} 
-              onClick={() => setActiveTab("clients")}
-              className="transition-all"
-            >
-              <Users className="w-4 h-4 mr-1" />
-              고객 관리
-            </Button>
-            <Button
-              variant={activeTab === "settlement" ? "default" : "outline"}
-              onClick={() => setActiveTab("settlement")}
-              className="transition-all"
-            >
-              <Wallet className="w-4 h-4 mr-1" />
-              정산 관리
-            </Button>
-            <Button 
-              variant={activeTab === "tasks" ? "default" : "outline"} 
-              onClick={() => setActiveTab("tasks")}
-              className="transition-all"
-            >
-              <Bell className="w-4 h-4 mr-1" />
-              할 일
-            </Button>
-          </div>
+    <AppPage
+      title={`${user?.user_metadata?.name ? `${user.user_metadata.name} 파트너님` : "파트너님"}의 작업 현황`}
+      description="고객 공사 진행 상황을 확인하고, 정산·고객 관리를 한 곳에서 관리하세요."
+      icon={<User className="w-6 h-6 text-accent" />}
+      maxWidth="xl"
+      headerRight={
+        <div className="flex gap-2 justify-end">
+          <Button 
+            variant={activeTab === "clients" ? "default" : "outline"} 
+            onClick={() => setActiveTab("clients")}
+            className="transition-all"
+          >
+            <Users className="w-4 h-4 mr-1" />
+            고객 관리
+          </Button>
+          <Button
+            variant={activeTab === "settlement" ? "default" : "outline"}
+            onClick={() => setActiveTab("settlement")}
+            className="transition-all"
+          >
+            <Wallet className="w-4 h-4 mr-1" />
+            정산 관리
+          </Button>
+          <Button 
+            variant={activeTab === "tasks" ? "default" : "outline"} 
+            onClick={() => setActiveTab("tasks")}
+            className="transition-all"
+          >
+            <Bell className="w-4 h-4 mr-1" />
+            할 일
+          </Button>
         </div>
+      }
+    >
+      {/* 통계 카드 */}
+      <StatsGrid items={statsItems} cols={3} />
 
-        {/* 요약 카드 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="shadow-[var(--shadow-card)] hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">전체 프로젝트</CardTitle>
-            </CardHeader>
-            <CardContent className="flex items-baseline justify-between">
-              <span className="text-2xl font-bold">{stats.totalProjects}</span>
-              <span className="text-xs text-muted-foreground">
-                진행중 {stats.activeProjects} · 완료 {stats.completedProjects}
-              </span>
-            </CardContent>
-          </Card>
-          <Card className="shadow-[var(--shadow-card)] hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">예상 매출(총 계약금액)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <span className="text-2xl font-bold">{formatMoney(stats.expectedRevenue)}원</span>
-            </CardContent>
-          </Card>
-          <Card className="shadow-[var(--shadow-card)] hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">지급 완료 정산액</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <span className="text-2xl font-bold">{formatMoney(stats.releasedRevenue)}원</span>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* 탭별 내용 */}
-        {activeTab === "clients" && (
-          <Card className="shadow-[var(--shadow-card)]">
-            <CardHeader>
-              <CardTitle>고객 / 프로젝트 관리</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
+      {/* 탭별 내용 */}
+      {activeTab === "clients" && (
+        <SectionCard title="고객 / 프로젝트 관리">
+          <div className="space-y-3">
               {myContracts.length === 0 ? (
                 <div className="py-12 text-center">
                   <Users className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
@@ -383,24 +367,25 @@ export default function PartnerCenter({ user }: PartnerCenterProps) {
                   );
                 })
               )}
-            </CardContent>
-          </Card>
-        )}
+          </div>
+        </SectionCard>
+      )}
 
-        {activeTab === "settlement" && (
-          <Card className="shadow-[var(--shadow-card)]">
-            <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-              <CardTitle>정산 관리</CardTitle>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleBulkPayoutRequest}
-                disabled={settlementItems.filter(item => item.held > 0).length === 0}
-              >
-                전체 정산 요청하기
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-3">
+      {activeTab === "settlement" && (
+        <SectionCard 
+          title="정산 관리"
+          headerRight={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleBulkPayoutRequest}
+              disabled={settlementItems.filter(item => item.held > 0).length === 0}
+            >
+              전체 정산 요청하기
+            </Button>
+          }
+        >
+          <div className="space-y-3">
               {settlementItems.length === 0 ? (
                 <div className="py-12 text-center">
                   <Wallet className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
@@ -448,16 +433,13 @@ export default function PartnerCenter({ user }: PartnerCenterProps) {
                   </div>
                 ))
               )}
-            </CardContent>
-          </Card>
-        )}
+          </div>
+        </SectionCard>
+      )}
 
-        {activeTab === "tasks" && (
-          <Card className="shadow-[var(--shadow-card)]">
-            <CardHeader>
-              <CardTitle>오늘 살펴볼 공사 / 할 일</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
+      {activeTab === "tasks" && (
+        <SectionCard title="오늘 살펴볼 공사 / 할 일">
+          <div className="space-y-3">
               {taskItems.length === 0 ? (
                 <div className="py-12 text-center">
                   <Bell className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
@@ -499,10 +481,9 @@ export default function PartnerCenter({ user }: PartnerCenterProps) {
                   </div>
                 ))
               )}
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    </div>
+          </div>
+        </SectionCard>
+      )}
+    </AppPage>
   );
 }
