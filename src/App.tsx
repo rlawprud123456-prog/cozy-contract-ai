@@ -49,6 +49,7 @@ import FeaturedHistory from "./pages/FeaturedHistory";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AIInterior from "./pages/AIInterior";
 import CommunityManagement from "./pages/admin/Community";
+import PartnerCenter from "./pages/PartnerCenter";
 
 const queryClient = new QueryClient();
 
@@ -125,6 +126,7 @@ function AppContent() {
           <Route path="/community/post/:id" element={<PostDetailPage />} />
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/reviews/write" element={<ReviewWrite />} />
+          <Route path="/partner-center" element={<ProtectedRoute><PartnerCenter user={user} /></ProtectedRoute>} />
           <Route path="/install" element={<Install />} />
           <Route path="/featured-history" element={<ProtectedRoute><FeaturedHistory /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
