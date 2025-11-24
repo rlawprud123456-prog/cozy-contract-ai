@@ -213,6 +213,13 @@ export default function Header() {
                   >
                     파트너 신청
                   </Link>
+                  <Link 
+                    to="/partner-center" 
+                    className="block text-base hover:text-primary transition"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    파트너 센터
+                  </Link>
                 </CollapsibleContent>
               </Collapsible>
 
@@ -365,6 +372,9 @@ export default function Header() {
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/partner/apply" className="cursor-pointer">파트너 신청</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/partner-center" className="cursor-pointer">파트너 센터</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
