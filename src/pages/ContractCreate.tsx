@@ -3,13 +3,14 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { createContract } from "@/services/contract";
 import { supabase } from "@/integrations/supabase/client";
 import { FileText, Shield, Eye } from "lucide-react";
 import ContractPreview from "@/components/ContractPreview";
+import { AppPage } from "@/components/layout/AppPage";
+import { SectionCard } from "@/components/layout/SectionCard";
 
 interface ContractCreateProps {
   user: any;
@@ -262,32 +263,29 @@ export default function ContractCreate({ user }: ContractCreateProps) {
   };
 
   return (
-    <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-background to-secondary/30 p-3 sm:p-4">
-      <div className="container mx-auto max-w-4xl py-4 sm:py-6 md:py-8">
-        <div className="mb-6 sm:mb-8 text-center px-2">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-accent" />
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary">
-              안전한 인테리어 계약
-            </h1>
-          </div>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            에스크로 결제로 안전하게 보호되는 계약을 시작하세요
-          </p>
-        </div>
-
-        <Card className="shadow-[var(--shadow-card)]">
-          <CardHeader className="p-4 sm:p-6">
-            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-              <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
-              계약서 작성
-            </CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
-              모든 정보를 정확하게 입력해주세요. 계약 완료 후 에스크로 결제가 진행됩니다.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-4 sm:p-6">
-            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+    <AppPage
+      title="안전한 인테리어 계약"
+      description="에스크로 결제로 안전하게 보호되는 계약을 시작하세요"
+      icon={<FileText className="w-6 h-6 text-accent" />}
+      maxWidth="lg"
+    >
+      <SectionCard
+        title="계약서 작성"
+        description="모든 정보를 정확하게 입력해주세요. 계약 완료 후 에스크로 결제가 진행됩니다."
+        headerRight={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handlePreview}
+            disabled={submitting}
+          >
+            <Eye className="w-4 h-4 mr-1" />
+            미리보기
+          </Button>
+        }
+      >
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               {/* 파트너 정보 */}
               <div className="space-y-3 sm:space-y-4">
                 <h3 className="text-base sm:text-lg font-semibold text-foreground border-b pb-2">
@@ -515,50 +513,38 @@ export default function ContractCreate({ user }: ContractCreateProps) {
               </div>
 
               {/* 버튼 */}
-              <div className="flex gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="flex-1"
-                  onClick={handlePreview}
-                  disabled={submitting}
-                >
-                  <Eye className="w-4 h-4 mr-2" />
-                  계약서 미리보기
-                </Button>
+              <div className="flex justify-end">
                 <Button
                   type="submit"
-                  className="flex-1 bg-accent hover:bg-accent/90"
+                  className="bg-accent hover:bg-accent/90"
                   disabled={submitting}
                 >
                   {submitting ? "처리 중..." : "계약 생성 및 에스크로 진행"}
                 </Button>
               </div>
             </form>
-          </CardContent>
-        </Card>
-      </div>
+          </SectionCard>
 
-      {/* 미리보기 모달 */}
-      {showPreview && (
-        <ContractPreview
-          contract={{
-            projectName: formData.projectName,
-            partnerName: formData.partnerName,
-            partnerPhone: formData.partnerPhone,
-            userName: "고객",
-            location: formData.location,
-            startDate: formData.startDate,
-            endDate: formData.endDate,
-            description: formData.description,
-            totalAmount: parseIntSafe(formData.totalAmount),
-            depositAmount: parseIntSafe(formData.depositAmount),
-            midAmount: parseIntSafe(formData.midAmount),
-            finalAmount: parseIntSafe(formData.finalAmount),
-          }}
-          onClose={() => setShowPreview(false)}
-        />
-      )}
-    </div>
-  );
-}
+          {/* 미리보기 모달 */}
+          {showPreview && (
+            <ContractPreview
+              contract={{
+                projectName: formData.projectName,
+                partnerName: formData.partnerName,
+                partnerPhone: formData.partnerPhone,
+                userName: "고객",
+                location: formData.location,
+                startDate: formData.startDate,
+                endDate: formData.endDate,
+                description: formData.description,
+                totalAmount: parseIntSafe(formData.totalAmount),
+                depositAmount: parseIntSafe(formData.depositAmount),
+                midAmount: parseIntSafe(formData.midAmount),
+                finalAmount: parseIntSafe(formData.finalAmount),
+              }}
+              onClose={() => setShowPreview(false)}
+            />
+          )}
+        </AppPage>
+      );
+    }

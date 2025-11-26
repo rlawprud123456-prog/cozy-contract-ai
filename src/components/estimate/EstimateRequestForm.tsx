@@ -1,17 +1,17 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calculator, Send, Upload, X, Sparkles, CheckCircle, FileText, Download } from "lucide-react";
+import { Send, Upload, X, Sparkles, CheckCircle, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { compressImage } from "@/lib/imageCompression";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import jsPDF from "jspdf";
+import { SectionCard } from "@/components/layout/SectionCard";
 
 const CATEGORIES = [
   { value: "full", label: "전체 리모델링" },
@@ -457,8 +457,8 @@ export default function EstimateRequestForm() {
     <div className="space-y-6">
       {/* AI 견적서 결과 */}
       {aiEstimate && (
-        <Card className="border-primary bg-primary/5 shadow-lg">
-          <CardContent className="p-4 sm:p-6">
+        <SectionCard className="border-primary bg-primary/5">
+          <div className="p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0 mb-4">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
@@ -602,41 +602,32 @@ export default function EstimateRequestForm() {
                     onClick={() => navigate("/contract-create", { state: { estimateData: aiEstimate } })}
                     className="gap-2"
                   >
-                    <FileText className="w-5 h-5" />
                     이 견적으로 계약서 작성하기
                   </Button>
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </SectionCard>
       )}
 
       {/* AI 견적 생성 중 */}
       {generatingAI && (
-        <Card className="border-primary">
-          <CardContent className="p-8 text-center">
+        <SectionCard className="border-primary">
+          <div className="p-8 text-center">
             <Sparkles className="w-12 h-12 text-primary mx-auto mb-4 animate-pulse" />
             <h3 className="text-xl font-semibold mb-2">AI가 견적서를 생성하고 있습니다</h3>
             <p className="text-muted-foreground">잠시만 기다려주세요...</p>
-          </CardContent>
-        </Card>
+          </div>
+        </SectionCard>
       )}
 
       {/* 견적 신청 폼 */}
-      <form onSubmit={handleSubmit}>
-        <Card className="shadow-[var(--shadow-card)]">
-          <CardHeader className="p-4 sm:p-6">
-            <CardTitle className="text-xl sm:text-2xl flex items-center gap-2">
-              <Calculator className="w-5 h-5 sm:w-6 sm:h-6" />
-              AI 자동 견적 신청
-            </CardTitle>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-2">
-              정보를 입력하시면 AI가 자동으로 견적서를 생성해드립니다
-            </p>
-          </CardHeader>
-
-        <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+      <SectionCard
+        title="AI 자동 견적 신청"
+        description="정보를 입력하시면 AI가 자동으로 견적서를 생성해드립니다"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           {/* 프로젝트 정보 */}
           <div className="space-y-3 sm:space-y-4">
             <h3 className="font-semibold text-base sm:text-lg">프로젝트 정보</h3>
@@ -835,9 +826,8 @@ export default function EstimateRequestForm() {
               {loading ? "신청 중..." : "AI 견적서 받기"}
             </Button>
           </div>
-        </CardContent>
-      </Card>
-    </form>
+        </form>
+      </SectionCard>
     </div>
   );
 }
