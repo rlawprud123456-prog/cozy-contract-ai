@@ -1,11 +1,16 @@
 import EstimateRequestForm from "@/components/estimate/EstimateRequestForm";
+import { AppPage } from "@/components/layout/AppPage";
+import { Calculator } from "lucide-react";
 
 export default function EstimatePage() {
   return (
-    <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-background to-secondary/30 p-3 sm:p-4">
-      <div className="container mx-auto max-w-4xl py-4 sm:py-6 md:py-8">
-        <EstimateRequestForm />
-      </div>
-    </div>
+    <AppPage
+      title="AI 자동 견적"
+      description="프로젝트 정보를 입력하면 AI가 자동으로 견적서를 생성해드립니다"
+      icon={<Calculator className="w-6 h-6 text-accent" />}
+      maxWidth="lg"
+    >
+      <EstimateRequestForm />
+    </AppPage>
   );
 }
