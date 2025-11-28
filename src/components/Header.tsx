@@ -173,6 +173,13 @@ export default function Header() {
                   >
                     에스크로
                   </Link>
+                  <Link 
+                    to="/evidence-package" 
+                    className="block text-base hover:text-primary transition"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    증빙 패키지
+                  </Link>
                 </CollapsibleContent>
               </Collapsible>
 
@@ -349,6 +356,9 @@ export default function Header() {
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/escrow" className="cursor-pointer">에스크로</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/evidence-package" className="cursor-pointer">증빙 패키지</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
