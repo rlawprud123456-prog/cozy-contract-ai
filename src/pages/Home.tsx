@@ -260,6 +260,64 @@ export default function Home() {
         </div>
       </section>
 
+      {/* 증빙 패키지 섹션 */}
+      <section className="py-8 sm:py-12 md:py-16 px-3 sm:px-4 bg-gradient-to-br from-primary/5 to-accent/10">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-6 sm:mb-8">
+            <Badge className="mb-2 sm:mb-3 bg-primary text-primary-foreground text-xs sm:text-sm">신규 기능</Badge>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4">
+              소비자 자동 증빙 패키지
+            </h2>
+            <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
+              계약·시공·결제 데이터를 자동으로 타임스탬프 인증하여 법적 효력이 있는 증빙 자료로 보관합니다
+            </p>
+          </div>
+          <div className="max-w-4xl mx-auto">
+            <Card className="overflow-hidden hover:shadow-xl transition-all">
+              <div className="grid md:grid-cols-2 gap-6 p-6 sm:p-8">
+                <div className="space-y-4">
+                  <h3 className="text-xl font-bold flex items-center gap-2">
+                    <span className="text-2xl">🔒</span>
+                    블록체인 타임스탬프 인증
+                  </h3>
+                  <ul className="space-y-3 text-sm">
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-0.5">✓</span>
+                      <span>계약서, 현장 사진, 결제 내역 자동 저장</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-0.5">✓</span>
+                      <span>변조 불가능한 블록체인 해시값 기록</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-0.5">✓</span>
+                      <span>법적 효력이 있는 PDF 리포트 원클릭 생성</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-0.5">✓</span>
+                      <span>분쟁 발생 시 즉시 제출 가능한 증빙 자료</span>
+                    </li>
+                  </ul>
+                </div>
+                <div className="flex flex-col justify-center gap-4">
+                  <div className="bg-muted/50 rounded-xl p-4 text-center">
+                    <p className="text-xs text-muted-foreground mb-2">전자문서 및 전자거래 기본법 준수</p>
+                    <p className="font-bold text-lg">법적 효력 보장</p>
+                  </div>
+                  <Button
+                    size="lg"
+                    className="w-full bg-primary hover:bg-primary/90 text-white shadow-lg"
+                    onClick={() => navigate("/evidence-package")}
+                  >
+                    증빙 패키지 시작하기 →
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* 이달의 전문가 */}
       <section className="py-6 sm:py-8 md:py-12 lg:py-16 px-3 sm:px-4 bg-muted/30">
         <div className="max-w-7xl mx-auto">
