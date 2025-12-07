@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { Briefcase } from "lucide-react";
 
 const KakaoIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24">
@@ -293,6 +294,16 @@ export default function Login() {
           </a>
           에 동의하는 것으로 간주됩니다.
         </p>
+
+        {/* 파트너 로그인 연결 버튼 */}
+        <div className="border-t pt-6 mt-6">
+          <Link to="/partner-login">
+            <Button variant="outline" className="w-full h-11 border-accent/50 text-accent hover:bg-accent/5 hover:text-accent">
+              <Briefcase className="w-4 h-4 mr-2" />
+              전문가이신가요? 파트너로 로그인하기
+            </Button>
+          </Link>
+        </div>
       </div>
     </div>
   );
