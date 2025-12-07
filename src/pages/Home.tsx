@@ -24,31 +24,31 @@ const QUICK_MENUS = [
   { icon: Menu, label: "전체 메뉴", path: "/all-menu", color: "bg-slate-100 text-slate-600" },
 ];
 
-// 이달의 시공사 (광고/추천 파트너)
+// 이달의 시공사 (우리 플랫폼 파트너 업체 홍보)
 const PREMIER_PARTNERS = [
   { 
     id: 1, 
-    name: "한샘 리하우스 서초점", 
-    tag: "프리미엄 파트너", 
-    desc: "호텔 같은 욕실, 3일 완성 패키지", 
-    img: "https://images.unsplash.com/photo-1620626012053-1c1ad8029e4d?auto=format&fit=crop&q=80&w=600",
+    name: "디자인 스튜디오 숲", 
+    tag: "우수 파트너", 
+    desc: "30평대 아파트 화이트우드 전문", 
+    img: "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&q=80&w=600",
     rating: 4.9 
   },
   { 
     id: 2, 
-    name: "LX 지인 인테리어", 
-    tag: "공식 대리점", 
-    desc: "창호/바닥재 10년 보증 시공", 
-    img: "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&q=80&w=600",
+    name: "어반 인테리어", 
+    tag: "상가/카페", 
+    desc: "트렌디한 상업공간 리모델링", 
+    img: "https://images.unsplash.com/photo-1522771753035-48497c2f6e5c?auto=format&fit=crop&q=80&w=600",
     rating: 4.8 
   },
   { 
     id: 3, 
-    name: "집닥 우수 파트너", 
+    name: "공간을 그리다", 
     tag: "인기 시공사", 
-    desc: "20평대 아파트 모던 화이트 스타일", 
-    img: "https://images.unsplash.com/photo-1502005229762-cf1afd38088d?auto=format&fit=crop&q=80&w=600",
-    rating: 4.9 
+    desc: "욕실/주방 부분시공 패키지", 
+    img: "https://images.unsplash.com/photo-1584622050111-993a426fbf0a?auto=format&fit=crop&q=80&w=600",
+    rating: 5.0 
   },
 ];
 
@@ -59,7 +59,6 @@ interface CommunityPost {
   like_count: number | null;
   view_count: number | null;
   images: string[] | null;
-  created_at: string;
 }
 
 export default function Home() {
@@ -72,7 +71,7 @@ export default function Home() {
     const fetchPosts = async () => {
       const { data, error } = await supabase
         .from('community_posts') 
-        .select('id, title, category, like_count, view_count, images, created_at')
+        .select('id, title, category, like_count, view_count, images')
         .order('like_count', { ascending: false, nullsFirst: false })
         .limit(3);
 
@@ -168,24 +167,24 @@ export default function Home() {
                   ★ 4.{8-i}
                 </Badge>
               </div>
-              <h4 className="font-bold text-sm truncate">디자인 스튜디오 {i+1}</h4>
-              <p className="text-xs text-gray-500 truncate">서울 강남구 • 전체 리모델링</p>
+              <h4 className="font-bold text-sm truncate">믿음 인테리어 {i+1}호점</h4>
+              <p className="text-xs text-gray-500 truncate">서울 • 아파트/빌라 전문</p>
             </Link>
           ))}
         </div>
       </section>
 
-      {/* 5. 이달의 인테리어 시공사 (광고/파트너 배너) */}
-      <section className="py-4 pl-4 bg-blue-50/50">
-        <div className="pr-4 mb-4 pt-4">
+      {/* 5. 이달의 인테리어 시공사 (우리 파트너 홍보 배너) */}
+      <section className="py-6 pl-4 bg-blue-50/50">
+        <div className="pr-4 mb-4 pt-2">
           <div className="flex items-center gap-2">
             <h3 className="font-bold text-lg text-slate-900">이달의 인테리어 시공사</h3>
-            <Badge variant="secondary" className="text-[10px] h-5">AD</Badge>
+            <Badge variant="secondary" className="text-[10px] h-5 bg-white border">AD</Badge>
           </div>
-          <p className="text-xs text-gray-500">믿고 맡길 수 있는 우수 파트너를 소개합니다</p>
+          <p className="text-xs text-gray-500">고객님들이 가장 만족한 이달의 파트너입니다</p>
         </div>
 
-        <div className="flex overflow-x-auto gap-4 pb-6 pr-4 scrollbar-hide">
+        <div className="flex overflow-x-auto gap-4 pb-4 pr-4 scrollbar-hide">
           {PREMIER_PARTNERS.map((partner) => (
             <div key={partner.id} className="shrink-0 w-[280px] group cursor-pointer bg-white rounded-xl shadow-sm border overflow-hidden">
               <div className="aspect-[2/1] relative overflow-hidden">
@@ -289,7 +288,6 @@ export default function Home() {
         </div>
       </section>
       
-      {/* 하단 여백 */}
       <div className="h-4" />
     </div>
   );
