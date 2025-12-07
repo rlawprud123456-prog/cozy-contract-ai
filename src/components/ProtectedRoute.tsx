@@ -1,36 +1,79 @@
 import { Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { isAdmin, isPartner, getPartnerStatus } from "@/lib/auth";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  requireAdmin?: boolean;
+  requirePartner?: boolean;
 }
 
-export default function ProtectedRoute({ children }: ProtectedRouteProps) {
+export default function ProtectedRoute({ 
+  children, 
+  requireAdmin = false, 
+  requirePartner = false 
+}: ProtectedRouteProps) {
   const [loading, setLoading] = useState(true);
-  const [authenticated, setAuthenticated] = useState(false);
+  const [authorized, setAuthorized] = useState(false);
+  const [redirectPath, setRedirectPath] = useState("/login");
 
   useEffect(() => {
-    // 초기 세션 확인
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      setAuthenticated(!!session?.user);
+      const user = session?.user;
+
+      if (!user) {
+        setAuthorized(false);
+        setLoading(false);
+        return;
+      }
+
+      // 관리자 페이지 접근 확인
+      if (requireAdmin) {
+        const adminCheck = await isAdmin(user.id);
+        if (!adminCheck) {
+          setRedirectPath("/");
+          setAuthorized(false);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 파트너 페이지 접근 확인
+      if (requirePartner) {
+        const partnerCheck = await isPartner(user.id);
+        if (!partnerCheck) {
+          setRedirectPath("/partner-login");
+          setAuthorized(false);
+          setLoading(false);
+          return;
+        }
+
+        // 파트너 승인 상태 확인 (선택적)
+        const status = await getPartnerStatus(user.id);
+        if (status === "pending") {
+          // pending 상태도 접근은 허용하되 UI에서 처리
+        }
+      }
+
+      setAuthorized(true);
       setLoading(false);
     };
 
     checkAuth();
 
-    // 인증 상태 변경 감지
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        setAuthenticated(!!session?.user);
+        if (!session?.user) {
+          setAuthorized(false);
+        }
       }
     );
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [requireAdmin, requirePartner]);
 
-  // 로딩 중일 때 스피너 표시
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -42,9 +85,8 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  // 인증되지 않은 경우 로그인 페이지로 리다이렉트
-  if (!authenticated) {
-    return <Navigate to="/login" replace />;
+  if (!authorized) {
+    return <Navigate to={redirectPath} replace />;
   }
 
   return <>{children}</>;
