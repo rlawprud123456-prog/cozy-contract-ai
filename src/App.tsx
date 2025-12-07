@@ -10,6 +10,9 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import BottomNav from "./components/layout/BottomNav";
 import Home from "./pages/Home";
+import AllMenu from "./pages/AllMenu";
+import Cases from "./pages/Cases";
+import Community from "./pages/Community";
 import Auth from "./pages/Auth";
 import Login from "./pages/Login";
 import AuthCallback from "./pages/AuthCallback";
@@ -53,9 +56,6 @@ import CommunityManagement from "./pages/admin/Community";
 import PartnerCenter from "./pages/PartnerCenter";
 import EvidencePackage from "./pages/EvidencePackage";
 import PartnerLogin from "./pages/PartnerLogin";
-import AllMenu from "./pages/AllMenu";
-import Cases from "./pages/Cases";
-import Community from "./pages/Community";
 
 const queryClient = new QueryClient();
 
@@ -139,10 +139,10 @@ function AppContent() {
           <Route path="/partner-center" element={<ProtectedRoute><PartnerCenter user={user} /></ProtectedRoute>} />
           <Route path="/evidence-package" element={<ProtectedRoute><EvidencePackage /></ProtectedRoute>} />
           <Route path="/install" element={<Install />} />
-          <Route path="/featured-history" element={<ProtectedRoute><FeaturedHistory /></ProtectedRoute>} />
           <Route path="/all-menu" element={<AllMenu />} />
           <Route path="/cases" element={<Cases />} />
           <Route path="/community" element={<Community />} />
+          <Route path="/featured-history" element={<ProtectedRoute><FeaturedHistory /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
