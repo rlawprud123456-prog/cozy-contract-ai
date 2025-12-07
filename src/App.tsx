@@ -9,6 +9,7 @@ import { User, Session } from "@supabase/supabase-js";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import BottomNav from "./components/layout/BottomNav";
+import Chatbot from "./components/Chatbot";
 import Home from "./pages/Home";
 import AllMenu from "./pages/AllMenu";
 import Cases from "./pages/Cases";
@@ -147,6 +148,7 @@ function AppContent() {
         </Routes>
       </main>
       {!isHomePage && <Footer />}
+      <Chatbot />
       <BottomNav />
     </div>
   );
