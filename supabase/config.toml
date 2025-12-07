@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.contract-review]
 verify_jwt = false
+
+[functions.generate-interior]
+verify_jwt = false

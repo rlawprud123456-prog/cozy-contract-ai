@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_generations: {
+        Row: {
+          created_at: string
+          generated_image_url: string | null
+          id: string
+          original_image_url: string
+          prompt: string | null
+          status: string
+          style: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          generated_image_url?: string | null
+          id?: string
+          original_image_url: string
+          prompt?: string | null
+          status?: string
+          style: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          generated_image_url?: string | null
+          id?: string
+          original_image_url?: string
+          prompt?: string | null
+          status?: string
+          style?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       comments: {
         Row: {
           content: string
@@ -321,6 +354,77 @@ export type Database = {
           phone?: string
           project_name?: string
           rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      evidence_items: {
+        Row: {
+          created_at: string
+          file_url: string
+          id: string
+          package_id: string
+          status: string
+          title: string
+          type: string
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_url: string
+          id?: string
+          package_id: string
+          status?: string
+          title: string
+          type: string
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_url?: string
+          id?: string
+          package_id?: string
+          status?: string
+          title?: string
+          type?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evidence_items_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "evidence_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evidence_packages: {
+        Row: {
+          contractor_name: string | null
+          created_at: string
+          id: string
+          project_name: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contractor_name?: string | null
+          created_at?: string
+          id?: string
+          project_name: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contractor_name?: string | null
+          created_at?: string
+          id?: string
+          project_name?: string
           status?: string
           updated_at?: string
           user_id?: string

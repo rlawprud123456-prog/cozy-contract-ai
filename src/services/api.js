@@ -1,3 +1,5 @@
+import { supabase } from "@/integrations/supabase/client";
+
 // 모의 API. 나중에 서버로 교체 가능
 const delay = (ms=200)=>new Promise(r=>setTimeout(r, ms))
 const get = (k,d)=>JSON.parse(localStorage.getItem(k)||JSON.stringify(d))
@@ -58,7 +60,7 @@ export const contractManagement = {
     const newContract = {
       ...contract,
       id: Date.now(),
-      status: 'pending', // pending, in_progress, completed, cancelled
+      status: 'pending',
       createdAt: new Date().toISOString()
     }
     contracts.push(newContract)
@@ -95,8 +97,8 @@ export const escrow = {
       id: Date.now(),
       contractId,
       amount,
-      type, // deposit(선금), mid(중도금), final(잔금)
-      status: 'held', // held(보관중), released(지급완료), refunded(환불)
+      type,
+      status: 'held',
       createdAt: new Date().toISOString()
     }
     payments.push(payment)
@@ -130,5 +132,79 @@ export const escrow = {
       return { payment: payments[index] }
     }
     throw new Error('결제를 찾을 수 없습니다')
+  }
+}
+
+// 증빙 패키지 API (Supabase 연동)
+export const evidence = {
+  async createPackage(data) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("로그인이 필요합니다.");
+
+    const { data: pkg, error } = await supabase
+      .from("evidence_packages")
+      .insert({
+        user_id: user.id,
+        project_name: data.name,
+        contractor_name: data.contractor
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return pkg;
+  },
+
+  async addItem(packageId, item) {
+    const { data, error } = await supabase
+      .from("evidence_items")
+      .insert({
+        package_id: packageId,
+        type: item.type,
+        title: item.title,
+        file_url: item.file_url,
+        status: "verified"
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async getPackage(packageId) {
+    const { data, error } = await supabase
+      .from("evidence_packages")
+      .select(`*, items:evidence_items(*)`)
+      .eq("id", packageId)
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async listPackages() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("로그인이 필요합니다.");
+
+    const { data, error } = await supabase
+      .from("evidence_packages")
+      .select(`*, items:evidence_items(*)`)
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  }
+}
+
+// AI 인테리어 API
+export const aiInterior = {
+  async generate(imageUrl, style, prompt) {
+    const { data, error } = await supabase.functions.invoke('generate-interior', {
+      body: { image: imageUrl, style, prompt }
+    });
+
+    if (error) throw error;
+    return data;
   }
 }
