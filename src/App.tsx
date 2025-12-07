@@ -2,12 +2,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import BottomNav from "./components/layout/BottomNav";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import Login from "./pages/Login";
@@ -85,9 +86,12 @@ function AppContent() {
     navigate("/");
   };
 
+  const location = useLocation();
+  const isHomePage = location.pathname === "/";
+
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
+      {!isHomePage && <Header />}
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<Home />} />
@@ -110,10 +114,10 @@ function AppContent() {
           <Route path="/contract-create" element={<ContractCreate user={user} />} />
           <Route path="/escrow" element={<Escrow user={user} />} />
           <Route path="/contract-review" element={<ContractReview user={user} />} />
-        <Route path="/estimate" element={<EstimatePage />} />
-        <Route path="/match" element={<Match />} />
-        <Route path="/partners" element={<Partners />} />
-        <Route path="/ai-interior" element={<AIInterior />} />
+          <Route path="/estimate" element={<EstimatePage />} />
+          <Route path="/match" element={<Match />} />
+          <Route path="/partners" element={<Partners />} />
+          <Route path="/ai-interior" element={<AIInterior />} />
           <Route path="/partners/:category" element={<PartnerList />} />
           <Route path="/scammer-search" element={<ScammerSearch />} />
           <Route path="/damage-history" element={<DamageHistory />} />
@@ -129,14 +133,15 @@ function AppContent() {
           <Route path="/community/post/:id" element={<PostDetailPage />} />
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/reviews/write" element={<ReviewWrite />} />
-              <Route path="/partner-center" element={<ProtectedRoute><PartnerCenter user={user} /></ProtectedRoute>} />
-              <Route path="/evidence-package" element={<ProtectedRoute><EvidencePackage /></ProtectedRoute>} />
-              <Route path="/install" element={<Install />} />
+          <Route path="/partner-center" element={<ProtectedRoute><PartnerCenter user={user} /></ProtectedRoute>} />
+          <Route path="/evidence-package" element={<ProtectedRoute><EvidencePackage /></ProtectedRoute>} />
+          <Route path="/install" element={<Install />} />
           <Route path="/featured-history" element={<ProtectedRoute><FeaturedHistory /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
-      <Footer />
+      {!isHomePage && <Footer />}
+      <BottomNav />
     </div>
   );
 }
