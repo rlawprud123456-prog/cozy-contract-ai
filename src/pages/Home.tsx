@@ -19,7 +19,7 @@ const QUICK_MENUS = [
   { icon: AlertTriangle, label: "피해사례 조회", path: "/scammer-search", color: "bg-red-100 text-red-600" },
   { icon: Wand2, label: "AI 인테리어", path: "/ai-interior", color: "bg-purple-100 text-purple-600" },
   { icon: FileText, label: "증빙 패키지", path: "/evidence-package", color: "bg-orange-100 text-orange-600" },
-  { icon: HomeIcon, label: "시공 사례", path: "/history", color: "bg-gray-100 text-gray-600" },
+  { icon: HomeIcon, label: "시공 사례", path: "/cases", color: "bg-gray-100 text-gray-600" },
   { icon: MessageSquare, label: "커뮤니티", path: "/community", color: "bg-yellow-100 text-yellow-600" },
   { icon: Menu, label: "전체 메뉴", path: "/all-menu", color: "bg-slate-100 text-slate-600" },
 ];
