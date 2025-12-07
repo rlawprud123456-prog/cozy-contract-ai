@@ -55,6 +55,7 @@ import EvidencePackage from "./pages/EvidencePackage";
 import PartnerLogin from "./pages/PartnerLogin";
 import AllMenu from "./pages/AllMenu";
 import Cases from "./pages/Cases";
+import Community from "./pages/Community";
 
 const queryClient = new QueryClient();
 
@@ -141,6 +142,7 @@ function AppContent() {
           <Route path="/featured-history" element={<ProtectedRoute><FeaturedHistory /></ProtectedRoute>} />
           <Route path="/all-menu" element={<AllMenu />} />
           <Route path="/cases" element={<Cases />} />
+          <Route path="/community" element={<Community />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
