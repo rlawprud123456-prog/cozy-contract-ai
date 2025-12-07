@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { 
   Search, ShieldCheck, UserSearch, FileText, 
   Wand2, Home as HomeIcon, AlertTriangle, Menu, Bell,
-  ChevronRight, MessageSquare, ThumbsUp
+  ChevronRight, MessageSquare, ThumbsUp, Star
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 
-// 퀵 메뉴 데이터 (아이콘 + 라벨)
+// 퀵 메뉴 데이터
 const QUICK_MENUS = [
   { icon: UserSearch, label: "전문가 찾기", path: "/match", color: "bg-blue-100 text-blue-600" },
   { icon: ShieldCheck, label: "안전 에스크로", path: "/escrow", color: "bg-green-100 text-green-600" },
@@ -24,39 +24,64 @@ const QUICK_MENUS = [
   { icon: Menu, label: "전체 메뉴", path: "/all-menu", color: "bg-slate-100 text-slate-600" },
 ];
 
-// 이달의 인테리어 (매거진) 데이터
-const MAGAZINE_ITEMS = [
-  { id: 1, title: "20평대 구축 아파트의 기적", desc: "화이트&우드로 넓어보이게", img: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&q=80" },
-  { id: 2, title: "플랜테리어 시작하기", desc: "식물로 채우는 생기있는 공간", img: "https://images.unsplash.com/photo-1616047006789-b7af5afb8c20?auto=format&fit=crop&q=80" },
-  { id: 3, title: "호텔 같은 욕실 만들기", desc: "조명 하나로 분위기 반전", img: "https://images.unsplash.com/photo-1552321901-700977eeadd0?auto=format&fit=crop&q=80" },
+// 이달의 시공사 (광고/추천 파트너)
+const PREMIER_PARTNERS = [
+  { 
+    id: 1, 
+    name: "한샘 리하우스 서초점", 
+    tag: "프리미엄 파트너", 
+    desc: "호텔 같은 욕실, 3일 완성 패키지", 
+    img: "https://images.unsplash.com/photo-1620626012053-1c1ad8029e4d?auto=format&fit=crop&q=80&w=600",
+    rating: 4.9 
+  },
+  { 
+    id: 2, 
+    name: "LX 지인 인테리어", 
+    tag: "공식 대리점", 
+    desc: "창호/바닥재 10년 보증 시공", 
+    img: "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&q=80&w=600",
+    rating: 4.8 
+  },
+  { 
+    id: 3, 
+    name: "집닥 우수 파트너", 
+    tag: "인기 시공사", 
+    desc: "20평대 아파트 모던 화이트 스타일", 
+    img: "https://images.unsplash.com/photo-1502005229762-cf1afd38088d?auto=format&fit=crop&q=80&w=600",
+    rating: 4.9 
+  },
 ];
 
-interface FeaturedPartner {
+interface CommunityPost {
   id: string;
-  business_name: string;
+  title: string;
   category: string;
-  description: string | null;
-  portfolio_images: string[] | null;
+  like_count: number | null;
+  view_count: number | null;
+  images: string[] | null;
+  created_at: string;
 }
 
 export default function Home() {
   const navigate = useNavigate();
   const [keyword, setKeyword] = useState("");
-  const [featuredPartners, setFeaturedPartners] = useState<FeaturedPartner[]>([]);
+  const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>([]);
 
+  // 커뮤니티 글 불러오기 (실제 DB 연동)
   useEffect(() => {
-    const fetchFeaturedPartners = async () => {
-      const { data } = await supabase
-        .from("partners")
-        .select("id, business_name, category, description, portfolio_images")
-        .eq("status", "approved")
-        .eq("featured", true)
-        .limit(5);
-      
-      if (data) setFeaturedPartners(data);
+    const fetchPosts = async () => {
+      const { data, error } = await supabase
+        .from('community_posts') 
+        .select('id, title, category, like_count, view_count, images, created_at')
+        .order('like_count', { ascending: false, nullsFirst: false })
+        .limit(3);
+
+      if (!error && data) {
+        setCommunityPosts(data);
+      }
     };
 
-    fetchFeaturedPartners();
+    fetchPosts();
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -66,14 +91,14 @@ export default function Home() {
 
   return (
     <div className="pb-24 bg-white min-h-screen">
-      {/* 1. 상단 검색바 & 알림 (앱 스타일 헤더) */}
+      {/* 1. 상단 검색바 */}
       <div className="sticky top-0 z-50 bg-white px-4 py-3 flex items-center gap-3 border-b shadow-sm">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <form onSubmit={handleSearch}>
             <Input 
               className="pl-9 bg-gray-50 border-none h-10 rounded-lg focus-visible:ring-1 focus-visible:ring-gray-200" 
-              placeholder="인테리어 업체, 시공사례 검색" 
+              placeholder="업체명, 시공사례 검색" 
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
             />
@@ -81,11 +106,10 @@ export default function Home() {
         </div>
         <Button variant="ghost" size="icon" className="shrink-0 relative">
           <Bell className="w-6 h-6 text-gray-600" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
         </Button>
       </div>
 
-      {/* 2. 메인 배너 (문구 변경됨) */}
+      {/* 2. 메인 배너 */}
       <div className="relative w-full aspect-[21/9] bg-slate-900 overflow-hidden">
         <img 
           src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&q=80" 
@@ -104,7 +128,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 3. 퀵 메뉴 그리드 */}
+      {/* 3. 퀵 메뉴 */}
       <div className="px-4 py-6">
         <div className="grid grid-cols-4 gap-y-6 gap-x-2">
           {QUICK_MENUS.map((menu, idx) => (
@@ -120,7 +144,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="h-2 bg-gray-50" /> {/* 구분선 */}
+      <div className="h-2 bg-gray-50" />
 
       {/* 4. 우리 동네 인기 전문가 */}
       <section className="py-8 pl-4">
@@ -132,71 +156,54 @@ export default function Home() {
         </div>
         
         <div className="flex overflow-x-auto gap-4 pb-4 pr-4 scrollbar-hide">
-          {featuredPartners.length > 0 ? (
-            featuredPartners.map((partner) => (
-              <Link key={partner.id} to={`/partners`} className="shrink-0 w-[150px]">
-                <div className="rounded-lg overflow-hidden aspect-[4/3] mb-2 relative bg-gray-100">
-                  {partner.portfolio_images?.[0] ? (
-                    <img 
-                      src={partner.portfolio_images[0]} 
-                      alt={partner.business_name} 
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                      <HomeIcon className="w-8 h-8" />
-                    </div>
-                  )}
-                  <Badge className="absolute top-2 left-2 bg-black/60 backdrop-blur-sm border-none text-[10px] h-5 px-1.5 text-white">
-                    {partner.category}
-                  </Badge>
-                </div>
-                <h4 className="font-bold text-sm truncate">{partner.business_name}</h4>
-                <p className="text-xs text-gray-500 truncate">{partner.description || "인테리어 전문"}</p>
-              </Link>
-            ))
-          ) : (
-            [1, 2, 3, 4, 5].map((_, i) => (
-              <Link key={i} to={`/partner/${i}`} className="shrink-0 w-[150px]">
-                <div className="rounded-lg overflow-hidden aspect-[4/3] mb-2 relative">
-                  <img 
-                    src={`https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80&w=300&text=${i}`} 
-                    alt="Partner" 
-                    className="w-full h-full object-cover"
-                  />
-                  <Badge className="absolute top-2 left-2 bg-black/60 backdrop-blur-sm border-none text-[10px] h-5 px-1.5 text-white">
-                    ★ 4.{8-i}
-                  </Badge>
-                </div>
-                <h4 className="font-bold text-sm truncate">디자인 스튜디오 {i+1}</h4>
-                <p className="text-xs text-gray-500 truncate">서울 강남구 • 전체 리모델링</p>
-              </Link>
-            ))
-          )}
+          {[1, 2, 3, 4, 5].map((_, i) => (
+            <Link key={i} to={`/partner/${i}`} className="shrink-0 w-[150px]">
+              <div className="rounded-lg overflow-hidden aspect-[4/3] mb-2 relative">
+                <img 
+                  src={`https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80&w=300&text=${i}`} 
+                  alt="Partner" 
+                  className="w-full h-full object-cover"
+                />
+                <Badge className="absolute top-2 left-2 bg-black/60 backdrop-blur-sm border-none text-[10px] h-5 px-1.5 text-white">
+                  ★ 4.{8-i}
+                </Badge>
+              </div>
+              <h4 className="font-bold text-sm truncate">디자인 스튜디오 {i+1}</h4>
+              <p className="text-xs text-gray-500 truncate">서울 강남구 • 전체 리모델링</p>
+            </Link>
+          ))}
         </div>
       </section>
 
-      {/* 5. [NEW] 이달의 인테리어 (매거진 스타일) */}
-      <section className="py-2 pl-4">
-        <div className="pr-4 mb-4">
-          <h3 className="font-bold text-lg text-slate-900">이달의 인테리어 🏠</h3>
-          <p className="text-xs text-gray-500">요즘 뜨는 스타일을 확인해보세요</p>
+      {/* 5. 이달의 인테리어 시공사 (광고/파트너 배너) */}
+      <section className="py-4 pl-4 bg-blue-50/50">
+        <div className="pr-4 mb-4 pt-4">
+          <div className="flex items-center gap-2">
+            <h3 className="font-bold text-lg text-slate-900">이달의 인테리어 시공사</h3>
+            <Badge variant="secondary" className="text-[10px] h-5">AD</Badge>
+          </div>
+          <p className="text-xs text-gray-500">믿고 맡길 수 있는 우수 파트너를 소개합니다</p>
         </div>
 
-        <div className="flex overflow-x-auto gap-4 pb-4 pr-4 scrollbar-hide">
-          {MAGAZINE_ITEMS.map((item) => (
-            <div key={item.id} className="shrink-0 w-[280px] group cursor-pointer">
-              <div className="rounded-xl overflow-hidden aspect-[16/9] mb-3 relative">
+        <div className="flex overflow-x-auto gap-4 pb-6 pr-4 scrollbar-hide">
+          {PREMIER_PARTNERS.map((partner) => (
+            <div key={partner.id} className="shrink-0 w-[280px] group cursor-pointer bg-white rounded-xl shadow-sm border overflow-hidden">
+              <div className="aspect-[2/1] relative overflow-hidden">
                 <img 
-                  src={item.img} 
-                  alt={item.title} 
+                  src={partner.img} 
+                  alt={partner.name} 
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute bottom-3 left-3 right-3 text-white">
-                  <h4 className="font-bold text-base leading-tight mb-0.5">{item.title}</h4>
-                  <p className="text-xs text-white/80 font-light">{item.desc}</p>
+                <Badge className="absolute top-3 left-3 bg-blue-600 border-none text-[10px]">{partner.tag}</Badge>
+              </div>
+              <div className="p-4">
+                <div className="flex justify-between items-start mb-1">
+                  <h4 className="font-bold text-base text-slate-900">{partner.name}</h4>
+                  <div className="flex items-center text-yellow-500 text-xs font-bold">
+                    <Star className="w-3 h-3 fill-current mr-0.5" />{partner.rating}
+                  </div>
                 </div>
+                <p className="text-sm text-gray-600 line-clamp-1">{partner.desc}</p>
               </div>
             </div>
           ))}
@@ -205,7 +212,7 @@ export default function Home() {
 
       <div className="h-2 bg-gray-50" />
 
-      {/* 6. 실시간 피해사례 주의 (제목 변경) */}
+      {/* 6. 실시간 피해사례 주의 */}
       <section className="py-8 pl-4">
         <div className="flex justify-between items-center pr-4 mb-4">
           <h3 className="font-bold text-lg text-slate-900">실시간 피해사례 주의 🚨</h3>
@@ -224,10 +231,6 @@ export default function Home() {
                 </div>
                 <p className="font-bold text-sm mb-1 line-clamp-1">선금 받고 연락 두절 (강남구)</p>
                 <p className="text-xs text-gray-500 mb-2">010-****-1234 (김*수)</p>
-                <div className="flex items-center text-[11px] text-gray-400 bg-gray-50 p-2 rounded">
-                  <AlertTriangle className="w-3 h-3 mr-1" />
-                  계약 전 반드시 실명인증 하세요!
-                </div>
               </CardContent>
             </Card>
           ))}
@@ -236,7 +239,7 @@ export default function Home() {
 
       <div className="h-2 bg-gray-50" />
 
-      {/* 7. [NEW] 인기 커뮤니티 글 */}
+      {/* 7. 지금 뜨는 이야기 (커뮤니티 실제 연동) */}
       <section className="py-8 px-4">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-bold text-lg text-slate-900">지금 뜨는 이야기 💬</h3>
@@ -244,33 +247,49 @@ export default function Home() {
         </div>
 
         <div className="space-y-4">
-          {[1, 2, 3].map((_, i) => (
-            <div key={i}>
-              <div className="flex gap-3 items-start py-1">
-                <div className="font-bold text-lg text-accent italic w-4 text-center">{i+1}</div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-medium mb-1 truncate">
-                    {i === 0 ? "인테리어 견적 3000만원, 이게 맞나요? ㅠㅠ" : 
-                     i === 1 ? "셀프 페인트칠하다가 망했습니다 살려주세요" : 
-                     "오늘의집 같은 분위기 내려면 조명 뭐 써야하나요?"}
-                  </h4>
-                  <div className="flex items-center gap-3 text-xs text-gray-400">
-                    <span className="flex items-center"><ThumbsUp className="w-3 h-3 mr-1" /> {120 - i*20}</span>
-                    <span className="flex items-center"><MessageSquare className="w-3 h-3 mr-1" /> {45 - i*5}</span>
-                    <span>자유게시판</span>
-                  </div>
-                </div>
-                <div className="w-16 h-16 rounded bg-gray-100 shrink-0 overflow-hidden">
-                   <img src={`https://images.unsplash.com/photo-1594026112284-02bb6f3352fe?auto=format&fit=crop&q=80&w=100&text=${i}`} className="w-full h-full object-cover" alt="thumbnail" />
-                </div>
-              </div>
-              {i < 2 && <Separator className="mt-4" />}
+          {communityPosts.length === 0 ? (
+            <div className="text-center py-6 text-gray-400 text-sm">
+              아직 등록된 게시글이 없습니다. <br />
+              <Link to="/community" className="underline text-blue-500">첫 글을 남겨보세요!</Link>
             </div>
-          ))}
+          ) : (
+            communityPosts.map((post, i) => (
+              <div key={post.id}>
+                <div 
+                  onClick={() => navigate(`/community/post/${post.id}`)} 
+                  className="cursor-pointer flex gap-3 items-start py-1"
+                >
+                  <div className="font-bold text-lg text-accent italic w-4 text-center">{i+1}</div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-medium mb-1 truncate">{post.title}</h4>
+                    <div className="flex items-center gap-3 text-xs text-gray-400">
+                      <span className="flex items-center">
+                        <ThumbsUp className="w-3 h-3 mr-1" /> {post.like_count || 0}
+                      </span>
+                      <span className="flex items-center">
+                        <MessageSquare className="w-3 h-3 mr-1" /> {post.view_count || 0}
+                      </span>
+                      <span>{post.category}</span>
+                    </div>
+                  </div>
+                  {post.images && post.images[0] && (
+                    <div className="w-16 h-16 rounded bg-gray-100 shrink-0 overflow-hidden">
+                      <img 
+                        src={post.images[0]} 
+                        className="w-full h-full object-cover" 
+                        alt="thumbnail" 
+                      />
+                    </div>
+                  )}
+                </div>
+                {i < communityPosts.length - 1 && <Separator className="mt-4" />}
+              </div>
+            ))
+          )}
         </div>
       </section>
       
-      {/* 하단 여백 (네비게이션바 가림 방지) */}
+      {/* 하단 여백 */}
       <div className="h-4" />
     </div>
   );
