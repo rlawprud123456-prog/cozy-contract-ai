@@ -51,6 +51,7 @@ import AIInterior from "./pages/AIInterior";
 import CommunityManagement from "./pages/admin/Community";
 import PartnerCenter from "./pages/PartnerCenter";
 import EvidencePackage from "./pages/EvidencePackage";
+import PartnerLogin from "./pages/PartnerLogin";
 
 const queryClient = new QueryClient();
 
@@ -92,6 +93,7 @@ function AppContent() {
           <Route path="/" element={<Home />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/partner-login" element={<PartnerLogin />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/admin-old" element={<Admin />} />
           <Route path="/admin" element={<AdminLayout />}>

@@ -41,7 +41,36 @@ const partnersDB=[
 export const partners={
   async listByCategory(cat){return {items:partnersDB.filter(p=>p.category===cat)}},
   async match({city,minRating=0}){return {items:partnersDB.filter(p=>(!city||p.city===city)&&p.rating>=minRating)}},
-  async apply(f){const x=get('apps',[]);x.push(f);set('apps',x);return {ok:true}}
+  
+  // 파트너 신청 (Supabase 연동)
+  async apply(formData) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("로그인이 필요합니다.");
+
+    // 이미 신청했는지 확인
+    const { data: existing } = await supabase
+      .from("partners")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (existing) throw new Error("이미 파트너 신청이 접수되었습니다.");
+
+    const { error } = await supabase.from("partners").insert({
+      user_id: user.id,
+      business_name: formData.companyName || formData.business_name,
+      phone: formData.phone,
+      email: formData.email,
+      category: formData.category,
+      description: formData.introduction || formData.description,
+      business_license: formData.license || formData.business_license,
+      portfolio_images: formData.portfolio_images || [],
+      status: "pending"
+    });
+
+    if (error) throw error;
+    return { ok: true };
+  }
 }
 
 const scamDB=[
