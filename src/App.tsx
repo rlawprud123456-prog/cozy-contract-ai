@@ -58,7 +58,7 @@ import PartnerCenter from "./pages/PartnerCenter";
 import EvidencePackage from "./pages/EvidencePackage";
 import PartnerLogin from "./pages/PartnerLogin";
 import EstimateRequests from "./pages/EstimateRequests";
-
+import SupportPage from "./pages/SupportPage";
 const queryClient = new QueryClient();
 
 function AppContent() {
@@ -146,6 +146,7 @@ function AppContent() {
           <Route path="/community" element={<Community />} />
           <Route path="/estimate-requests" element={<ProtectedRoute><EstimateRequests /></ProtectedRoute>} />
           <Route path="/featured-history" element={<ProtectedRoute><FeaturedHistory /></ProtectedRoute>} />
+          <Route path="/support" element={<SupportPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

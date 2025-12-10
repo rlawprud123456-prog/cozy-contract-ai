@@ -18,7 +18,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Menu, LogOut, FileText, UserCircle2, ChevronDown, ChevronRight, Users, AlertTriangle, MessageSquare, Calculator } from "lucide-react";
+import { Menu, LogOut, FileText, UserCircle2, ChevronDown, ChevronRight, Users, AlertTriangle, MessageSquare, Calculator, Headphones } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 type SBUser = {
@@ -435,6 +435,11 @@ export default function Header() {
           {/* AI 인테리어 */}
           <Link to="/ai-interior" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             AI 인테리어
+          </Link>
+
+          {/* 고객센터 */}
+          <Link to="/support" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            고객센터
           </Link>
         </nav>
 
