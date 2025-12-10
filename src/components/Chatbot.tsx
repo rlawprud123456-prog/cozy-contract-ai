@@ -47,12 +47,12 @@ export default function Chatbot() {
   };
 
   return (
-    <div>
-      {/* 플로팅 버튼 */}
+    <div className="z-50">
+      {/* 플로팅 버튼 (모바일에서는 네비게이션바 위로 올림: bottom-20) */}
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 bg-primary text-white rounded-full p-4 shadow-lg hover:scale-105 transition z-50"
+          className="fixed bottom-20 md:bottom-6 right-6 bg-primary text-white rounded-full p-4 shadow-lg hover:scale-105 transition z-50"
         >
           <MessageCircle className="w-6 h-6" />
         </button>
@@ -60,7 +60,7 @@ export default function Chatbot() {
 
       {/* 챗봇 창 */}
       {open && (
-        <div className="fixed bottom-6 right-6 w-80 bg-background border border-border rounded-2xl shadow-xl flex flex-col overflow-hidden z-50">
+        <div className="fixed bottom-20 md:bottom-6 right-6 w-80 bg-background border border-border rounded-2xl shadow-xl flex flex-col overflow-hidden z-50">
           <div className="flex items-center justify-between bg-primary text-primary-foreground px-4 py-2">
             <span className="font-semibold text-sm">AI 계약 도우미 (베타)</span>
             <button onClick={() => setOpen(false)}>
