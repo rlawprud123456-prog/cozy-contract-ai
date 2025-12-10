@@ -497,6 +497,17 @@ export default function Header() {
                   <button
                     onClick={() => {
                       setOpen(false);
+                      navigate("/estimate-requests");
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-muted text-sm transition"
+                  >
+                    <Calculator className="w-4 h-4" />
+                    내 견적 문의 내역
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setOpen(false);
                       navigate("/history");
                     }}
                     className="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-muted text-sm transition"
