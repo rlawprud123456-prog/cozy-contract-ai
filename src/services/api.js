@@ -237,3 +237,27 @@ export const aiInterior = {
     return data;
   }
 }
+
+// 관리자용 견적 문의 API
+export const adminEstimates = {
+  // 모든 견적 문의 조회 (관리자용)
+  async getAllRequests() {
+    const { data, error } = await supabase
+      .from("estimate_requests")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return { items: data || [] };
+  },
+
+  // 상태 변경 (예: 상담완료 처리)
+  async updateStatus(id, status) {
+    const { error } = await supabase
+      .from("estimate_requests")
+      .update({ status })
+      .eq("id", id);
+      
+    if (error) throw error;
+  }
+}
