@@ -238,6 +238,46 @@ export const aiInterior = {
   }
 }
 
+// 견적 문의 API (사용자용)
+export const estimates = {
+  // 견적 문의 생성
+  async createRequest(data) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("로그인이 필요합니다.");
+
+    const { error } = await supabase
+      .from("estimate_requests")
+      .insert({
+        user_id: user.id,
+        project_name: data.project_type,
+        client_name: user.email,
+        phone: data.contact_phone,
+        location: data.location,
+        category: data.project_type,
+        area: 30,
+        description: data.ai_summary
+      });
+
+    if (error) throw error;
+    return { ok: true };
+  },
+
+  // 내 견적 문의 내역 조회
+  async getMyRequests() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { items: [] };
+
+    const { data, error } = await supabase
+      .from("estimate_requests")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return { items: data || [] };
+  }
+};
+
 // 관리자용 견적 문의 API
 export const adminEstimates = {
   // 모든 견적 문의 조회 (관리자용)
