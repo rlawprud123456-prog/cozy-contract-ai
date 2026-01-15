@@ -299,7 +299,11 @@ export default function Home() {
               <Button size="lg" onClick={startContract} className="text-lg px-8">
                 계약 시작하기
               </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8 border-white/30 text-white hover:bg-white/10" onClick={() => navigate("/match")}
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="text-lg px-8 border-white bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm" 
+                onClick={() => navigate("/match")}
               >
                 전문가 찾기
               </Button>
