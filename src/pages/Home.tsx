@@ -171,16 +171,16 @@ export default function Home() {
 
       const recentDeals = estimateData?.map(e => ({
         id: e.id,
-        location: e.location.split(' ')[0] || "서울", // '서울시 강남구' -> '서울시'
-        area: e.area,
+        location: e.location?.split(' ')[0] || "지역 미정",
+        area: e.area || 0,
         amount: e.estimated_budget || 0,
         type: '실시간 견적',
         timestamp: e.created_at
       })) || [];
 
       setStats({
-        totalAmount: totalAmt + 1250000000, // 데모용 베이스 금액 추가 (서비스 초기라 데이터가 적을 때를 대비)
-        activeContracts: activeCnt + 42,    // 데모용 베이스 카운트
+        totalAmount: totalAmt,
+        activeContracts: activeCnt,
         recentDeals: recentDeals
       });
 
