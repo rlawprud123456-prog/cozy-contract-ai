@@ -481,6 +481,7 @@ export type Database = {
           featured: boolean | null
           featured_at: string | null
           id: string
+          location: string | null
           phone: string
           portfolio_images: string[] | null
           status: string
@@ -498,6 +499,7 @@ export type Database = {
           featured?: boolean | null
           featured_at?: string | null
           id?: string
+          location?: string | null
           phone: string
           portfolio_images?: string[] | null
           status?: string
@@ -515,6 +517,7 @@ export type Database = {
           featured?: boolean | null
           featured_at?: string | null
           id?: string
+          location?: string | null
           phone?: string
           portfolio_images?: string[] | null
           status?: string

@@ -1,29 +1,76 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { partners } from "@/services/api";
-import { Briefcase, Star, CheckCircle2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CheckCircle2, Clock, Briefcase, Star, XCircle } from "lucide-react";
+
+interface ExistingApplication {
+  id: string;
+  business_name: string;
+  status: string;
+  created_at: string;
+}
 
 export default function PartnerApply() {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(true);
+  const [existingApplication, setExistingApplication] = useState<ExistingApplication | null>(null);
+  
   const [formData, setFormData] = useState({
-    companyName: "",
-    name: "",
+    businessName: "",
     phone: "",
     email: "",
-    city: "",
+    location: "",
     category: "",
-    experience: "",
-    license: "",
-    portfolio: "",
-    introduction: "",
+    description: "",
   });
+
+  const categories = [
+    "아파트 인테리어",
+    "주택 리모델링",
+    "상업공간",
+    "욕실/주방",
+    "도배/장판",
+    "목공",
+    "전기/설비",
+    "종합 인테리어",
+  ];
+
+  useEffect(() => {
+    checkApplicationStatus();
+  }, []);
+
+  const checkApplicationStatus = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setCheckingStatus(false);
+        return;
+      }
+
+      const { data } = await supabase
+        .from("partners")
+        .select("id, business_name, status, created_at")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (data) {
+        setExistingApplication(data);
+      }
+    } catch (error) {
+      console.error("신청 현황 확인 오류:", error);
+    } finally {
+      setCheckingStatus(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -31,40 +78,119 @@ export default function PartnerApply() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
-      await partners.apply(formData);
+      const { data: { user } } = await supabase.auth.getUser();
       
+      if (!user) {
+        toast({ 
+          title: "로그인 필요", 
+          description: "먼저 로그인해주세요.", 
+          variant: "destructive" 
+        });
+        navigate("/login");
+        return;
+      }
+
+      const { error } = await supabase.from("partners").insert({
+        user_id: user.id,
+        business_name: formData.businessName,
+        phone: formData.phone,
+        email: formData.email || user.email,
+        location: formData.location,
+        category: formData.category,
+        description: formData.description,
+        status: "pending"
+      });
+
+      if (error) throw error;
+
       toast({
         title: "신청 완료",
-        description: "파트너 신청이 접수되었습니다. 검토 후 연락드리겠습니다.",
+        description: "관리자 검토 후 승인됩니다. (영업일 기준 1-2일 소요)",
       });
       
-      navigate("/");
-    } catch (error) {
-      toast({
-        title: "오류 발생",
-        description: error instanceof Error ? error.message : "신청에 실패했습니다",
-        variant: "destructive",
+      checkApplicationStatus();
+
+    } catch (error: any) {
+      toast({ 
+        title: "오류 발생", 
+        description: error.message, 
+        variant: "destructive" 
       });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const categories = [
-    "화이트톤",
-    "우드 포인트",
-    "모던 주방",
-    "라이트 그레이",
-    "내추럴 베이지",
-    "산뜻한 현관",
-    "미니멀",
-    "북유럽 스타일",
-    "럭셔리",
-  ];
+  if (checkingStatus) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <p className="text-muted-foreground">로딩 중...</p>
+      </div>
+    );
+  }
+
+  // 기존 신청이 있는 경우 상태 표시
+  if (existingApplication) {
+    return (
+      <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-background to-secondary/30 p-4">
+        <div className="container mx-auto max-w-md py-8">
+          {existingApplication.status === 'pending' && (
+            <Alert className="border-yellow-500/50 bg-yellow-50">
+              <Clock className="h-5 w-5 text-yellow-600" />
+              <AlertTitle className="text-yellow-800">승인 대기 중</AlertTitle>
+              <AlertDescription className="text-yellow-700">
+                <p className="mb-2">
+                  <strong>{existingApplication.business_name}</strong> 신청이 접수되었습니다.
+                </p>
+                <p>관리자가 신청 내용을 검토하고 있습니다.</p>
+                <p className="text-sm mt-2">검토가 완료되면 이메일로 알려드립니다.</p>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {existingApplication.status === 'approved' && (
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                <CheckCircle2 className="w-8 h-8 text-green-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-green-700">승인 완료!</h2>
+              <p className="text-muted-foreground">
+                이제 파트너 센터를 이용하실 수 있습니다.
+              </p>
+              <Button 
+                onClick={() => navigate("/partner-center")}
+                className="w-full"
+              >
+                파트너 센터로 이동
+              </Button>
+            </div>
+          )}
+
+          {existingApplication.status === 'rejected' && (
+            <Alert className="border-red-500/50 bg-red-50">
+              <XCircle className="h-5 w-5 text-red-600" />
+              <AlertTitle className="text-red-800">승인 거절</AlertTitle>
+              <AlertDescription className="text-red-700">
+                <p className="mb-2">
+                  안타깝게도 신청이 승인되지 않았습니다.
+                </p>
+                <p className="text-sm">
+                  자세한 내용은 고객센터로 문의해주세요.
+                </p>
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-background to-secondary/30 p-3 sm:p-4">
-      <div className="container mx-auto max-w-4xl py-4 sm:py-6 md:py-8">
+      <div className="container mx-auto max-w-2xl py-4 sm:py-6 md:py-8">
         <div className="mb-6 sm:mb-8 text-center">
           <div className="flex items-center justify-center gap-2 mb-2 sm:mb-3">
             <Briefcase className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-accent" />
@@ -102,157 +228,96 @@ export default function PartnerApply() {
           </div>
         </div>
 
-        <Card className="shadow-[var(--shadow-card)]">
+        <Card className="shadow-lg">
           <CardHeader>
             <CardTitle>신청서 작성</CardTitle>
             <CardDescription>
-              모든 정보를 정확하게 입력해주세요. 검토 후 2-3일 내 연락드립니다.
+              모든 정보를 정확하게 입력해주세요. 검토 후 1-2일 내 연락드립니다.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* 기본 정보 */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground border-b pb-2">
-                  기본 정보
-                </h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="companyName">업체명 / 상호 *</Label>
-                    <Input
-                      id="companyName"
-                      name="companyName"
-                      value={formData.companyName}
-                      onChange={handleChange}
-                      required
-                      placeholder="새로고침 인테리어"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="name">대표자명 *</Label>
-                    <Input
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      required
-                      placeholder="홍길동"
-                    />
-                  </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="businessName">업체명 (상호) *</Label>
+                <Input
+                  id="businessName"
+                  name="businessName"
+                  value={formData.businessName}
+                  onChange={handleChange}
+                  required
+                  placeholder="예: 디자인 팩토리"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="phone">연락처 *</Label>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    required
+                    placeholder="010-0000-0000"
+                  />
                 </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">연락처 *</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      required
-                      placeholder="010-1234-5678"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">이메일 *</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      required
-                      placeholder="partner@example.com"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">이메일</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="partner@company.com"
+                  />
                 </div>
               </div>
 
-              {/* 사업 정보 */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground border-b pb-2">
-                  사업 정보
-                </h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="city">주요 활동 지역 *</Label>
-                    <Input
-                      id="city"
-                      name="city"
-                      value={formData.city}
-                      onChange={handleChange}
-                      required
-                      placeholder="서울, 경기 등"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="category">전문 분야 *</Label>
-                    <select
-                      id="category"
-                      name="category"
-                      value={formData.category}
-                      onChange={handleChange}
-                      required
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <option value="">선택해주세요</option>
-                      {categories.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="experience">경력 (년) *</Label>
-                    <Input
-                      id="experience"
-                      name="experience"
-                      type="number"
-                      value={formData.experience}
-                      onChange={handleChange}
-                      required
-                      placeholder="5"
-                      min="0"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="license">사업자등록번호 *</Label>
-                    <Input
-                      id="license"
-                      name="license"
-                      value={formData.license}
-                      onChange={handleChange}
-                      required
-                      placeholder="123-45-67890"
-                    />
-                  </div>
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="portfolio">포트폴리오 URL</Label>
+                  <Label htmlFor="location">주 활동 지역 *</Label>
                   <Input
-                    id="portfolio"
-                    name="portfolio"
-                    type="url"
-                    value={formData.portfolio}
-                    onChange={handleChange}
-                    placeholder="https://example.com/portfolio"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="introduction">자기소개 *</Label>
-                  <Textarea
-                    id="introduction"
-                    name="introduction"
-                    value={formData.introduction}
+                    id="location"
+                    name="location"
+                    value={formData.location}
                     onChange={handleChange}
                     required
-                    placeholder="본인의 강점과 주요 작업 스타일을 소개해주세요"
-                    className="min-h-[120px]"
+                    placeholder="예: 서울 강남구"
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="category">주력 분야 *</Label>
+                  <select
+                    id="category"
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    required
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    <option value="">선택해주세요</option>
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">업체 소개 *</Label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  required
+                  placeholder="고객들에게 보여질 소개글을 적어주세요. 경력, 주요 시공 사례, 강점 등"
+                  rows={4}
+                />
               </div>
 
               <div className="p-4 bg-muted/50 rounded-lg">
@@ -262,8 +327,8 @@ export default function PartnerApply() {
                 </p>
               </div>
 
-              <Button type="submit" className="w-full bg-accent hover:bg-accent/90">
-                파트너 신청하기
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "처리 중..." : "파트너 신청하기"}
               </Button>
             </form>
           </CardContent>
