@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  Star, ArrowLeft, PenLine, Ghost 
+  Star, ArrowLeft, PenLine, Ghost
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +19,9 @@ interface Review {
   created_at: string;
   partner_id: string;
   images?: string[];
+  author_name?: string;
   partner_name?: string;
+  tags?: string[];
 }
 
 export default function Reviews() {
@@ -35,33 +37,48 @@ export default function Reviews() {
   const fetchReviews = async () => {
     try {
       setLoading(true);
-      // 실제 DB에서 리뷰 가져오기
-      const { data, error } = await supabase
+      
+      // 1. 리뷰 데이터 가져오기 (조인 없이)
+      const { data: reviewsData, error: reviewError } = await supabase
         .from('reviews')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error("리뷰 로딩 실패:", error);
-      } else {
-        // 파트너 정보 별도 조회
-        const reviewsWithPartners = await Promise.all(
-          (data || []).map(async (review) => {
-            if (review.partner_id) {
-              const { data: partnerData } = await supabase
-                .from('partners')
-                .select('business_name')
-                .eq('id', review.partner_id)
-                .single();
-              return { ...review, partner_name: partnerData?.business_name };
-            }
-            return review;
-          })
-        );
-        setReviews(reviewsWithPartners);
+      if (reviewError) throw reviewError;
+
+      if (!reviewsData || reviewsData.length === 0) {
+        setReviews([]);
+        return;
       }
+
+      // 2. 파트너 정보 따로 가져오기 (Manual Join)
+      const partnerIds = [...new Set(reviewsData.map(r => r.partner_id).filter(Boolean))];
+      
+      let partnersMap: Record<string, string> = {};
+      
+      if (partnerIds.length > 0) {
+        const { data: partnersData } = await supabase
+          .from('partners')
+          .select('id, business_name')
+          .in('id', partnerIds);
+          
+        if (partnersData) {
+          partnersData.forEach(p => {
+            partnersMap[p.id] = p.business_name;
+          });
+        }
+      }
+
+      // 3. 리뷰 데이터에 파트너 이름 합치기
+      const combinedReviews = reviewsData.map(review => ({
+        ...review,
+        partner_name: review.partner_id ? partnersMap[review.partner_id] : undefined
+      }));
+
+      setReviews(combinedReviews);
+
     } catch (error) {
-      console.error(error);
+      console.error("리뷰 로딩 실패:", error);
     } finally {
       setLoading(false);
     }
@@ -97,7 +114,7 @@ export default function Reviews() {
 
       <div className="max-w-2xl mx-auto px-4 pt-6">
         
-        {/* 1. 리뷰 통계 (데이터가 있을 때만 표시) */}
+        {/* 1. 리뷰 통계 */}
         {reviews.length > 0 && (
           <Card className="p-6 mb-6 border-0 shadow-lg rounded-3xl bg-white">
             <div className="flex items-center gap-6">
@@ -146,7 +163,6 @@ export default function Reviews() {
           {loading ? (
             <p className="text-center text-gray-400 py-10">로딩 중...</p>
           ) : reviews.length === 0 ? (
-            // [데이터 없음 상태]
             <Card className="p-10 border-0 shadow-lg rounded-3xl bg-white text-center">
               <div className="flex justify-center mb-4">
                 <Ghost className="w-16 h-16 text-gray-200" />
@@ -165,7 +181,6 @@ export default function Reviews() {
               </Button>
             </Card>
           ) : (
-            // [실제 데이터 렌더링]
             reviews.map((review) => (
               <Card key={review.id} className="p-5 border-0 shadow-md rounded-3xl bg-white">
                 <div className="flex items-start justify-between mb-3">
@@ -173,12 +188,14 @@ export default function Reviews() {
                     <Avatar className="w-10 h-10 border-2 border-gray-100">
                       <AvatarImage src="" />
                       <AvatarFallback className="bg-gradient-to-br from-blue-400 to-blue-600 text-white text-sm font-bold">
-                        익
+                        {review.author_name ? review.author_name[0] : "익"}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <div className="flex items-center gap-1.5 text-sm">
-                        <span className="font-bold text-gray-800">익명</span>
+                        <span className="font-bold text-gray-800">
+                          {review.author_name || "익명"}
+                        </span>
                         <span className="text-gray-300">•</span>
                         <span className="text-gray-400">
                           {new Date(review.created_at).toLocaleDateString()}
@@ -191,6 +208,7 @@ export default function Reviews() {
                       </div>
                     </div>
                   </div>
+                  {/* 파트너 이름 표시 */}
                   {review.partner_name && (
                     <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-blue-100 text-xs">
                       {review.partner_name}
@@ -203,12 +221,12 @@ export default function Reviews() {
                   <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
                     {review.content}
                   </p>
-                  {review.images && review.images.length > 0 && (
-                    <div className="flex gap-2 mt-3 overflow-x-auto scrollbar-hide">
-                      {review.images.map((img, idx) => (
-                        <div key={idx} className="w-20 h-20 rounded-xl overflow-hidden shrink-0">
-                          <img src={img} alt="리뷰 이미지" className="w-full h-full object-cover" />
-                        </div>
+                  {review.tags && Array.isArray(review.tags) && (
+                    <div className="flex flex-wrap gap-1.5 mt-3">
+                      {review.tags.map((tag: string, idx: number) => (
+                        <span key={idx} className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                          #{tag}
+                        </span>
                       ))}
                     </div>
                   )}
@@ -219,7 +237,6 @@ export default function Reviews() {
         </div>
       </div>
 
-      {/* 하단 플로팅 버튼 */}
       <div className="fixed bottom-6 right-6 z-20">
         <Button 
           size="lg" 
