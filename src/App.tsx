@@ -59,6 +59,7 @@ import EvidencePackage from "./pages/EvidencePackage";
 import PartnerLogin from "./pages/PartnerLogin";
 import EstimateRequests from "./pages/EstimateRequests";
 import SupportPage from "./pages/SupportPage";
+import PartnerDetail from "./pages/PartnerDetail";
 const queryClient = new QueryClient();
 
 function AppContent() {
@@ -122,6 +123,7 @@ function AppContent() {
           <Route path="/estimate" element={<EstimatePage />} />
           <Route path="/match" element={<Match />} />
           <Route path="/partners" element={<Partners />} />
+          <Route path="/partners/detail/:id" element={<PartnerDetail />} />
           <Route path="/ai-interior" element={<AIInterior />} />
           <Route path="/partners/:category" element={<PartnerList />} />
           <Route path="/scammer-search" element={<ScammerSearch />} />
