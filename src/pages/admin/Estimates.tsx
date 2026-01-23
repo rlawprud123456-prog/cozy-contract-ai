@@ -1,15 +1,30 @@
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { adminEstimates } from "@/services/api";
-import { Phone, MapPin, Calendar, CheckCircle2 } from "lucide-react";
+import { Phone, MapPin, Calendar, CheckCircle2, Trash2 } from "lucide-react";
+
+interface EstimateRequest {
+  id: string;
+  client_name: string;
+  category: string;
+  created_at: string;
+  status: string;
+  project_name: string;
+  area: number;
+  estimated_budget?: number;
+  location: string;
+  phone: string;
+  description?: string;
+}
 
 export default function Estimates() {
   const { toast } = useToast();
-  const [requests, setRequests] = useState<any[]>([]);
+  const [requests, setRequests] = useState<EstimateRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,6 +39,20 @@ export default function Estimates() {
       console.error(e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`'${name}' 님의 견적 요청을 정말 삭제하시겠습니까?`)) return;
+
+    try {
+      const { error } = await supabase.from('estimate_requests').delete().eq('id', id);
+      if (error) throw error;
+
+      toast({ title: "삭제 완료", description: "견적 요청이 삭제되었습니다." });
+      setRequests(prev => prev.filter(req => req.id !== id));
+    } catch (e) {
+      toast({ title: "오류", description: "삭제에 실패했습니다.", variant: "destructive" });
     }
   };
 
@@ -74,19 +103,29 @@ export default function Estimates() {
                       {new Date(req.created_at).toLocaleString('ko-KR')}
                     </span>
                   </div>
-                  <Select 
-                    defaultValue={req.status} 
-                    onValueChange={(val) => handleStatusChange(req.id, val)}
-                  >
-                    <SelectTrigger className="w-[130px] h-8 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">신규 접수</SelectItem>
-                      <SelectItem value="contacted">상담 중</SelectItem>
-                      <SelectItem value="done">상담 종료</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-2">
+                    <Select 
+                      defaultValue={req.status} 
+                      onValueChange={(val) => handleStatusChange(req.id, val)}
+                    >
+                      <SelectTrigger className="w-[130px] h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">신규 접수</SelectItem>
+                        <SelectItem value="contacted">상담 중</SelectItem>
+                        <SelectItem value="done">상담 종료</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      onClick={() => handleDelete(req.id, req.client_name)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="pt-4 grid md:grid-cols-2 gap-6">

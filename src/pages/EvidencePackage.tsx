@@ -7,6 +7,7 @@ import {
   Download,
   CheckCircle,
   Clock,
+  X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AppPage } from "@/components/layout/AppPage";
@@ -67,6 +68,13 @@ export default function EvidencePackage() {
   useEffect(() => {
     timelineEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [evidenceList]);
+
+  const handleDeleteItem = (id: number) => {
+    if (confirm("이 증빙 자료를 삭제하시겠습니까?")) {
+      setEvidenceList(prev => prev.filter(item => item.id !== id));
+      toast({ title: "삭제 완료", description: "항목이 타임라인에서 제거되었습니다." });
+    }
+  };
 
   const handleGeneratePDF = () => {
     if (!projectInfo.name.trim()) {
@@ -245,13 +253,21 @@ export default function EvidencePackage() {
                 {evidenceList.map((item) => (
                   <div
                     key={item.id}
-                    className="relative pl-8 animate-in fade-in slide-in-from-bottom-2 duration-300"
+                    className="relative pl-8 animate-in fade-in slide-in-from-bottom-2 duration-300 group"
                   >
                     {/* 타임라인 점 */}
                     <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full border-4 border-card bg-primary shadow-sm" />
 
                     {/* 카드 내용 */}
-                    <div className="bg-card p-4 rounded-xl border shadow-sm hover:shadow-md transition-all">
+                    <div className="bg-card p-4 rounded-xl border shadow-sm hover:shadow-md transition-all relative">
+                      {/* 삭제 버튼 (호버 시 표시) */}
+                      <button
+                        onClick={() => handleDeleteItem(item.id)}
+                        className="absolute top-3 right-3 text-muted-foreground/50 hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex items-center gap-2">
                           {renderTypeIcon(item.type)}
