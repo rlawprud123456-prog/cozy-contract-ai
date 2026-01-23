@@ -476,7 +476,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {featuredPartners.map((partner) => (
-              <Link key={partner.id} to={`/partners/${partner.id}`}>
+              <Link key={partner.id} to={`/partners/detail/${partner.id}`}>
                 <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer overflow-hidden">
                   <div className="aspect-[4/3] relative bg-slate-100">
                     {partner.portfolio_images && partner.portfolio_images.length > 0 ? (
@@ -514,15 +514,17 @@ export default function Home() {
           <h3 className="text-2xl font-bold mb-8 text-center">새로고침 인증 파트너</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {styles.map((s) => (
-              <Card key={s.title} className="overflow-hidden hover:shadow-lg transition group cursor-pointer">
-                <div className="aspect-square overflow-hidden">
-                  <img src={s.img} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                </div>
-                <CardContent className="p-3 text-center">
-                  <h4 className="font-medium text-sm mb-1">{s.title}</h4>
-                  <p className="text-xs text-muted-foreground">{s.desc}</p>
-                </CardContent>
-              </Card>
+              <Link key={s.title} to={`/partners?style=${s.q}`}>
+                <Card className="overflow-hidden hover:shadow-lg transition group cursor-pointer">
+                  <div className="aspect-square overflow-hidden">
+                    <img src={s.img} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  </div>
+                  <CardContent className="p-3 text-center">
+                    <h4 className="font-medium text-sm mb-1">{s.title}</h4>
+                    <p className="text-xs text-muted-foreground">{s.desc}</p>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         </div>
