@@ -22,13 +22,12 @@ export default function PartnerCenter() {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // 데이터 상태 관리
   const [loading, setLoading] = useState(true);
   const [partner, setPartner] = useState<any>(null);
   const [requests, setRequests] = useState<any[]>([]);
   const [ongoingProjects, setOngoingProjects] = useState<any[]>([]);
+  const [isTestMode, setIsTestMode] = useState(false);
 
-  // 견적 발송 모달 상태 관리
   const [isBidModalOpen, setIsBidModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [bidForm, setBidForm] = useState({ amount: "", message: "" });
@@ -38,31 +37,40 @@ export default function PartnerCenter() {
     fetchData();
   }, []);
 
-  // [1] 데이터 불러오기 (파트너 정보 + 요청 목록 + 공사 목록)
   const fetchData = async () => {
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       
-      if (!user) {
-        navigate("/login");
-        return;
+      let currentPartnerId = null;
+
+      if (user) {
+        // 1. 파트너 정보 가져오기
+        const { data: partnerData } = await supabase
+          .from("partners")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (partnerData) {
+          setPartner(partnerData);
+          currentPartnerId = partnerData.id;
+        }
       }
 
-      // 1. 내 파트너 프로필 가져오기
-      const { data: partnerData, error: partnerError } = await supabase
-        .from("partners")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (partnerError || !partnerData) {
-        navigate("/partner/apply");
-        return;
+      // 파트너 데이터가 없으면 테스트 모드로 진입
+      if (!currentPartnerId) {
+        console.log("파트너 정보 없음: 테스트 모드로 진입합니다.");
+        setIsTestMode(true);
+        setPartner({
+          id: "test-partner-id",
+          business_name: "[테스트] 디자인 확인용 업체",
+          rating: 5.0,
+          status: "approved"
+        });
       }
-      setPartner(partnerData);
 
-      // 2. 고객 견적 요청 목록 가져오기 (Status가 pending인 것)
+      // 2. 요청 목록 가져오기
       const { data: reqData } = await supabase
         .from("estimate_requests")
         .select("*")
@@ -71,41 +79,46 @@ export default function PartnerCenter() {
       
       setRequests(reqData || []);
 
-      // 3. 진행 중인 내 공사 가져오기 (Contracts 테이블)
-      const { data: contractData } = await supabase
-        .from("contracts")
-        .select("*")
-        .eq("partner_id", partnerData.id)
-        .eq("status", "ongoing")
-        .order("created_at", { ascending: false });
-
-      setOngoingProjects(contractData || []);
+      // 3. 공사 목록 가져오기
+      if (currentPartnerId) {
+        const { data: contractData } = await supabase
+          .from("contracts")
+          .select("*")
+          .eq("partner_id", currentPartnerId)
+          .eq("status", "ongoing")
+          .order("created_at", { ascending: false });
+        setOngoingProjects(contractData || []);
+      }
 
     } catch (error) {
-      console.error("데이터 로딩 중 오류:", error);
+      console.error("오류 발생:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  // [2] '견적 보내기' 버튼 클릭 시 모달 열기
   const openBidModal = (req: any) => {
     setSelectedRequest(req);
     setBidForm({ amount: "", message: "" });
     setIsBidModalOpen(true);
   };
 
-  // [3] 실제 견적 전송 (DB에 저장)
   const handleSubmitBid = async () => {
     if (!bidForm.amount || !bidForm.message) {
-      toast({ title: "내용 부족", description: "견적 금액과 메시지를 모두 입력해주세요.", variant: "destructive" });
+      toast({ title: "내용 부족", description: "금액과 메시지를 입력해주세요.", variant: "destructive" });
+      return;
+    }
+    
+    // 테스트 모드일 경우
+    if (isTestMode) {
+      toast({ title: "테스트 모드", description: "화면 확인용입니다. 실제 전송되지 않습니다." });
+      setIsBidModalOpen(false);
       return;
     }
 
     setSending(true);
     try {
-      // estimates 테이블이 아직 생성되지 않았으므로 임시로 toast만 표시
-      // 실제 DB 연동은 estimates 테이블 마이그레이션 후 활성화
+      // estimates 테이블이 아직 생성되지 않았으므로 임시 처리
       const cleanAmount = bidForm.amount.split(",").join("");
       console.log("견적 데이터:", {
         request_id: selectedRequest.id,
@@ -115,10 +128,9 @@ export default function PartnerCenter() {
         status: "sent"
       });
 
-      toast({ title: "전송 완료", description: "고객님께 견적서를 성공적으로 발송했습니다." });
+      toast({ title: "전송 완료", description: "견적서가 발송되었습니다." });
       setIsBidModalOpen(false);
       setRequests(prev => prev.filter(r => r.id !== selectedRequest.id));
-
     } catch (error: any) {
       toast({ title: "전송 실패", description: error.message, variant: "destructive" });
     } finally {
@@ -139,6 +151,13 @@ export default function PartnerCenter() {
 
   return (
     <div className="min-h-screen bg-muted/30 pb-24">
+      {/* 테스트 모드 배너 */}
+      {isTestMode && (
+        <div className="bg-amber-500 text-amber-950 text-center py-2 text-sm font-medium">
+          🧪 테스트 모드: 디자인 확인용입니다. 실제 데이터가 아닙니다.
+        </div>
+      )}
+
       {/* 상단 헤더 */}
       <header className="bg-card border-b border-border sticky top-0 z-10">
         <div className="px-4 py-3">
@@ -165,7 +184,7 @@ export default function PartnerCenter() {
               </div>
               <div className="flex-1 min-w-0">
                 <h2 className="font-bold text-lg text-foreground truncate">
-                  {partner?.business_name} 대표님
+                  {partner?.business_name || "로딩 중..."}
                 </h2>
                 <div className="flex items-center gap-2 mt-1">
                   <div className="flex items-center gap-1 text-amber-500">
@@ -270,7 +289,7 @@ export default function PartnerCenter() {
                     {/* 헤더 */}
                     <div className="flex items-center justify-between">
                       <Badge className="bg-primary/10 text-primary hover:bg-primary/20 font-medium">
-                        {req.project_type || "유형 미정"}
+                        {req.category || req.project_type || "유형 미정"}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
                         {new Date(req.created_at).toLocaleDateString('ko-KR', {
@@ -287,7 +306,7 @@ export default function PartnerCenter() {
                       </h3>
                       <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                         <Wallet className="w-4 h-4" />
-                        <span>예산: {req.budget_range || "미정"}</span>
+                        <span>예산: {req.estimated_budget ? `${req.estimated_budget.toLocaleString()}원` : "미정"}</span>
                       </div>
                     </div>
 
