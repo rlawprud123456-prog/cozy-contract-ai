@@ -145,7 +145,7 @@ function AppContent() {
           <Route path="/community/post/:id" element={<PostDetailPage />} />
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/reviews/write" element={<ReviewWrite />} />
-          <Route path="/partner-center" element={<ProtectedRoute><PartnerCenter user={user} /></ProtectedRoute>} />
+          <Route path="/partner-center" element={<ProtectedRoute><PartnerCenter /></ProtectedRoute>} />
           <Route path="/evidence-package" element={<ProtectedRoute><EvidencePackage /></ProtectedRoute>} />
           <Route path="/install" element={<Install />} />
           <Route path="/all-menu" element={<AllMenu />} />
