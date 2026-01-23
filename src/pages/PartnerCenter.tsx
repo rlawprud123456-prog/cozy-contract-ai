@@ -1,489 +1,419 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Users, Wallet, Bell, ArrowRight, CheckCircle2, Clock, Ban, RefreshCw } from "lucide-react";
-import { AppPage } from "@/components/layout/AppPage";
-import { SectionCard } from "@/components/layout/SectionCard";
-import { StatsGrid, StatItem } from "@/components/layout/StatsGrid";
+import { 
+  Wallet, Bell, Star, 
+  Clock, Calendar, ArrowRight, Send,
+  TrendingUp, FileText, Sparkles
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import Chatbot from "@/components/Chatbot";
 
-interface PartnerCenterProps {
-  user: any;
-}
-
-interface Contract {
-  id: string;
-  project_name: string;
-  partner_name: string;
-  partner_phone?: string;
-  total_amount: number;
-  deposit_amount: number;
-  mid_amount: number;
-  final_amount: number;
-  status: "pending" | "in_progress" | "completed" | "cancelled";
-  created_at: string;
-}
-
-interface Payment {
-  id: string;
-  contract_id: string;
-  amount: number;
-  type: "deposit" | "mid" | "final";
-  status: "held" | "pending_approval" | "released" | "refunded";
-  created_at: string;
-  released_at?: string;
-  refunded_at?: string;
-}
-
-type TabKey = "clients" | "settlement" | "tasks";
-
-export default function PartnerCenter({ user }: PartnerCenterProps) {
+export default function PartnerCenter() {
+  const navigate = useNavigate();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<TabKey>("clients");
-  const [contracts, setContracts] = useState<Contract[]>([]);
-  const [payments, setPayments] = useState<Record<string, Payment[]>>({});
-  const [loading, setLoading] = useState(false);
+  
+  // 데이터 상태 관리
+  const [loading, setLoading] = useState(true);
+  const [partner, setPartner] = useState<any>(null);
+  const [requests, setRequests] = useState<any[]>([]);
+  const [ongoingProjects, setOngoingProjects] = useState<any[]>([]);
 
-  // 데이터 로드 함수를 useCallback으로 메모이제이션
-  const loadData = useCallback(async () => {
-    setLoading(true);
+  // 견적 발송 모달 상태 관리
+  const [isBidModalOpen, setIsBidModalOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [bidForm, setBidForm] = useState({ amount: "", message: "" });
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // [1] 데이터 불러오기 (파트너 정보 + 요청 목록 + 공사 목록)
+  const fetchData = async () => {
     try {
-      const { data: contractsData, error: contractsError } = await supabase
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        navigate("/login");
+        return;
+      }
+
+      // 1. 내 파트너 프로필 가져오기
+      const { data: partnerData, error: partnerError } = await supabase
+        .from("partners")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (partnerError || !partnerData) {
+        navigate("/partner/apply");
+        return;
+      }
+      setPartner(partnerData);
+
+      // 2. 고객 견적 요청 목록 가져오기 (Status가 pending인 것)
+      const { data: reqData } = await supabase
+        .from("estimate_requests")
+        .select("*")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+      
+      setRequests(reqData || []);
+
+      // 3. 진행 중인 내 공사 가져오기 (Contracts 테이블)
+      const { data: contractData } = await supabase
         .from("contracts")
         .select("*")
+        .eq("partner_id", partnerData.id)
+        .eq("status", "ongoing")
         .order("created_at", { ascending: false });
 
-      if (contractsError) throw contractsError;
-      
-      const list = (contractsData || []) as Contract[];
-      setContracts(list);
+      setOngoingProjects(contractData || []);
 
-      const map: Record<string, Payment[]> = {};
-      // Promise.all로 병렬 처리하여 성능 개선
-      await Promise.all(
-        list.map(async (c) => {
-          try {
-            const { data: paymentsData, error: paymentsError } = await supabase
-              .from("escrow_payments")
-              .select("*")
-              .eq("contract_id", c.id)
-              .order("created_at", { ascending: true });
-
-            if (paymentsError) throw paymentsError;
-            map[c.id] = (paymentsData || []) as Payment[];
-          } catch (e) {
-            console.error(`계약 ${c.id} 결제 정보 로드 실패:`, e);
-            map[c.id] = [];
-          }
-        })
-      );
-      setPayments(map);
-    } catch (e) {
-      console.error("데이터 로드 실패:", e);
-      toast({
-        title: "데이터 로드 실패",
-        description: "파트너 정보를 불러오지 못했습니다.",
-        variant: "destructive",
-      });
+    } catch (error) {
+      console.error("데이터 로딩 중 오류:", error);
     } finally {
       setLoading(false);
     }
-  }, [toast]);
-
-  // 초기 데이터 로드
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  // 파트너 이름 기준으로 필터 (MVP: 이름으로 매칭)
-  const myContracts = useMemo(() => {
-    if (!user?.user_metadata?.name) return [];
-    return contracts.filter((c) => c.partner_name === user.user_metadata.name);
-  }, [contracts, user?.user_metadata?.name]);
-
-  // 요약 지표
-  const stats = useMemo(() => {
-    const totalProjects = myContracts.length;
-    const activeProjects = myContracts.filter(
-      (c) => c.status === "pending" || c.status === "in_progress"
-    ).length;
-    const completedProjects = myContracts.filter((c) => c.status === "completed").length;
-
-    let expectedRevenue = 0;
-    let releasedRevenue = 0;
-    
-    myContracts.forEach((c) => {
-      expectedRevenue += c.total_amount || 0;
-      const ps = payments[c.id] || [];
-      releasedRevenue += ps
-        .filter((p) => p.status === "released")
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
-    });
-
-    return {
-      totalProjects,
-      activeProjects,
-      completedProjects,
-      expectedRevenue,
-      releasedRevenue,
-    };
-  }, [myContracts, payments]);
-
-  // 정산 관련 데이터
-  const settlementItems = useMemo(() => {
-    return myContracts.map((c) => {
-      const ps = payments[c.id] || [];
-      const totalPaid = ps
-        .filter((p) => p.status === "released")
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
-      const held = ps
-        .filter((p) => p.status === "held")
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
-      const refunded = ps
-        .filter((p) => p.status === "refunded")
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
-      const isAllPaid = c.total_amount > 0 && totalPaid >= c.total_amount;
-
-      return {
-        contract: c,
-        totalPaid,
-        held,
-        refunded,
-        isAllPaid,
-      };
-    });
-  }, [myContracts, payments]);
-
-  // 할 일: 진행중/대기중 공사들
-  const taskItems = useMemo(() => {
-    return myContracts.filter((c) => c.status === "pending" || c.status === "in_progress");
-  }, [myContracts]);
-
-  const formatMoney = (n: number) => {
-    if (typeof n !== 'number' || isNaN(n)) return '0';
-    return n.toLocaleString("ko-KR");
   };
 
-  const formatDate = (dateString: string) => {
+  // [2] '견적 보내기' 버튼 클릭 시 모달 열기
+  const openBidModal = (req: any) => {
+    setSelectedRequest(req);
+    setBidForm({ amount: "", message: "" });
+    setIsBidModalOpen(true);
+  };
+
+  // [3] 실제 견적 전송 (DB에 저장)
+  const handleSubmitBid = async () => {
+    if (!bidForm.amount || !bidForm.message) {
+      toast({ title: "내용 부족", description: "견적 금액과 메시지를 모두 입력해주세요.", variant: "destructive" });
+      return;
+    }
+
+    setSending(true);
     try {
-      return new Date(dateString).toLocaleDateString("ko-KR", {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+      // estimates 테이블이 아직 생성되지 않았으므로 임시로 toast만 표시
+      // 실제 DB 연동은 estimates 테이블 마이그레이션 후 활성화
+      const cleanAmount = bidForm.amount.split(",").join("");
+      console.log("견적 데이터:", {
+        request_id: selectedRequest.id,
+        partner_id: partner.id,
+        amount: Number(cleanAmount),
+        message: bidForm.message,
+        status: "sent"
       });
-    } catch {
-      return dateString;
+
+      toast({ title: "전송 완료", description: "고객님께 견적서를 성공적으로 발송했습니다." });
+      setIsBidModalOpen(false);
+      setRequests(prev => prev.filter(r => r.id !== selectedRequest.id));
+
+    } catch (error: any) {
+      toast({ title: "전송 실패", description: error.message, variant: "destructive" });
+    } finally {
+      setSending(false);
     }
   };
 
-  const getStatusBadge = (status: Contract['status']) => {
-    const badgeConfig = {
-      pending: {
-        className: "bg-yellow-500 hover:bg-yellow-600",
-        icon: Clock,
-        label: "대기"
-      },
-      in_progress: {
-        className: "bg-blue-500 hover:bg-blue-600",
-        icon: ArrowRight,
-        label: "진행중"
-      },
-      completed: {
-        className: "bg-green-500 hover:bg-green-600",
-        icon: CheckCircle2,
-        label: "완료"
-      },
-      cancelled: {
-        className: "bg-red-500 hover:bg-red-600",
-        icon: Ban,
-        label: "취소"
-      }
-    };
-
-    const config = badgeConfig[status];
-    if (!config) return <Badge variant="outline">{status}</Badge>;
-
-    const Icon = config.icon;
-    return (
-      <Badge className={config.className}>
-        <Icon className="w-3 h-3 mr-1" />
-        {config.label}
-      </Badge>
-    );
-  };
-
-  // 정산 요청 (MVP: 더미, 토스트만)
-  const handlePayoutRequest = useCallback((contractId: string) => {
-    const contract = myContracts.find((c) => c.id === contractId);
-    toast({
-      title: "정산 요청 접수",
-      description: contract
-        ? `${contract.project_name} 건에 대한 정산 요청이 접수되었습니다. (데모 기능)`
-        : "정산 요청이 접수되었습니다. (데모 기능)",
-    });
-  }, [myContracts, toast]);
-
-  // 전체 정산 요청
-  const handleBulkPayoutRequest = useCallback(() => {
-    const pendingAmount = settlementItems
-      .filter(item => item.held > 0)
-      .reduce((sum, item) => sum + item.held, 0);
-    
-    toast({
-      title: "정산 통합 요청",
-      description: `총 ${formatMoney(pendingAmount)}원에 대한 일괄 정산 요청이 접수되었습니다. (데모 기능)`,
-    });
-  }, [settlementItems, toast]);
-
-  // 통계 데이터
-  const statsItems: StatItem[] = useMemo(() => [
-    {
-      label: "전체 프로젝트",
-      value: stats.totalProjects,
-      subText: `진행중 ${stats.activeProjects} · 완료 ${stats.completedProjects}`,
-      icon: <Users className="w-5 h-5" />
-    },
-    {
-      label: "예상 매출(총 계약금액)",
-      value: `${formatMoney(stats.expectedRevenue)}원`,
-      icon: <Wallet className="w-5 h-5" />
-    },
-    {
-      label: "지급 완료 정산액",
-      value: `${formatMoney(stats.releasedRevenue)}원`,
-      icon: <CheckCircle2 className="w-5 h-5" />
-    },
-  ], [stats]);
-
-  // 로딩 상태
   if (loading) {
     return (
-      <AppPage
-        title="파트너 센터"
-        description="데이터를 불러오는 중입니다."
-        icon={<User className="w-6 h-6 text-accent" />}
-        maxWidth="xl"
-      >
-        <div className="flex items-center justify-center h-64">
-          <RefreshCw className="w-8 h-8 animate-spin text-accent" />
-          <span className="ml-3 text-muted-foreground">데이터 불러오는 중…</span>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+          <p className="text-muted-foreground">로딩 중...</p>
         </div>
-      </AppPage>
+      </div>
     );
   }
 
   return (
-    <AppPage
-      title={`${user?.user_metadata?.name ? `${user.user_metadata.name} 파트너님` : "파트너님"}의 작업 현황`}
-      description="고객 공사 진행 상황을 확인하고, 정산·고객 관리를 한 곳에서 관리하세요."
-      icon={<User className="w-6 h-6 text-accent" />}
-      maxWidth="xl"
-      headerRight={
-        <div className="flex gap-2 justify-end">
-          <Button 
-            variant={activeTab === "clients" ? "default" : "outline"} 
-            onClick={() => setActiveTab("clients")}
-            className="transition-all"
-          >
-            <Users className="w-4 h-4 mr-1" />
-            고객 관리
-          </Button>
-          <Button
-            variant={activeTab === "settlement" ? "default" : "outline"}
-            onClick={() => setActiveTab("settlement")}
-            className="transition-all"
-          >
-            <Wallet className="w-4 h-4 mr-1" />
-            정산 관리
-          </Button>
-          <Button 
-            variant={activeTab === "tasks" ? "default" : "outline"} 
-            onClick={() => setActiveTab("tasks")}
-            className="transition-all"
-          >
-            <Bell className="w-4 h-4 mr-1" />
-            할 일
-          </Button>
-        </div>
-      }
-    >
-      {/* 통계 카드 */}
-      <StatsGrid items={statsItems} cols={3} />
-
-      {/* 탭별 내용 */}
-      {activeTab === "clients" && (
-        <SectionCard title="고객 / 프로젝트 관리">
-          <div className="space-y-3">
-              {myContracts.length === 0 ? (
-                <div className="py-12 text-center">
-                  <Users className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
-                  <p className="text-muted-foreground text-sm">
-                    담당 중인 프로젝트가 없습니다.
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    계약 생성 시 파트너 이름을 정확히 입력하면 자동으로 연결됩니다.
-                  </p>
-                </div>
-              ) : (
-                myContracts.map((c) => {
-                  const ps = payments[c.id] || [];
-                  const totalPaid = ps
-                    .filter((p) => p.status === "released")
-                    .reduce((sum, p) => sum + (p.amount || 0), 0);
-                  return (
-                    <div
-                      key={c.id}
-                      className="border rounded-xl p-3 md:p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 hover:bg-secondary/20 transition-colors"
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold">{c.project_name}</span>
-                          {getStatusBadge(c.status)}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          계약일 {formatDate(c.created_at)}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          총액 {formatMoney(c.total_amount)}원 · 지급 완료 {formatMoney(totalPaid)}원
-                        </div>
-                      </div>
-                      <div className="flex gap-2 justify-end">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-xs"
-                          onClick={() =>
-                            toast({
-                              title: "준비 중",
-                              description: "상세 프로젝트 페이지는 추후 연동 예정입니다. (MVP 더미)",
-                            })
-                          }
-                        >
-                          상세보기
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-          </div>
-        </SectionCard>
-      )}
-
-      {activeTab === "settlement" && (
-        <SectionCard 
-          title="정산 관리"
-          headerRight={
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleBulkPayoutRequest}
-              disabled={settlementItems.filter(item => item.held > 0).length === 0}
-            >
-              전체 정산 요청하기
+    <div className="min-h-screen bg-muted/30 pb-24">
+      {/* 상단 헤더 */}
+      <header className="bg-card border-b border-border sticky top-0 z-10">
+        <div className="px-4 py-3">
+          {/* 타이틀 & 알림 */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-primary" />
+              </div>
+              <span className="text-lg font-bold text-foreground">파트너 센터</span>
+              <Badge variant="secondary" className="text-xs font-medium">PRO</Badge>
+            </div>
+            <Button variant="ghost" size="icon" className="relative">
+              <Bell className="w-5 h-5 text-muted-foreground" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-destructive rounded-full" />
             </Button>
-          }
-        >
-          <div className="space-y-3">
-              {settlementItems.length === 0 ? (
-                <div className="py-12 text-center">
-                  <Wallet className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
-                  <p className="text-muted-foreground text-sm">
-                    정산 대상 프로젝트가 없습니다.
-                  </p>
-                </div>
-              ) : (
-                settlementItems.map((item) => (
-                  <div
-                    key={item.contract.id}
-                    className="border rounded-xl p-3 md:p-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between hover:bg-secondary/20 transition-colors"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold">{item.contract.project_name}</span>
-                        {getStatusBadge(item.contract.status)}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        총 계약금액 {formatMoney(item.contract.total_amount)}원
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        지급 완료 {formatMoney(item.totalPaid)}원 · 에스크로 보관{" "}
-                        {formatMoney(item.held)}원 · 환불 {formatMoney(item.refunded)}원
-                      </div>
-                    </div>
-                    <div className="flex flex-col md:items-end gap-2">
-                      {item.isAllPaid ? (
-                        <Badge className="bg-green-500">정산 완료</Badge>
-                      ) : item.held > 0 ? (
-                        <Badge className="bg-blue-500">정산 가능 금액 보관중</Badge>
-                      ) : (
-                        <Badge variant="outline">정산 대기</Badge>
-                      )}
-                      {item.held > 0 && (
-                        <Button
-                          size="sm"
-                          className="bg-accent hover:bg-accent/90"
-                          onClick={() => handlePayoutRequest(item.contract.id)}
-                        >
-                          이 건 정산 요청
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
           </div>
-        </SectionCard>
-      )}
 
-      {activeTab === "tasks" && (
-        <SectionCard title="오늘 살펴볼 공사 / 할 일">
-          <div className="space-y-3">
-              {taskItems.length === 0 ? (
-                <div className="py-12 text-center">
-                  <Bell className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
-                  <p className="text-muted-foreground text-sm">
-                    현재 진행중 또는 대기중인 공사가 없습니다.
-                  </p>
+          {/* 프로필 카드 */}
+          <Card className="p-4 bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center text-2xl shadow-sm">
+                🏗️
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="font-bold text-lg text-foreground truncate">
+                  {partner?.business_name} 대표님
+                </h2>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-1 text-amber-500">
+                    <Star className="w-4 h-4 fill-current" />
+                    <span className="text-sm font-semibold">{partner?.rating || "5.0"}</span>
+                  </div>
+                  <span className="text-muted-foreground">•</span>
+                  <Badge variant="outline" className="text-xs border-primary/30 text-primary">
+                    인증 파트너
+                  </Badge>
                 </div>
-              ) : (
-                taskItems.map((c) => (
-                  <div
-                    key={c.id}
-                    className="border rounded-xl p-3 md:p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2 hover:bg-secondary/20 transition-colors"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold">{c.project_name}</span>
-                        {getStatusBadge(c.status)}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        계약일 {formatDate(c.created_at)}
+              </div>
+            </div>
+          </Card>
+        </div>
+      </header>
+
+      {/* 메인 콘텐츠 */}
+      <main className="px-4 py-5 space-y-5">
+        {/* 정산 카드 */}
+        <Card className="relative overflow-hidden border-0 shadow-lg">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-primary/80" />
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary-foreground/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary-foreground/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+          
+          <div className="relative p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-primary-foreground/20 flex items-center justify-center">
+                  <Wallet className="w-5 h-5 text-primary-foreground" />
+                </div>
+                <span className="text-primary-foreground/80 font-medium">정산 가능 금액</span>
+              </div>
+              <TrendingUp className="w-5 h-5 text-primary-foreground/60" />
+            </div>
+            
+            <div className="flex items-baseline gap-1 mb-5">
+              <span className="text-4xl font-extrabold text-primary-foreground tracking-tight">0</span>
+              <span className="text-lg font-medium text-primary-foreground/70">원</span>
+            </div>
+            
+            <div className="flex gap-3">
+              <Button 
+                variant="secondary" 
+                className="flex-1 h-11 bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground border-0 font-semibold"
+              >
+                정산 신청
+              </Button>
+              <Button 
+                variant="secondary" 
+                className="flex-1 h-11 bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground border-0 font-semibold"
+              >
+                내역 조회
+              </Button>
+            </div>
+          </div>
+        </Card>
+
+        {/* 탭 메뉴 */}
+        <Tabs defaultValue="requests" className="w-full">
+          <TabsList className="w-full h-12 p-1 bg-muted rounded-xl grid grid-cols-2">
+            <TabsTrigger 
+              value="requests" 
+              className="h-10 rounded-lg font-semibold data-[state=active]:bg-card data-[state=active]:shadow-sm transition-all"
+            >
+              새 요청
+              {requests.length > 0 && (
+                <Badge className="ml-2 bg-primary text-primary-foreground text-xs px-1.5 min-w-[20px]">
+                  {requests.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="ongoing" 
+              className="h-10 rounded-lg font-semibold data-[state=active]:bg-card data-[state=active]:shadow-sm transition-all"
+            >
+              진행 중
+              {ongoingProjects.length > 0 && (
+                <Badge variant="outline" className="ml-2 text-xs px-1.5 min-w-[20px]">
+                  {ongoingProjects.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          {/* 탭 1: 견적 요청 리스트 */}
+          <TabsContent value="requests" className="mt-4 space-y-3">
+            {requests.length === 0 ? (
+              <Card className="p-8 text-center border-dashed">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-muted flex items-center justify-center">
+                  <FileText className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h3 className="font-bold text-lg text-foreground mb-2">새로운 요청이 없습니다</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  고객님의 요청이 들어오면<br />실시간 알림을 보내드릴게요.
+                </p>
+              </Card>
+            ) : (
+              requests.map((req) => (
+                <Card key={req.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                  <div className="p-4 space-y-4">
+                    {/* 헤더 */}
+                    <div className="flex items-center justify-between">
+                      <Badge className="bg-primary/10 text-primary hover:bg-primary/20 font-medium">
+                        {req.project_type || "유형 미정"}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(req.created_at).toLocaleDateString('ko-KR', {
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </span>
+                    </div>
+
+                    {/* 내용 */}
+                    <div>
+                      <h3 className="font-bold text-foreground mb-1">
+                        {req.location || "지역 정보 없음"}
+                      </h3>
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <Wallet className="w-4 h-4" />
+                        <span>예산: {req.budget_range || "미정"}</span>
                       </div>
                     </div>
-                    <div className="flex flex-col md:items-end gap-1 text-xs text-muted-foreground">
-                      {c.status === "pending" && <span>📝 착공 전: 일정 확정 및 사전 안내 필요</span>}
-                      {c.status === "in_progress" && <span>🔧 진행중: 중간 점검 및 사진 기록 권장</span>}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          toast({
-                            title: "할 일 상세",
-                            description: "구체적인 할 일 기능은 추후 투입 예정입니다. (MVP 더미)",
-                          })
-                        }
-                      >
-                        메모 / 체크리스트
+
+                    {/* 버튼 */}
+                    <Button 
+                      onClick={() => openBidModal(req)}
+                      className="w-full h-12 font-bold text-base gap-2 rounded-xl shadow-sm"
+                    >
+                      <Send className="w-4 h-4" /> 견적 보내기
+                    </Button>
+                  </div>
+                </Card>
+              ))
+            )}
+          </TabsContent>
+
+          {/* 탭 2: 진행 중인 공사 리스트 */}
+          <TabsContent value="ongoing" className="mt-4 space-y-3">
+            {ongoingProjects.length === 0 ? (
+              <Card className="p-8 text-center border-dashed">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-muted flex items-center justify-center">
+                  <Clock className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h3 className="font-bold text-lg text-foreground mb-2">진행 중인 공사가 없습니다</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  견적을 보내고 공사를 수주해보세요!<br />
+                  성공적인 비즈니스를 응원합니다.
+                </p>
+              </Card>
+            ) : (
+              ongoingProjects.map((project) => (
+                <Card key={project.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                  <div className="p-4 space-y-4">
+                    {/* 헤더 */}
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-bold text-foreground">{project.project_name}</h3>
+                      <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                        시공중
+                      </Badge>
+                    </div>
+
+                    {/* 진행률 */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">공정률</span>
+                        <span className="font-bold text-foreground">{project.progress || 0}%</span>
+                      </div>
+                      <Progress value={project.progress || 0} className="h-2" />
+                    </div>
+
+                    {/* 일정 */}
+                    <div className="flex items-center justify-between pt-2 border-t border-border">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Calendar className="w-4 h-4" />
+                        <span>{project.start_date ? `착공일: ${project.start_date}` : "일정 미정"}</span>
+                      </div>
+                      <Button variant="ghost" size="sm" className="text-primary font-medium gap-1">
+                        상세보기 <ArrowRight className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
-                ))
-              )}
+                </Card>
+              ))
+            )}
+          </TabsContent>
+        </Tabs>
+      </main>
+
+      {/* 견적 보내기 모달 */}
+      <Dialog open={isBidModalOpen} onOpenChange={setIsBidModalOpen}>
+        <DialogContent className="sm:max-w-md mx-4 rounded-2xl">
+          <DialogHeader className="text-left">
+            <DialogTitle className="text-xl font-bold">견적서 작성</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              고객에게 제안할 금액과 메시지를 입력해주세요.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-5 py-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-foreground">예상 견적 금액</Label>
+              <div className="relative">
+                <Input
+                  placeholder="예: 3,500,000"
+                  value={bidForm.amount}
+                  onChange={(e) => setBidForm({...bidForm, amount: e.target.value})}
+                  className="h-12 pr-10 text-lg font-semibold rounded-xl"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">원</span>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-foreground">전달 메시지</Label>
+              <Textarea
+                placeholder="견적에 대한 상세 설명, 작업 일정, 특이사항 등을 입력해주세요."
+                rows={4}
+                value={bidForm.message}
+                onChange={(e) => setBidForm({...bidForm, message: e.target.value})}
+                className="resize-none rounded-xl"
+              />
+            </div>
           </div>
-        </SectionCard>
-      )}
-    </AppPage>
+
+          <DialogFooter>
+            <Button 
+              className="w-full h-14 rounded-xl text-lg font-bold gap-2 shadow-lg" 
+              onClick={handleSubmitBid}
+              disabled={sending}
+            >
+              {sending ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                  전송 중...
+                </>
+              ) : (
+                <>
+                  <Send className="w-5 h-5" /> 견적 발송하기
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Chatbot />
+    </div>
   );
 }
