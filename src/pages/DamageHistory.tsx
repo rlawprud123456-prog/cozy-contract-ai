@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,10 +20,13 @@ interface DamageReport {
 }
 
 export default function DamageHistory() {
+  const [searchParams] = useSearchParams();
+  const query = searchParams.get("query");
+  
   const [reports, setReports] = useState<DamageReport[]>([]);
   const [filteredReports, setFilteredReports] = useState<DamageReport[]>([]);
   const [searchName, setSearchName] = useState("");
-  const [searchPhone, setSearchPhone] = useState("");
+  const [searchPhone, setSearchPhone] = useState(query || "");
   const [searchLicense, setSearchLicense] = useState("");
   const [searched, setSearched] = useState(false);
   const { toast } = useToast();
@@ -30,6 +34,13 @@ export default function DamageHistory() {
   useEffect(() => {
     fetchReports();
   }, []);
+
+  // URL 쿼리 파라미터로 들어왔을 때 자동 검색
+  useEffect(() => {
+    if (query && reports.length > 0) {
+      handleSearch();
+    }
+  }, [query, reports]);
 
   const fetchReports = async () => {
     const { data, error } = await supabase
