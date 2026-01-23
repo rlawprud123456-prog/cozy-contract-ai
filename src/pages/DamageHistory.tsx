@@ -16,6 +16,8 @@ interface DamageReport {
   business_license: string | null;
   amount: number | null;
   description: string | null;
+  status: string;
+  images: string[] | null;
   created_at: string;
 }
 
@@ -154,11 +156,23 @@ export default function DamageHistory() {
                       <p className="text-sm text-muted-foreground">전화: {report.phone}</p>
                     )}
                   </div>
-                  {report.amount && (
-                    <Badge variant="destructive" className="rounded-full px-3 py-1">
-                      {report.amount.toLocaleString()}원
+                  <div className="flex flex-col items-end gap-2">
+                    <Badge 
+                      variant={report.status === 'fixed' ? 'secondary' : 'destructive'} 
+                      className="rounded-full px-3 py-1"
+                    >
+                      {report.status === 'pending' && '처리 대기'}
+                      {report.status === 'in_progress' && '처리 중'}
+                      {report.status === 'fixed' && '해결 완료'}
+                      {report.status === 'rejected' && '반려'}
+                      {!['pending', 'in_progress', 'fixed', 'rejected'].includes(report.status) && report.status}
                     </Badge>
-                  )}
+                    {report.amount && (
+                      <span className="text-sm font-semibold text-destructive">
+                        피해액 {report.amount.toLocaleString()}원
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-2 text-sm">
                   {report.business_license && (
@@ -172,6 +186,23 @@ export default function DamageHistory() {
                       <span className="font-semibold text-foreground">피해 내용:</span>{" "}
                       <span className="text-muted-foreground">{report.description}</span>
                     </p>
+                  )}
+                  {report.images && report.images.length > 0 && (
+                    <div className="flex gap-2 mt-3 overflow-x-auto">
+                      {report.images.slice(0, 3).map((img, idx) => (
+                        <img 
+                          key={idx} 
+                          src={img} 
+                          alt={`증거 ${idx + 1}`} 
+                          className="w-20 h-20 object-cover rounded-lg border border-border"
+                        />
+                      ))}
+                      {report.images.length > 3 && (
+                        <div className="w-20 h-20 rounded-lg bg-muted flex items-center justify-center text-sm text-muted-foreground">
+                          +{report.images.length - 3}
+                        </div>
+                      )}
+                    </div>
                   )}
                   <p className="text-xs text-muted-foreground mt-2">
                     신고일: {new Date(report.created_at).toLocaleDateString("ko-KR")}
