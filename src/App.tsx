@@ -60,6 +60,8 @@ import PartnerLogin from "./pages/PartnerLogin";
 import EstimateRequests from "./pages/EstimateRequests";
 import SupportPage from "./pages/SupportPage";
 import PartnerDetail from "./pages/PartnerDetail";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 const queryClient = new QueryClient();
 
 function AppContent() {
@@ -149,6 +151,8 @@ function AppContent() {
           <Route path="/estimate-requests" element={<ProtectedRoute><EstimateRequests /></ProtectedRoute>} />
           <Route path="/featured-history" element={<ProtectedRoute><FeaturedHistory /></ProtectedRoute>} />
           <Route path="/support" element={<SupportPage />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
