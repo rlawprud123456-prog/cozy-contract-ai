@@ -62,6 +62,7 @@ import SupportPage from "./pages/SupportPage";
 import PartnerDetail from "./pages/PartnerDetail";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import Signup from "./pages/Signup";
 const queryClient = new QueryClient();
 
 function AppContent() {
@@ -153,6 +154,8 @@ function AppContent() {
           <Route path="/support" element={<SupportPage />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="*" element={<NotFound />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
