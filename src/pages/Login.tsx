@@ -4,8 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, Building2, User } from "lucide-react";
-import Chatbot from "@/components/Chatbot";
+import { ArrowRight } from "lucide-react";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -13,134 +12,81 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [userType, setUserType] = useState<"user" | "partner">("user");
+
+  const handleGoogleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      toast({ title: "로그인 실패", description: error.message, variant: "destructive" });
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-
       if (error) throw error;
-
-      if (userType === "partner") {
-        const { data: partner } = await supabase
-          .from("partners")
-          .select("status")
-          .eq("user_id", data.user.id)
-          .single();
-
-        if (!partner) {
-          toast({ title: "파트너 계정이 아닙니다", description: "먼저 파트너 신청을 해주세요.", variant: "destructive" });
-          navigate("/partner/apply");
-          return;
-        }
-        if (partner.status === 'pending') {
-          toast({ title: "승인 대기 중", description: "관리자 승인을 기다리는 중입니다." });
-          navigate("/partner/apply");
-          return;
-        }
-        navigate("/partner-center");
-      } else {
-        navigate("/");
-      }
+      
       toast({ title: "환영합니다!", description: "성공적으로 로그인되었습니다." });
-
+      navigate("/");
     } catch (error: any) {
-      toast({ title: "로그인 실패", description: error.message, variant: "destructive" });
+      toast({ title: "로그인 실패", description: "이메일 또는 비밀번호를 확인해주세요.", variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-blue-50 p-4 relative overflow-hidden">
+    <div className="min-h-screen flex">
 
-      {/* 배경 데코레이션 (은은하게) */}
-      <div className="absolute top-0 left-0 w-96 h-96 bg-blue-100/50 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
-      <div className="absolute bottom-0 right-0 w-80 h-80 bg-purple-100/40 rounded-full blur-3xl translate-x-1/3 translate-y-1/3" />
-      
-      <div className="relative w-full max-w-5xl grid md:grid-cols-2 gap-8 lg:gap-16 items-center z-10">
-        
-        {/* 왼쪽: 브랜드 메시지 (데스크탑 전용) */}
-        <div className="hidden md:flex flex-col justify-center space-y-8 p-8">
-          <div className="space-y-4">
-            <h1 className="text-4xl lg:text-5xl font-black text-slate-900 leading-tight tracking-tight">
-              안전한 인테리어,<br />
-              바로고침에서<br />
-              시작하세요.
+      {/* 왼쪽: 감각적인 인테리어 이미지 */}
+      <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-slate-900 to-slate-800">
+        <div className="absolute inset-0 bg-[url('/placeholder.svg')] bg-cover bg-center opacity-40" />
+        <div className="relative z-10 flex flex-col justify-end p-12 text-white">
+          <div className="max-w-md">
+            <h1 className="text-4xl font-bold leading-tight mb-4">
+              공간의 가치를<br/>높이는 기술
             </h1>
-            <p className="text-lg text-slate-500">
-              계약부터 시공, 결제까지.<br />
-              모든 과정이 투명하게 기록됩니다.
+            <p className="text-lg text-white/80">
+              투명한 견적, 안전한 결제.<br/>
+              바로고침이 새로운 인테리어 기준을 만듭니다.
             </p>
           </div>
-          <div className="flex gap-6">
-            <div className="flex items-center gap-3 p-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-100">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Building2 className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-400">3초 만에</p>
-                <p className="font-bold text-slate-700">계약서 분석</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-100">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <User className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-400">먹튀 걱정 없는</p>
-                <p className="font-bold text-slate-700">에스크로 결제</p>
-              </div>
-            </div>
-          </div>
         </div>
+      </div>
 
-        {/* 오른쪽: 로그인 폼 (토스 스타일) */}
-        <div className="w-full max-w-md mx-auto bg-white rounded-3xl shadow-xl border border-slate-200/80 p-8 space-y-6">
-          <div className="text-center">
-             <h2 className="text-2xl font-bold text-slate-900">안녕하세요 👋</h2>
-             <p className="text-slate-500 mt-1">서비스 이용을 위해 로그인해주세요.</p>
+      {/* 오른쪽: 로그인 폼 */}
+      <div className="flex-1 flex items-center justify-center p-8 bg-white">
+        <div className="w-full max-w-md space-y-8">
+          <div className="text-center lg:text-left">
+            <h2 className="text-3xl font-bold text-gray-900">안녕하세요 👋</h2>
+            <p className="mt-2 text-gray-500">서비스 이용을 위해 로그인해주세요.</p>
           </div>
 
-          {/* 1. 회원 유형 선택 탭 (토스 스타일 토글) */}
-          <div className="bg-slate-100 p-1.5 rounded-2xl flex relative">
-            <div 
-              className={`absolute top-1.5 h-[calc(100%-12px)] w-[calc(50%-6px)] bg-white rounded-xl shadow-md transition-all duration-300 ease-out ${userType === 'partner' ? 'left-[calc(50%+3px)]' : 'left-1.5'}`}
-            />
-            <button 
-              onClick={() => setUserType("user")}
-              className={`flex-1 relative z-10 py-3 text-sm font-bold transition-colors ${userType === "user" ? "text-slate-900" : "text-gray-400"}`}
-            >
-              일반 회원
-            </button>
-            <button 
-              onClick={() => setUserType("partner")}
-              className={`flex-1 relative z-10 py-3 text-sm font-bold transition-colors ${userType === "partner" ? "text-slate-900" : "text-gray-400"}`}
-            >
-              파트너 (전문가)
-            </button>
-          </div>
-
-          {/* 2. 입력 폼 */}
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-sm font-semibold text-slate-600 pl-1">이메일</label>
+          <form onSubmit={handleLogin} className="space-y-5">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">이메일</label>
               <Input 
                 type="email" 
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)} 
                 required 
-                placeholder="example@email.com" 
+                placeholder="user@example.com" 
                 className="h-14 rounded-2xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-blue-500 text-lg px-4 transition-all"
               />
             </div>
-            <div className="space-y-1">
-              <label className="text-sm font-semibold text-slate-600 pl-1">비밀번호</label>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">비밀번호</label>
               <Input 
                 type="password" 
                 value={password} 
@@ -151,39 +97,37 @@ export default function Login() {
               />
             </div>
 
-            <Button type="submit" disabled={loading} className="w-full h-14 rounded-2xl text-lg font-bold bg-slate-900 hover:bg-slate-800 transition-transform active:scale-[0.98]">
-              {loading ? "확인하는 중..." : "로그인하기"} <ArrowRight className="ml-2 w-5 h-5" />
+            <Button type="submit" disabled={loading} className="w-full h-14 rounded-2xl text-lg font-semibold bg-blue-600 hover:bg-blue-700">
+              {loading ? "확인 중..." : "이메일로 로그인"} <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           </form>
 
-          {/* 3. 하단 링크 */}
-          <div className="flex items-center justify-center gap-4 text-sm text-slate-400 pt-2">
-            <button className="hover:text-slate-600 transition">아이디 찾기</button>
-            <span>|</span>
-            <button className="hover:text-slate-600 transition">비밀번호 찾기</button>
-            <span>|</span>
-            <button 
-              onClick={() => navigate("/signup")}
-              className="hover:text-blue-600 font-semibold transition"
-            >
-              회원가입
-            </button>
+          {/* 구분선 */}
+          <div className="relative flex items-center py-4">
+            <div className="flex-grow border-t border-gray-200" />
+            <span className="flex-shrink mx-4 text-sm text-gray-400">또는</span>
+            <div className="flex-grow border-t border-gray-200" />
           </div>
-          
-          {userType === 'partner' && (
-            <div className="text-center pt-4 border-t border-slate-100 space-y-1">
-              <p className="text-sm text-slate-500">아직 바로고침 파트너가 아니신가요?</p>
-              <button 
-                onClick={() => navigate("/partner/apply")}
-                className="text-sm font-bold text-blue-700 underline decoration-2 underline-offset-2 hover:text-blue-800"
-              >
-                파트너 입점 신청하러 가기
-              </button>
-            </div>
-          )}
+
+          {/* 구글 로그인 버튼 */}
+          <Button variant="outline" onClick={handleGoogleLogin} className="w-full h-14 rounded-2xl text-lg font-medium border-gray-200 hover:bg-gray-50">
+            <svg viewBox="0 0 24 24" className="w-5 h-5 mr-3">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Google로 시작하기
+          </Button>
+
+          {/* 하단 링크 */}
+          <div className="flex justify-center items-center gap-4 text-sm text-gray-500">
+            <button className="hover:text-blue-600 transition">비밀번호 찾기</button>
+            <span>|</span>
+            <button onClick={() => navigate("/signup")} className="hover:text-blue-600 font-semibold transition">회원가입</button>
+          </div>
         </div>
       </div>
-      <Chatbot />
     </div>
   );
 }
