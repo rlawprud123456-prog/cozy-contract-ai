@@ -1,12 +1,14 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   Frown, AlertTriangle, Lightbulb, Briefcase, HelpCircle, 
-  ChevronRight, MessageSquare, ThumbsUp, Eye
+  ChevronRight, ThumbsUp, Eye, Edit3
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import Chatbot from "@/components/Chatbot";
 
 const COMMUNITY_CATEGORIES = [
   { 
@@ -51,13 +53,22 @@ const COMMUNITY_CATEGORIES = [
   },
 ];
 
+const CATEGORY_TABS = [
+  { id: "all", name: "전체" },
+  { id: "sad", name: "속상해요" },
+  { id: "tips", name: "꿀팁 공유" },
+  { id: "help", name: "도와주세요" },
+];
+
 export default function Community() {
+  const navigate = useNavigate();
+
   const { data: popularPosts = [] } = useQuery({
     queryKey: ['community-popular-posts'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('community_posts')
-        .select('id, title, category, like_count, view_count, images')
+        .select('id, title, category, like_count, view_count, images, created_at')
         .order('like_count', { ascending: false, nullsFirst: false })
         .limit(5);
       
@@ -66,18 +77,52 @@ export default function Community() {
     }
   });
 
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return "방금 전";
+    if (diffMins < 60) return `${diffMins}분 전`;
+    if (diffHours < 24) return `${diffHours}시간 전`;
+    return `${diffDays}일 전`;
+  };
+
   return (
     <div className="pb-24 min-h-screen bg-background">
       {/* 헤더 */}
-      <div className="px-4 py-6">
-        <h1 className="text-2xl font-bold text-foreground">커뮤니티</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          인테리어 이야기를 나눠보세요
-        </p>
+      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b">
+        <div className="px-4 py-4 flex items-center justify-between">
+          <h1 className="text-xl font-bold text-foreground">커뮤니티</h1>
+          <Button 
+            size="sm" 
+            className="rounded-full"
+            onClick={() => navigate('/community/write')}
+          >
+            <Edit3 className="w-4 h-4 mr-1" />
+            글쓰기
+          </Button>
+        </div>
+
+        {/* 카테고리 탭 */}
+        <div className="px-4 pb-3 flex gap-2 overflow-x-auto scrollbar-hide">
+          {CATEGORY_TABS.map((c) => (
+            <Badge 
+              key={c.id} 
+              variant="secondary" 
+              className="px-4 py-2 cursor-pointer whitespace-nowrap hover:bg-primary hover:text-primary-foreground transition-colors"
+            >
+              {c.name}
+            </Badge>
+          ))}
+        </div>
       </div>
 
       {/* 카테고리 목록 */}
-      <div className="px-4 space-y-3">
+      <div className="px-4 py-4 space-y-3">
         {COMMUNITY_CATEGORIES.map((cat) => (
           <Link key={cat.id} to={cat.path}>
             <Card className="hover:shadow-md transition-shadow">
@@ -97,7 +142,7 @@ export default function Community() {
       </div>
 
       {/* 인기글 */}
-      <div className="mt-8 px-4">
+      <div className="mt-4 px-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="font-bold text-lg text-foreground">🔥 인기글</h2>
         </div>
@@ -118,6 +163,9 @@ export default function Community() {
                           <Badge variant="secondary" className="text-xs">
                             {post.category}
                           </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {formatTimeAgo(post.created_at)}
+                          </span>
                         </div>
                         <h4 className="font-medium text-foreground line-clamp-1">
                           {post.title}
@@ -150,6 +198,8 @@ export default function Community() {
           </div>
         )}
       </div>
+
+      <Chatbot />
     </div>
   );
 }
