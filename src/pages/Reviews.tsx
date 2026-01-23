@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  Star, MessageCircle, ArrowLeft, 
-  Search, PenLine, Ghost 
+  Star, ArrowLeft, PenLine, Ghost 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,12 +13,13 @@ import Chatbot from "@/components/Chatbot";
 
 interface Review {
   id: string;
+  title: string;
   content: string;
   rating: number;
   created_at: string;
-  title: string;
   partner_id: string;
   images?: string[];
+  partner_name?: string;
 }
 
 export default function Reviews() {
@@ -44,7 +44,21 @@ export default function Reviews() {
       if (error) {
         console.error("리뷰 로딩 실패:", error);
       } else {
-        setReviews(data || []);
+        // 파트너 정보 별도 조회
+        const reviewsWithPartners = await Promise.all(
+          (data || []).map(async (review) => {
+            if (review.partner_id) {
+              const { data: partnerData } = await supabase
+                .from('partners')
+                .select('business_name')
+                .eq('id', review.partner_id)
+                .single();
+              return { ...review, partner_name: partnerData?.business_name };
+            }
+            return review;
+          })
+        );
+        setReviews(reviewsWithPartners);
       }
     } catch (error) {
       console.error(error);
@@ -177,9 +191,11 @@ export default function Reviews() {
                       </div>
                     </div>
                   </div>
-                  <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-blue-100 text-xs">
-                    시공 리뷰
-                  </Badge>
+                  {review.partner_name && (
+                    <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-blue-100 text-xs">
+                      {review.partner_name}
+                    </Badge>
+                  )}
                 </div>
 
                 <div className="pl-[52px]">
