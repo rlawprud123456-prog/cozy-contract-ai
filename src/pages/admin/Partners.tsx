@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Check, X, MapPin, Phone, Calendar } from "lucide-react";
+import { Check, X, MapPin, Phone, Calendar, Trash2 } from "lucide-react";
 
 export default function Partners() {
   const [partners, setPartners] = useState<any[]>([]);
@@ -26,6 +26,38 @@ export default function Partners() {
       if (data) setPartners(data);
     } catch (error) {
       console.error("파트너 목록 로딩 실패:", error);
+    }
+  };
+
+  // 파트너 삭제 함수
+  const deletePartner = async (id: string, name: string) => {
+    if (!window.confirm(`'${name}' 업체를 정말 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.`)) {
+      return;
+    }
+
+    setProcessingId(id);
+    try {
+      const { error } = await supabase
+        .from("partners")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "삭제 완료",
+        description: "파트너 정보가 영구적으로 삭제되었습니다.",
+      });
+
+      await loadPartners();
+    } catch (error: any) {
+      toast({
+        title: "삭제 실패",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -97,28 +129,40 @@ export default function Partners() {
                     <CardDescription>{partner.category} 전문</CardDescription>
                   </div>
                   
-                  {partner.status === "pending" && (
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => updateStatus(partner.id, "approved", partner.business_name)}
-                        disabled={!!processingId}
-                        size="sm"
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                      >
-                        <Check className="w-4 h-4 mr-1" />
-                        승인
-                      </Button>
-                      <Button
-                        onClick={() => updateStatus(partner.id, "rejected", partner.business_name)}
-                        disabled={!!processingId}
-                        variant="destructive"
-                        size="sm"
-                      >
-                        <X className="w-4 h-4 mr-1" />
-                        거절
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex gap-2">
+                    {partner.status === "pending" && (
+                      <>
+                        <Button
+                          onClick={() => updateStatus(partner.id, "approved", partner.business_name)}
+                          disabled={!!processingId}
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          <Check className="w-4 h-4 mr-1" />
+                          승인
+                        </Button>
+                        <Button
+                          onClick={() => updateStatus(partner.id, "rejected", partner.business_name)}
+                          disabled={!!processingId}
+                          variant="destructive"
+                          size="sm"
+                        >
+                          <X className="w-4 h-4 mr-1" />
+                          거절
+                        </Button>
+                      </>
+                    )}
+                    {/* 삭제 버튼 - 모든 상태에서 표시 */}
+                    <Button
+                      onClick={() => deletePartner(partner.id, partner.business_name)}
+                      disabled={!!processingId}
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
