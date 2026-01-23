@@ -1,56 +1,72 @@
-import { LayoutDashboard, Users, Briefcase, FileText, Calculator, DollarSign, Shield, Star, MessageSquare } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
+  LayoutDashboard,
+  Users,
+  FileText,
+  CreditCard,
+  Settings,
+  ShieldCheck,
+  HardHat,
+  MessageSquare,
+  AlertTriangle,
+  LogOut
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 const menuItems = [
-  { title: "대시보드", url: "/admin", icon: LayoutDashboard, end: true },
-  { title: "사용자 관리", url: "/admin/users", icon: Users },
-  { title: "파트너 관리", url: "/admin/partners", icon: Briefcase },
-  { title: "계약 관리", url: "/admin/contracts", icon: FileText },
-  { title: "견적 요청", url: "/admin/estimates", icon: Calculator },
-  { title: "에스크로 결제", url: "/admin/payments", icon: DollarSign },
-  { title: "피해 신고", url: "/admin/damage-reports", icon: Shield },
-  { title: "이달의 전문가", url: "/admin/featured", icon: Star },
-  { title: "커뮤니티 관리", url: "/admin/community", icon: MessageSquare },
+  { icon: LayoutDashboard, label: "대시보드", href: "/admin" },
+  { icon: Users, label: "회원 관리", href: "/admin/users" },
+  { icon: HardHat, label: "파트너 승인/관리", href: "/admin/partners" },
+  { icon: MessageSquare, label: "견적 문의 관리", href: "/admin/estimates" },
+  { icon: FileText, label: "계약서 관리", href: "/admin/contracts" },
+  { icon: ShieldCheck, label: "증빙 패키지 관리", href: "/admin/evidence" },
+  { icon: CreditCard, label: "결제/정산", href: "/admin/payments" },
+  { icon: AlertTriangle, label: "피해 신고 관리", href: "/admin/damage-reports" },
+  { icon: Settings, label: "설정", href: "/admin/settings" },
 ];
 
-export function AdminSidebar() {
+export default function AdminSidebar() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/login");
+  };
+
   return (
-    <Sidebar className="border-r">
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>관리자 메뉴</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink 
-                      to={item.url} 
-                      end={item.end}
-                      className={({ isActive }) => 
-                        isActive ? "bg-muted text-primary font-medium" : "hover:bg-muted/50"
-                      }
-                    >
-                      <item.icon className="mr-2 h-4 w-4" />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
+    <aside className="w-64 min-h-screen bg-slate-900 text-white flex flex-col">
+      <div className="p-6 border-b border-slate-700">
+        <h1 className="text-xl font-bold tracking-tight">
+          Admin Console
+        </h1>
+      </div>
+
+      <nav className="flex-1 p-4 space-y-1">
+        {menuItems.map((item) => {
+          const isActive = location.pathname === item.href;
+          return (
+            <Link key={item.href} to={item.href}>
+              <Button
+                variant="ghost"
+                className={`w-full justify-start gap-3 text-slate-300 hover:text-white hover:bg-slate-800 ${isActive ? "bg-slate-800 text-white" : ""}`}
+              >
+                <item.icon className="h-5 w-5" />
+                {item.label}
+              </Button>
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="p-4 border-t border-slate-700">
+        <Button variant="ghost" onClick={handleLogout} className="w-full justify-start gap-3 text-red-400 hover:text-red-300 hover:bg-slate-800">
+          <LogOut className="h-5 w-5" />
+          로그아웃
+        </Button>
+      </div>
+    </aside>
   );
 }
