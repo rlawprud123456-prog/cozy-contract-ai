@@ -7,10 +7,13 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { createContract } from "@/services/contract";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, Shield, Eye } from "lucide-react";
+import { 
+  FileText, Shield, Eye, User, MapPin, 
+  Calendar, ArrowLeft, Calculator, CheckCircle2 
+} from "lucide-react";
 import ContractPreview from "@/components/ContractPreview";
-import { AppPage } from "@/components/layout/AppPage";
-import { SectionCard } from "@/components/layout/SectionCard";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface ContractCreateProps {
   user: any;
@@ -37,81 +40,82 @@ export default function ContractCreate({ user }: ContractCreateProps) {
     description: "",
   });
 
-  // AI 견적서에서 전달된 데이터로 폼 초기화
+  // AI 견적서 데이터 로드
   useEffect(() => {
     const estimateData = location.state?.estimateData;
     if (estimateData) {
       const today = new Date();
       const startDate = new Date(today);
-      startDate.setDate(startDate.getDate() + 3); // 3일 후 시작
+      startDate.setDate(startDate.getDate() + 3);
       const endDate = new Date(startDate);
       endDate.setDate(endDate.getDate() + (estimateData.estimate?.duration_days || 30));
+
+      const total = estimateData.estimate?.total_amount || 0;
 
       setFormData({
         partnerName: estimateData.recommendedPartner?.business_name || "",
         partnerPhone: "",
         projectName: estimateData.estimateRequest?.project_name || "",
         location: estimateData.estimateRequest?.location || "",
-        totalAmount: String(estimateData.estimate?.total_amount || ""),
-        depositAmount: String(Math.floor((estimateData.estimate?.total_amount || 0) * 0.3)),
-        midAmount: String(Math.floor((estimateData.estimate?.total_amount || 0) * 0.4)),
-        finalAmount: String(Math.floor((estimateData.estimate?.total_amount || 0) * 0.3)),
+        totalAmount: String(total),
+        depositAmount: String(Math.floor(total * 0.3)),
+        midAmount: String(Math.floor(total * 0.4)),
+        finalAmount: String(Math.floor(total * 0.3)),
         startDate: startDate.toISOString().split('T')[0],
         endDate: endDate.toISOString().split('T')[0],
         description: estimateData.estimate?.recommendations || "",
       });
 
       toast({
-        title: "AI 견적서 불러오기 완료",
-        description: "견적 정보가 자동으로 입력되었습니다. 필요시 수정해주세요.",
+        title: "데이터 연동 완료",
+        description: "AI 견적서 내용을 바탕으로 계약서를 작성합니다.",
       });
     }
   }, [location.state]);
 
-  // 숫자 안전 파싱/합계 유틸
-  const parseIntSafe = (v: string) => Number(v || 0);
+  // 유틸리티 함수
+  const parseIntSafe = (v: string) => Number(v?.replace(/[^0-9]/g, "") || 0);
+  
   const sumMoney = () =>
     parseIntSafe(formData.depositAmount) +
     parseIntSafe(formData.midAmount) +
     parseIntSafe(formData.finalAmount);
 
-  // 표시용 포맷
   const formatMoney = (value: string | number) => {
-    const n = typeof value === "string" ? Number(value || 0) : value;
+    const n = typeof value === "string" ? parseIntSafe(value) : value;
     if (!n) return "0";
     return n.toLocaleString("ko-KR");
   };
 
-  // 인풋 변경
+  // 자동 계산 기능 (총액 입력 시 자동 분배)
+  const autoCalculate = (total: number) => {
+    if (!total) return;
+    const deposit = Math.floor(total * 0.3); // 30%
+    const mid = Math.floor(total * 0.4);     // 40%
+    const final = total - deposit - mid;     // 나머지 (잔금)
+
+    setFormData(prev => ({
+      ...prev,
+      depositAmount: String(deposit),
+      midAmount: String(mid),
+      finalAmount: String(final)
+    }));
+    toast({ title: "자동 계산됨", description: "3:4:3 비율로 대금이 분배되었습니다." });
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target as { name: string; value: string };
+    const { name, value } = e.target;
     const moneyFields = ["totalAmount", "depositAmount", "midAmount", "finalAmount"];
 
     if (moneyFields.includes(name)) {
-      // 금액: 숫자만
       const sanitized = value.replace(/[^\d]/g, "");
       setFormData(prev => ({ ...prev, [name]: sanitized }));
       return;
     }
 
     if (name === "partnerPhone") {
-      // 휴대폰 자동 하이픈 + 최대 11자리
       const digits = value.replace(/\D/g, "").slice(0, 11);
-      let formatted = digits;
-
-      if (digits.startsWith("02")) {
-        if (digits.length > 2 && digits.length <= 6) {
-          formatted = digits.replace(/(\d{2})(\d+)/, "$1-$2");
-        } else if (digits.length > 6) {
-          formatted = digits.replace(/(\d{2})(\d{3,4})(\d{0,4})/, "$1-$2-$3").replace(/-$/, "");
-        }
-      } else {
-        if (digits.length > 3 && digits.length <= 7) {
-          formatted = digits.replace(/(\d{3})(\d+)/, "$1-$2");
-        } else if (digits.length > 7) {
-          formatted = digits.replace(/(\d{3})(\d{3,4})(\d{0,4})/, "$1-$2-$3").replace(/-$/, "");
-        }
-      }
+      let formatted = digits.replace(/^(\d{2,3})(\d{3,4})(\d{4})$/, `$1-$2-$3`);
       setFormData(prev => ({ ...prev, [name]: formatted }));
       return;
     }
@@ -119,116 +123,36 @@ export default function ContractCreate({ user }: ContractCreateProps) {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // 숫자 인풋 휠/이상키 방지
-  const preventWheel = (e: React.WheelEvent<HTMLInputElement>) => {
-    (e.target as HTMLInputElement).blur();
-  };
-  const blockWeirdKeys = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (["e", "E", "+", "-", "."].includes(e.key)) e.preventDefault();
-  };
-
-  // 공통 검증
+  // 유효성 검사 및 제출 로직
   const validateCommon = () => {
-    // 필수
     if (!formData.projectName || !formData.partnerName || !formData.totalAmount) {
-      toast({
-        title: "필수 항목 누락",
-        description: "프로젝트명, 전문가 이름, 총 계약금액은 필수입니다",
-        variant: "destructive",
-      });
+      toast({ title: "필수 정보 누락", description: "프로젝트명, 전문가, 금액을 확인해주세요.", variant: "destructive" });
       return false;
     }
-
-    // 총액 최소 10만원
     const total = parseIntSafe(formData.totalAmount);
     if (total < 100000) {
-      toast({
-        title: "금액 확인",
-        description: "총 계약금액은 최소 10만원 이상이어야 합니다",
-        variant: "destructive",
-      });
+      toast({ title: "금액 오류", description: "최소 계약금액은 10만원입니다.", variant: "destructive" });
       return false;
     }
-
-    // 날짜 검증
-    if (formData.startDate && formData.endDate) {
-      const start = new Date(formData.startDate);
-      const end = new Date(formData.endDate);
-
-      if (start > end) {
-        toast({
-          title: "기간 확인",
-          description: "완료 예정일이 시작일보다 빠를 수 없습니다",
-          variant: "destructive",
-        });
-        return false;
-      }
-
-      // 시작일 과거 금지
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      start.setHours(0, 0, 0, 0);
-      if (start < today) {
-        toast({
-          title: "시작일 확인",
-          description: "시작일은 오늘 이후여야 합니다",
-          variant: "destructive",
-        });
-        return false;
-      }
-    }
-
-    // 합계 일치
-    const partial = sumMoney();
-    if (total !== partial) {
-      toast({
-        title: "금액 합계 불일치",
-        description: `선금+중도금+잔금(${partial.toLocaleString()}원)의 합이 총 계약금액(${total.toLocaleString()}원)과 일치해야 합니다`,
-        variant: "destructive",
-      });
+    if (sumMoney() !== total) {
+      toast({ title: "금액 불일치", description: "지급 단계별 금액의 합이 총액과 다릅니다.", variant: "destructive" });
       return false;
     }
-
     return true;
-  };
-
-  const handlePreview = () => {
-    if (!validateCommon()) return;
-    setShowPreview(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // 인증 확인
     const { data: authData } = await supabase.auth.getUser();
     if (!authData.user) {
-      toast({
-        title: "로그인 필요",
-        description: "계약 생성을 위해 로그인해주세요",
-        variant: "destructive",
-      });
       navigate("/login");
       return;
     }
-
-    // 휴대폰 형식 체크
-    const phone = (formData.partnerPhone || "").trim();
-    const phoneOk = /^01[016789]-?\d{3,4}-?\d{4}$/.test(phone) || /^02-?\d{3,4}-?\d{4}$/.test(phone);
-    if (!phoneOk) {
-      toast({
-        title: "연락처 형식 오류",
-        description: "올바른 전화번호를 입력하세요 (예: 010-1234-5678)",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    
     if (!validateCommon()) return;
 
     try {
       setSubmitting(true);
-
       await createContract({
         user_id: authData.user.id,
         title: formData.projectName,
@@ -242,309 +166,201 @@ export default function ContractCreate({ user }: ContractCreateProps) {
         final_amount: parseIntSafe(formData.finalAmount),
         start_date: formData.startDate,
         end_date: formData.endDate,
-        description: formData.description || undefined,
+        description: formData.description,
       });
-
-      toast({
-        title: "계약 생성 완료",
-        description: "에스크로 결제 페이지로 이동합니다",
-      });
-
       navigate("/escrow");
-    } catch (error) {
-      toast({
-        title: "오류 발생",
-        description: error instanceof Error ? error.message : "계약 생성에 실패했습니다",
-        variant: "destructive",
-      });
+    } catch (error: any) {
+      toast({ title: "생성 실패", description: error.message, variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <AppPage
-      title="안전한 인테리어 계약"
-      description="에스크로 결제로 안전하게 보호되는 계약을 시작하세요"
-      icon={<FileText className="w-6 h-6 text-accent" />}
-      maxWidth="lg"
-    >
-      <SectionCard
-        title="계약서 작성"
-        description="모든 정보를 정확하게 입력해주세요. 계약 완료 후 에스크로 결제가 진행됩니다."
-        headerRight={
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handlePreview}
-            disabled={submitting}
-          >
-            <Eye className="w-4 h-4 mr-1" />
-            미리보기
+    <div className="min-h-screen bg-gray-50 pb-32">
+
+      {/* 헤더 */}
+      <div className="sticky top-0 bg-white border-b z-30 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <ArrowLeft className="w-5 h-5" />
           </Button>
-        }
-      >
-        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-              {/* 파트너 정보 */}
-              <div className="space-y-3 sm:space-y-4">
-                <h3 className="text-base sm:text-lg font-semibold text-foreground border-b pb-2">
-                  전문가 정보
-                </h3>
-                <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="partnerName" className="text-sm">전문가 이름 *</Label>
-                    <Input
-                      id="partnerName"
-                      name="partnerName"
-                      value={formData.partnerName}
-                      onChange={handleChange}
-                      required
-                      placeholder="홍길동"
-                      className="text-sm"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="partnerPhone" className="text-sm">연락처 *</Label>
-                    <Input
-                      id="partnerPhone"
-                      name="partnerPhone"
-                      value={formData.partnerPhone}
-                      onChange={handleChange}
-                      required
-                      maxLength={13}
-                      placeholder="010-1234-5678"
-                      className="text-sm"
-                    />
-                  </div>
-                </div>
+          <h1 className="text-lg font-bold">전자계약 작성</h1>
+        </div>
+        <Button
+          variant="ghost"
+          onClick={() => { if(validateCommon()) setShowPreview(true); }}
+          className="text-blue-600 font-bold"
+        >
+          미리보기
+        </Button>
+      </div>
+
+      <div className="p-4 max-w-2xl mx-auto">
+        {/* 안내 문구 */}
+        <div className="mb-6">
+          <h2 className="text-2xl font-extrabold text-gray-900 leading-tight">
+            안전한 시공을 위해<br />
+            계약 내용을 입력해주세요.
+          </h2>
+          <p className="text-gray-500 mt-2">에스크로 시스템이 대금을 안전하게 보호합니다.</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          
+          {/* 1. 전문가 및 현장 정보 */}
+          <Card className="p-5 rounded-2xl shadow-sm">
+            <div className="flex items-center gap-2 mb-4 text-blue-600">
+              <User className="w-5 h-5" />
+              <h3 className="font-bold">기본 정보</h3>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <Label className="text-xs text-gray-500">전문가(업체) 이름</Label>
+                <Input name="partnerName" value={formData.partnerName} onChange={handleChange} placeholder="예: 홍길동 디자인" className="mt-1 h-12 rounded-xl" />
               </div>
-
-              {/* 프로젝트 정보 */}
-              <div className="space-y-3 sm:space-y-4">
-                <h3 className="text-base sm:text-lg font-semibold text-foreground border-b pb-2">
-                  프로젝트 정보
-                </h3>
-                <div className="space-y-3 sm:space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="projectName" className="text-sm">프로젝트명 *</Label>
-                    <Input
-                      id="projectName"
-                      name="projectName"
-                      value={formData.projectName}
-                      onChange={handleChange}
-                      required
-                      placeholder="거실 및 주방 리모델링"
-                      className="text-sm"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="location" className="text-sm">시공 장소 *</Label>
-                    <Input
-                      id="location"
-                      name="location"
-                      value={formData.location}
-                      onChange={handleChange}
-                      required
-                      placeholder="서울시 강남구 테헤란로 123"
-                      className="text-sm"
-                    />
-                  </div>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="startDate">시작일 *</Label>
-                      <Input
-                        id="startDate"
-                        name="startDate"
-                        type="date"
-                        value={formData.startDate}
-                        onChange={handleChange}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="endDate">완료 예정일 *</Label>
-                      <Input
-                        id="endDate"
-                        name="endDate"
-                        type="date"
-                        value={formData.endDate}
-                        onChange={handleChange}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="description">프로젝트 설명</Label>
-                    <Textarea
-                      id="description"
-                      name="description"
-                      value={formData.description}
-                      onChange={handleChange}
-                      placeholder="프로젝트의 세부 내용을 작성해주세요"
-                      className="min-h-[100px]"
-                    />
-                  </div>
-                </div>
+              <div>
+                <Label className="text-xs text-gray-500">전문가 연락처</Label>
+                <Input name="partnerPhone" value={formData.partnerPhone} onChange={handleChange} placeholder="010-0000-0000" className="mt-1 h-12 rounded-xl" />
               </div>
+            </div>
 
-              {/* 결제 정보 */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground border-b pb-2">
-                  에스크로 결제 정보
-                </h3>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="totalAmount">총 계약 금액 (원) *</Label>
-                    <Input
-                      id="totalAmount"
-                      name="totalAmount"
-                      type="number"
-                      value={formData.totalAmount}
-                      onChange={handleChange}
-                      required
-                      min={100000}
-                      step={10000}
-                      inputMode="numeric"
-                      onWheel={preventWheel}
-                      onKeyDown={blockWeirdKeys}
-                      placeholder="10000000"
-                    />
-                    {formData.totalAmount && (
-                      <p className="text-sm text-muted-foreground">
-                        {formatMoney(formData.totalAmount)}원
-                      </p>
-                    )}
-                  </div>
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="depositAmount">선금 (원) *</Label>
-                      <Input
-                        id="depositAmount"
-                        name="depositAmount"
-                        type="number"
-                        value={formData.depositAmount}
-                        onChange={handleChange}
-                        required
-                        min={0}
-                        step={10000}
-                        inputMode="numeric"
-                        onWheel={preventWheel}
-                        onKeyDown={blockWeirdKeys}
-                        placeholder="3000000"
-                      />
-                      {formData.depositAmount && (
-                        <p className="text-xs text-muted-foreground">
-                          {formatMoney(formData.depositAmount)}원
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="midAmount">중도금 (원) *</Label>
-                      <Input
-                        id="midAmount"
-                        name="midAmount"
-                        type="number"
-                        value={formData.midAmount}
-                        onChange={handleChange}
-                        required
-                        min={0}
-                        step={10000}
-                        inputMode="numeric"
-                        onWheel={preventWheel}
-                        onKeyDown={blockWeirdKeys}
-                        placeholder="4000000"
-                      />
-                      {formData.midAmount && (
-                        <p className="text-xs text-muted-foreground">
-                          {formatMoney(formData.midAmount)}원
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="finalAmount">잔금 (원) *</Label>
-                      <Input
-                        id="finalAmount"
-                        name="finalAmount"
-                        type="number"
-                        value={formData.finalAmount}
-                        onChange={handleChange}
-                        required
-                        min={0}
-                        step={10000}
-                        inputMode="numeric"
-                        onWheel={preventWheel}
-                        onKeyDown={blockWeirdKeys}
-                        placeholder="3000000"
-                      />
-                      {formData.finalAmount && (
-                        <p className="text-xs text-muted-foreground">
-                          {formatMoney(formData.finalAmount)}원
-                        </p>
-                      )}
-                    </div>
-                  </div>
+            <div className="mb-4">
+              <Label className="text-xs text-gray-500">프로젝트 명</Label>
+              <Input name="projectName" value={formData.projectName} onChange={handleChange} placeholder="예: 강남 30평 전체 리모델링" className="mt-1 h-12 rounded-xl" />
+            </div>
 
-                  {/* 합계 표시 */}
-                  {(formData.depositAmount || formData.midAmount || formData.finalAmount) && (
-                    <div className="p-3 bg-secondary/50 rounded-lg">
-                      <div className="flex justify-between text-sm">
-                        <span>합계:</span>
-                        <span className="font-semibold">
-                          {formatMoney(sumMoney())}원
-                        </span>
-                      </div>
-                      {formData.totalAmount && (
-                        <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                          <span>총 계약금액:</span>
-                          <span>{formatMoney(formData.totalAmount)}원</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="p-4 bg-accent/10 rounded-lg border border-accent/20">
-                    <p className="text-sm text-muted-foreground">
-                      <Shield className="w-4 h-4 inline mr-1 text-accent" />
-                      에스크로 결제로 안전하게 보호됩니다. 각 단계별 작업 확인 후 전문가에게 대금이 지급됩니다.
-                    </p>
-                  </div>
-                </div>
+            <div>
+              <Label className="text-xs text-gray-500">시공 현장 주소</Label>
+              <div className="relative mt-1">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input name="location" value={formData.location} onChange={handleChange} placeholder="주소를 입력하세요" className="pl-10 h-12 rounded-xl" />
               </div>
+            </div>
+          </Card>
 
-              {/* 버튼 */}
-              <div className="flex justify-end">
-                <Button
-                  type="submit"
-                  className="bg-accent hover:bg-accent/90"
-                  disabled={submitting}
+          {/* 2. 일정 정보 */}
+          <Card className="p-5 rounded-2xl shadow-sm">
+            <div className="flex items-center gap-2 mb-4 text-blue-600">
+              <Calendar className="w-5 h-5" />
+              <h3 className="font-bold">공사 일정</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs text-gray-500">착공일</Label>
+                <Input type="date" name="startDate" value={formData.startDate} onChange={handleChange} className="mt-1 h-12 rounded-xl" />
+              </div>
+              <div>
+                <Label className="text-xs text-gray-500">준공 예정일</Label>
+                <Input type="date" name="endDate" value={formData.endDate} onChange={handleChange} className="mt-1 h-12 rounded-xl" />
+              </div>
+            </div>
+          </Card>
+
+          {/* 3. 대금 지급 (핵심) */}
+          <Card className="p-5 rounded-2xl shadow-sm border-blue-200 border-2 bg-gradient-to-br from-blue-50/50 to-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2 text-blue-600">
+                <Shield className="w-5 h-5" />
+                <h3 className="font-bold">대금 지급 (에스크로)</h3>
+              </div>
+              <Badge className="bg-green-100 text-green-700 border-none">안전결제 적용</Badge>
+            </div>
+
+            <div className="mb-5">
+              <div className="flex justify-between items-center">
+                <Label className="text-xs text-gray-500">총 공사 금액</Label>
+                <button
+                  type="button"
+                  onClick={() => autoCalculate(parseIntSafe(formData.totalAmount))}
+                  className="text-xs flex items-center gap-1 text-gray-500 hover:text-blue-600 font-medium transition"
                 >
-                  {submitting ? "처리 중..." : "계약 생성 및 에스크로 진행"}
-                </Button>
+                  <Calculator className="w-3 h-3" /> 자동 비율 계산 (3:4:3)
+                </button>
               </div>
-            </form>
-          </SectionCard>
+              <div className="relative mt-1">
+                <Input name="totalAmount" value={formatMoney(formData.totalAmount)} onChange={handleChange} placeholder="0" className="text-right h-14 rounded-xl text-xl font-bold pr-10" />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">원</span>
+              </div>
+            </div>
 
-          {/* 미리보기 모달 */}
-          {showPreview && (
-            <ContractPreview
-              contract={{
-                projectName: formData.projectName,
-                partnerName: formData.partnerName,
-                partnerPhone: formData.partnerPhone,
-                userName: "고객",
-                location: formData.location,
-                startDate: formData.startDate,
-                endDate: formData.endDate,
-                description: formData.description,
-                totalAmount: parseIntSafe(formData.totalAmount),
-                depositAmount: parseIntSafe(formData.depositAmount),
-                midAmount: parseIntSafe(formData.midAmount),
-                finalAmount: parseIntSafe(formData.finalAmount),
-              }}
-              onClose={() => setShowPreview(false)}
-            />
-          )}
-        </AppPage>
-      );
-    }
+            {/* 단계별 지급 */}
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="bg-white p-3 rounded-xl border">
+                <p className="text-[10px] text-gray-400 mb-1">계약금 (선)</p>
+                <div className="relative">
+                  <Input name="depositAmount" value={formatMoney(formData.depositAmount)} onChange={handleChange} className="text-center h-10 rounded-lg text-sm font-semibold pr-6" />
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">원</span>
+                </div>
+              </div>
+              <div className="bg-white p-3 rounded-xl border">
+                <p className="text-[10px] text-gray-400 mb-1">중도금</p>
+                <div className="relative">
+                  <Input name="midAmount" value={formatMoney(formData.midAmount)} onChange={handleChange} className="text-center h-10 rounded-lg text-sm font-semibold pr-6" />
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">원</span>
+                </div>
+              </div>
+              <div className="bg-white p-3 rounded-xl border">
+                <p className="text-[10px] text-gray-400 mb-1">잔금 (완료)</p>
+                <div className="relative">
+                  <Input name="finalAmount" value={formatMoney(formData.finalAmount)} onChange={handleChange} className="text-center h-10 rounded-lg text-sm font-semibold pr-6" />
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">원</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 검증 메시지 */}
+            <div className={`mt-4 text-xs flex items-center gap-1 ${sumMoney() === parseIntSafe(formData.totalAmount) ? 'text-green-600' : 'text-red-500'}`}>
+              {sumMoney() === parseIntSafe(formData.totalAmount) ? (
+                <><CheckCircle2 className="w-4 h-4" /> 금액이 정확히 일치합니다.</>
+              ) : (
+                <>합계가 {formatMoney(parseIntSafe(formData.totalAmount) - sumMoney())}원 차이납니다.</>
+              )}
+            </div>
+          </Card>
+
+          {/* 4. 특약 사항 */}
+          <Card className="p-5 rounded-2xl shadow-sm">
+            <Label className="text-xs text-gray-500">특약 및 요청사항</Label>
+            <Textarea name="description" value={formData.description} onChange={handleChange} placeholder="시공 관련 요청사항을 적어주세요." className="mt-1 min-h-[100px] rounded-xl" />
+          </Card>
+
+          {/* 하단 고정 버튼 */}
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t z-20">
+            <div className="max-w-2xl mx-auto">
+              <Button 
+                type="submit" 
+                disabled={submitting}
+                className="w-full h-14 rounded-2xl text-lg font-bold bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all"
+              >
+                {submitting ? "계약 생성 중..." : "작성 완료 및 결제하기"}
+              </Button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      {/* 미리보기 모달 */}
+      {showPreview && (
+        <ContractPreview
+          contract={{
+            projectName: formData.projectName,
+            partnerName: formData.partnerName,
+            partnerPhone: formData.partnerPhone,
+            userName: user?.user_metadata?.name || "고객",
+            location: formData.location,
+            startDate: formData.startDate,
+            endDate: formData.endDate,
+            description: formData.description,
+            totalAmount: parseIntSafe(formData.totalAmount),
+            depositAmount: parseIntSafe(formData.depositAmount),
+            midAmount: parseIntSafe(formData.midAmount),
+            finalAmount: parseIntSafe(formData.finalAmount),
+          }}
+          onClose={() => setShowPreview(false)}
+        />
+      )}
+    </div>
+  );
+}
