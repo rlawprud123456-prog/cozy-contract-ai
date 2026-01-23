@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { Check, X, MapPin, Phone, Calendar } from "lucide-react";
 
 export default function Partners() {
   const [partners, setPartners] = useState<any[]>([]);
+  const [processingId, setProcessingId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -15,18 +17,20 @@ export default function Partners() {
 
   const loadPartners = async () => {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("partners")
         .select("*")
         .order("created_at", { ascending: false });
 
+      if (error) throw error;
       if (data) setPartners(data);
     } catch (error) {
-      console.error("Partners loading error:", error);
+      console.error("파트너 목록 로딩 실패:", error);
     }
   };
 
-  const updateStatus = async (id: string, status: string) => {
+  const updateStatus = async (id: string, status: "approved" | "rejected", name: string) => {
+    setProcessingId(id);
     try {
       const { error } = await supabase
         .from("partners")
@@ -36,93 +40,115 @@ export default function Partners() {
       if (error) throw error;
 
       toast({
-        title: "상태 업데이트",
-        description: `파트너 상태가 ${status}로 변경되었습니다.`
+        title: status === "approved" ? "파트너 승인 완료" : "파트너 신청 거절",
+        description: `${name}님의 상태가 변경되었습니다.`,
+        variant: status === "approved" ? "default" : "destructive",
       });
 
       await loadPartners();
     } catch (error: any) {
       toast({
-        title: "오류",
+        title: "오류 발생",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
+    } finally {
+      setProcessingId(null);
     }
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      pending: "outline",
-      approved: "default",
-      rejected: "destructive"
-    };
-    
-    const labels: Record<string, string> = {
-      pending: "대기중",
-      approved: "승인됨",
-      rejected: "거부됨"
-    };
-
-    return <Badge variant={variants[status] || "outline"}>{labels[status] || status}</Badge>;
+    switch (status) {
+      case "approved":
+        return <Badge className="bg-green-600">승인됨</Badge>;
+      case "rejected":
+        return <Badge variant="destructive">거절됨</Badge>;
+      default:
+        return <Badge variant="outline">승인 대기중</Badge>;
+    }
   };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">파트너 관리</h1>
-        <p className="text-muted-foreground mt-2">파트너 신청 및 관리</p>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">바로고침 파트너 관리</h1>
+        <p className="text-muted-foreground">
+          총 {partners.length}건의 신청이 있습니다.
+        </p>
       </div>
 
-      <div className="space-y-4">
-        {partners.map((partner) => (
-          <Card key={partner.id}>
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <CardTitle>{partner.business_name}</CardTitle>
-                  <p className="text-sm text-muted-foreground">{partner.category}</p>
-                </div>
-                {getStatusBadge(partner.status)}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="grid gap-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">이메일:</span>
-                    <span>{partner.email}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">전화번호:</span>
-                    <span>{partner.phone}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">신청일:</span>
-                    <span>{new Date(partner.created_at).toLocaleDateString('ko-KR')}</span>
-                  </div>
-                </div>
-                
-                {partner.status === "pending" && (
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      onClick={() => updateStatus(partner.id, "approved")}
-                      size="sm"
-                    >
-                      승인
-                    </Button>
-                    <Button
-                      onClick={() => updateStatus(partner.id, "rejected")}
-                      variant="destructive"
-                      size="sm"
-                    >
-                      거부
-                    </Button>
-                  </div>
-                )}
-              </div>
+      <div className="grid gap-4">
+        {partners.length === 0 ? (
+          <Card>
+            <CardContent className="py-8 text-center text-muted-foreground">
+              아직 파트너 신청 내역이 없습니다.
             </CardContent>
           </Card>
-        ))}
+        ) : (
+          partners.map((partner) => (
+            <Card key={partner.id}>
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-lg">{partner.business_name}</CardTitle>
+                      {getStatusBadge(partner.status)}
+                    </div>
+                    <CardDescription>{partner.category} 전문</CardDescription>
+                  </div>
+                  
+                  {partner.status === "pending" && (
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => updateStatus(partner.id, "approved", partner.business_name)}
+                        disabled={!!processingId}
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        <Check className="w-4 h-4 mr-1" />
+                        승인
+                      </Button>
+                      <Button
+                        onClick={() => updateStatus(partner.id, "rejected", partner.business_name)}
+                        disabled={!!processingId}
+                        variant="destructive"
+                        size="sm"
+                      >
+                        <X className="w-4 h-4 mr-1" />
+                        거절
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-3">
+                  <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Phone className="w-4 h-4" />
+                      {partner.phone || "연락처 없음"}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <MapPin className="w-4 h-4" />
+                      {partner.location || "지역 정보 없음"}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      신청일: {new Date(partner.created_at).toLocaleDateString('ko-KR')}
+                    </span>
+                  </div>
+                  
+                  <div className="mt-2">
+                    <p className="text-sm font-medium mb-1">업체 소개</p>
+                    <p className="text-sm text-muted-foreground">
+                      {partner.description || "소개글이 없습니다."}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   );
