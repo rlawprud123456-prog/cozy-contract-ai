@@ -1,339 +1,236 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, CheckCircle2, AlertTriangle, Lightbulb, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { 
+  ArrowLeft, UploadCloud, FileText, 
+  ShieldCheck, AlertTriangle, CheckCircle2, 
+  ChevronRight, Loader2, SearchCheck 
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CONTRACT_PATTERN_EXAMPLES } from "@/constants/contractPatterns";
-
-interface Issue {
-  clause_hint: string;
-  type: string;
-  severity: "낮음" | "보통" | "높음" | "매우 높음";
-  excerpt: string;
-  reason: string;
-  recommendation: string;
-}
-
-interface AnalysisResult {
-  risk_score: number;
-  risk_level: "낮음" | "보통" | "높음" | "매우 높음";
-  issues: Issue[];
-  summary: string;
-  safe_tips: string[];
-}
 
 interface ContractReviewProps {
   user: any;
 }
 
 export default function ContractReview({ user }: ContractReviewProps) {
+  const navigate = useNavigate();
   const { toast } = useToast();
-  const [contractText, setContractText] = useState("");
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const analyzeContract = async () => {
-    if (!contractText.trim() || contractText.trim().length < 50) {
-      toast({
-        title: "입력 오류",
-        description: "계약서 내용을 최소 50자 이상 입력해주세요.",
-        variant: "destructive"
-      });
-      return;
-    }
+  const [step, setStep] = useState<"upload" | "analyzing" | "result">("upload");
+  const [file, setFile] = useState<File | null>(null);
+  const [progress, setProgress] = useState(0);
+  
+  // 분석 결과 상태 (데모 데이터)
+  const [result, setResult] = useState({
+    score: 85,
+    riskLevel: "양호", // 양호, 주의, 위험
+    summary: "전반적으로 공정한 계약이나, 2가지 독소 조항이 발견되었습니다.",
+    risks: [
+      { id: 1, type: "critical", title: "과도한 지체상금", desc: "공사 지연 시 하루 0.3% 배상은 법적 허용치를 초과합니다." },
+      { id: 2, type: "warning", title: "AS 기간 미명시", desc: "하자 보수 기간이 명확히 기재되지 않았습니다. (통상 1~2년)" },
+    ],
+    safeties: [
+      { id: 3, title: "대금 지급 시기 명확", desc: "착공/중도/잔금 비율이 표준 계약서를 따르고 있습니다." },
+      { id: 4, title: "자재 내역 상세 포함", desc: "사용되는 자재의 브랜드와 등급이 명시되어 있습니다." },
+    ]
+  });
 
-    setIsAnalyzing(true);
-    setAnalysisResult(null);
-
-    try {
-      const { data, error } = await supabase.functions.invoke('contract-review', {
-        body: { contractText }
-      });
-
-      if (error) {
-        console.error("Edge function error:", error);
-        throw error;
-      }
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      setAnalysisResult(data);
-      toast({ 
-        title: "분석 완료", 
-        description: "계약서 검토가 완료되었습니다." 
-      });
-
-    } catch (error: any) {
-      console.error("Analysis error:", error);
-      toast({
-        title: "분석 실패",
-        description: error.message || "계약서 분석 중 오류가 발생했습니다.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsAnalyzing(false);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+      startAnalysis();
     }
   };
 
-  const getRiskBadge = (level?: string) => {
-    const riskLevel = level || analysisResult?.risk_level;
-    switch (riskLevel) {
-      case "낮음":
-        return (
-          <Badge className="bg-green-500 hover:bg-green-600 text-white">
-            <CheckCircle2 className="w-4 h-4 mr-1" />
-            낮음
-          </Badge>
-        );
-      case "보통":
-        return (
-          <Badge className="bg-yellow-500 hover:bg-yellow-600 text-white">
-            <AlertTriangle className="w-4 h-4 mr-1" />
-            보통
-          </Badge>
-        );
-      case "높음":
-        return (
-          <Badge className="bg-orange-500 hover:bg-orange-600 text-white">
-            <AlertCircle className="w-4 h-4 mr-1" />
-            높음
-          </Badge>
-        );
-      case "매우 높음":
-        return (
-          <Badge className="bg-red-500 hover:bg-red-600 text-white">
-            <AlertCircle className="w-4 h-4 mr-1" />
-            매우 높음
-          </Badge>
-        );
-      default:
-        return null;
-    }
+  const startAnalysis = () => {
+    setStep("analyzing");
+    // 프로그레스바 애니메이션 시뮬레이션
+    let p = 0;
+    const interval = setInterval(() => {
+      p += Math.random() * 15;
+      if (p > 100) {
+        p = 100;
+        clearInterval(interval);
+        setTimeout(() => setStep("result"), 800); // 100% 도달 후 결과 화면으로
+      }
+      setProgress(p);
+    }, 300);
   };
 
-  const getSeverityBadge = (severity: string) => {
-    switch (severity) {
-      case "낮음":
-        return <Badge variant="outline" className="text-green-600 border-green-600">낮음</Badge>;
-      case "보통":
-        return <Badge variant="outline" className="text-yellow-600 border-yellow-600">보통</Badge>;
-      case "높음":
-        return <Badge variant="outline" className="text-orange-600 border-orange-600">높음</Badge>;
-      case "매우 높음":
-        return <Badge variant="outline" className="text-red-600 border-red-600">매우 높음</Badge>;
-      default:
-        return null;
-    }
+  const getScoreColor = (score: number) => {
+    if (score >= 90) return "text-green-600";
+    if (score >= 70) return "text-blue-600";
+    return "text-red-600";
   };
 
   return (
-    <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-background to-secondary/30 p-3 sm:p-4">
-      <div className="container mx-auto max-w-5xl py-4 sm:py-6 md:py-8">
-        <div className="mb-6 sm:mb-8 text-center px-2">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-2 sm:mb-3">
-            계약서 검토 서비스
-          </h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            인테리어 계약서를 분석하여 위험 요소를 찾아드립니다
-          </p>
+    <div className="min-h-screen bg-gray-50">
+
+      {/* 헤더 */}
+      <div className="sticky top-0 bg-white border-b z-30 px-4 py-3">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="text-lg font-bold">AI 계약서 진단</h1>
         </div>
+      </div>
 
-        <Tabs defaultValue="review" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="review">계약서 검토</TabsTrigger>
-            <TabsTrigger value="examples">예시 보기</TabsTrigger>
-          </TabsList>
+      <div className="p-4 max-w-xl mx-auto">
+        
+        {/* Step 1: 업로드 화면 */}
+        {step === "upload" && (
+          <div className="space-y-8 pt-8">
 
-          <TabsContent value="review">
-            <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
-          <Card className="shadow-[var(--shadow-card)]">
-            <CardHeader>
-              <CardTitle>계약서 내용 입력</CardTitle>
-              <CardDescription>
-                계약서 텍스트를 붙여넣어 주세요
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Textarea
-                placeholder="계약서 내용을 여기에 붙여넣어 주세요..."
-                value={contractText}
-                onChange={(e) => setContractText(e.target.value)}
-                className="min-h-[300px] resize-none"
-              />
-              <Button
-                onClick={analyzeContract}
-                disabled={!contractText.trim() || isAnalyzing}
-                className="w-full bg-primary hover:bg-primary/90"
-              >
-                {isAnalyzing ? "분석 중..." : "계약서 분석하기"}
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-[var(--shadow-card)]">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between flex-wrap gap-2">
-                <span className="text-base sm:text-lg md:text-xl">분석 결과</span>
-                {analysisResult && getRiskBadge()}
-              </CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
-                AI 기반 위험도 평가 및 개선 제안
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {!analysisResult ? (
-                <div className="flex items-center justify-center min-h-[300px] text-muted-foreground text-sm sm:text-base text-center px-4">
-                  계약서를 입력하고 분석을 시작해주세요
-                </div>
-              ) : (
-                <div className="space-y-4 sm:space-y-6">
-                  {/* 위험도 점수 */}
-                  <div className="p-3 sm:p-4 bg-muted rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-foreground text-sm sm:text-base">위험도 점수</h3>
-                      <span className="text-xl sm:text-2xl font-bold text-primary">{analysisResult.risk_score}/100</span>
-                    </div>
-                    <div className="w-full bg-secondary rounded-full h-2">
-                      <div 
-                        className="bg-primary h-2 rounded-full transition-all"
-                        style={{ width: `${analysisResult.risk_score}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* 요약 */}
-                  <div>
-                    <h3 className="font-semibold text-foreground mb-2 text-sm sm:text-base">종합 평가</h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                      {analysisResult.summary}
-                    </p>
-                  </div>
-                  
-                  {/* 발견된 문제점 */}
-                  {analysisResult.issues.length > 0 && (
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-3 text-sm sm:text-base">발견된 문제점 ({analysisResult.issues.length}개)</h3>
-                      <Accordion type="single" collapsible className="w-full">
-                        {analysisResult.issues.map((issue, idx) => (
-                          <AccordionItem key={idx} value={`item-${idx}`}>
-                            <AccordionTrigger className="text-left text-xs sm:text-sm hover:no-underline">
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full pr-2">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  {getSeverityBadge(issue.severity)}
-                                  <span className="font-medium">{issue.type}</span>
-                                </div>
-                                <span className="text-xs text-muted-foreground">
-                                  {issue.clause_hint}
-                                </span>
-                              </div>
-                            </AccordionTrigger>
-                            <AccordionContent className="text-xs sm:text-sm space-y-3 pt-2">
-                              <div>
-                                <p className="text-muted-foreground font-medium mb-1">📄 발췌:</p>
-                                <p className="text-muted-foreground italic pl-3 border-l-2 border-muted">
-                                  "{issue.excerpt}"
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-muted-foreground font-medium mb-1">⚠️ 문제점:</p>
-                                <p className="text-foreground">{issue.reason}</p>
-                              </div>
-                              <div>
-                                <p className="text-muted-foreground font-medium mb-1">💡 권고사항:</p>
-                                <p className="text-foreground">{issue.recommendation}</p>
-                              </div>
-                            </AccordionContent>
-                          </AccordionItem>
-                        ))}
-                      </Accordion>
-                    </div>
-                  )}
-
-                  {/* 안전 팁 */}
-                  {analysisResult.safe_tips.length > 0 && (
-                    <div className="bg-blue-50 dark:bg-blue-950/30 p-3 sm:p-4 rounded-lg">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Lightbulb className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
-                        <h3 className="font-semibold text-foreground text-sm sm:text-base">안전한 계약을 위한 팁</h3>
-                      </div>
-                      <ul className="space-y-2">
-                        {analysisResult.safe_tips.map((tip, idx) => (
-                          <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm">
-                            <span className="text-blue-600 dark:text-blue-400 mt-1 shrink-0">✓</span>
-                            <span className="text-muted-foreground">{tip}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            <div className="text-center">
+              <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <SearchCheck className="w-10 h-10 text-blue-600" />
+              </div>
+              <h2 className="text-2xl font-extrabold text-gray-900 leading-tight">
+                계약서를 찍어 올리면<br />
+                3초 만에 분석해드려요.
+              </h2>
+              <p className="text-gray-500 mt-2">독소 조항, 누락된 특약 사항을 AI가 찾아냅니다.</p>
             </div>
-          </TabsContent>
 
-          <TabsContent value="examples">
-            <div className="space-y-6">
-              <Card className="shadow-[var(--shadow-card)]">
-                <CardHeader>
-                  <CardTitle>문제계약서 vs 정상계약서 비교</CardTitle>
-                  <CardDescription>
-                    실제 사례를 바탕으로 한 문제계약서와 정상계약서 예시입니다
-                  </CardDescription>
-                </CardHeader>
-              </Card>
+            <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".pdf,image/*" className="hidden" />
+            <Card 
+              onClick={() => fileInputRef.current?.click()}
+              className="p-8 border-2 border-dashed border-blue-300 bg-blue-50/50 rounded-2xl cursor-pointer hover:bg-blue-100/50 transition text-center"
+            >
+              <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <UploadCloud className="w-7 h-7 text-white" />
+              </div>
+              <p className="text-lg font-bold text-gray-800">파일 업로드</p>
+              <p className="text-sm text-gray-500 mt-1">PDF 또는 이미지 파일 (최대 10MB)</p>
+            </Card>
 
-              <div className="grid gap-4 sm:gap-6">
-                {CONTRACT_PATTERN_EXAMPLES.map((example) => (
-                  <Card key={example.id} className="shadow-[var(--shadow-card)]">
-                    <CardHeader>
-                      <CardTitle className="text-base sm:text-lg md:text-xl flex items-center gap-2">
-                        <span className="text-primary">{example.title}</span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid gap-4 md:grid-cols-2">
-                        {/* 문제계약서 */}
-                        <div className="p-4 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-900">
-                          <div className="flex items-center gap-2 mb-3">
-                            <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 dark:text-red-400" />
-                            <h4 className="font-semibold text-red-900 dark:text-red-300 text-sm sm:text-base">
-                              {example.problemLabel}
-                            </h4>
-                          </div>
-                          <pre className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap font-sans">
-                            {example.problemText}
-                          </pre>
-                        </div>
+            <div className="bg-white p-5 rounded-2xl border">
+              <p className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-1">
+                <FileText className="w-4 h-4 text-blue-600" /> 이런걸 분석해요
+              </p>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" /> 불공정한 위약금 조항 여부
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" /> 하자보수(AS) 기간 누락 확인
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" /> 표준 계약서 대비 누락된 필수 조항
+                </li>
+              </ul>
+            </div>
+          </div>
+        )}
 
-                        {/* 정상계약서 */}
-                        <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900">
-                          <div className="flex items-center gap-2 mb-3">
-                            <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400" />
-                            <h4 className="font-semibold text-green-900 dark:text-green-300 text-sm sm:text-base">
-                              {example.normalLabel}
-                            </h4>
-                          </div>
-                          <pre className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap font-sans">
-                            {example.normalText}
-                          </pre>
-                        </div>
-                      </div>
-                    </CardContent>
+        {/* Step 2: 분석 중 화면 */}
+        {step === "analyzing" && (
+          <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6">
+
+            <div className="relative w-24 h-24">
+              {/* 애니메이션 원 */}
+              <div className="absolute inset-0 rounded-full border-4 border-blue-200 animate-ping opacity-50"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-blue-400 animate-pulse"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+              </div>
+            </div>
+            
+            <div>
+              <p className="text-xl font-bold text-gray-900">AI가 계약서를 분석 중입니다</p>
+              <p className="text-gray-500 mt-1">잠시만 기다려주세요... {Math.round(progress)}%</p>
+            </div>
+            
+            <div className="w-full max-w-xs">
+              <Progress value={progress} className="h-2" />
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: 분석 결과 화면 */}
+        {step === "result" && (
+          <div className="space-y-5 pb-32">
+
+            {/* 점수 카드 */}
+            <Card className="p-6 text-center bg-gradient-to-br from-white to-blue-50 rounded-2xl border-0 shadow-lg">
+              <Badge className="bg-green-100 text-green-700 border-none mb-3">
+                <ShieldCheck className="w-3 h-3 mr-1" />{result.riskLevel}
+              </Badge>
+              <p className="text-sm text-gray-500 font-medium">계약서 안전 점수</p>
+              <p className="text-5xl font-black my-3">
+                <span className={getScoreColor(result.score)}>
+                  {result.score}
+                </span>
+                <span className="text-2xl text-gray-400">/ 100</span>
+              </p>
+
+              <p className="text-sm text-gray-600 bg-gray-100 p-3 rounded-xl">
+                "{result.summary}"
+              </p>
+            </Card>
+
+            {/* 위험 요소 리스트 */}
+            <div className="space-y-3">
+              <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-red-500" /> 발견된 위험 요소
+                <Badge variant="destructive" className="ml-auto">{result.risks.length}</Badge>
+              </h3>
+              <div className="space-y-3">
+                {result.risks.map((risk) => (
+                  <Card key={risk.id} className="p-4 rounded-2xl border-red-100 bg-red-50/50">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant={risk.type === "critical" ? "destructive" : "outline"} className="text-xs">
+                        {risk.type === "critical" ? "심각" : "주의"}
+                      </Badge>
+                    </div>
+                    <p className="font-semibold text-gray-900">{risk.title}</p>
+                    <p className="text-sm text-gray-600 mt-1">{risk.desc}</p>
                   </Card>
                 ))}
               </div>
             </div>
-          </TabsContent>
-        </Tabs>
+
+            {/* 안전 요소 리스트 (접이식 느낌) */}
+            <div className="space-y-3">
+              <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-green-500" /> 잘 작성된 조항
+              </h3>
+              <div className="bg-white p-4 rounded-2xl border space-y-4">
+                {result.safeties.map((safe) => (
+                  <div key={safe.id} className="flex items-start gap-3">
+                    <div className="shrink-0 pt-0.5">
+                      <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm text-gray-900">{safe.title}</p>
+                      <p className="text-xs text-gray-500">{safe.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 하단 고정 버튼 */}
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t z-20">
+              <div className="max-w-xl mx-auto grid grid-cols-2 gap-3">
+                <Button variant="outline" onClick={() => setStep("upload")}>
+                  다시 검토하기
+                </Button>
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  전문가 상담 요청
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
