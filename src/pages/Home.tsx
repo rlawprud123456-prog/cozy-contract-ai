@@ -13,30 +13,36 @@ import {
   SearchCheck,
   History,
   Award,
-  ArrowRight
+  ArrowRight,
+  Handshake
 } from "lucide-react";
 import Chatbot from "@/components/Chatbot";
+
+const BASE_STATS = {
+  ESTIMATES: 0, 
+  PARTNERS: 0     
+};
 
 const styles = [
   { 
     id: 1, 
     title: "미니멀 화이트 홈", 
     desc: "군더더기 없는 깔끔한 공간 디자인", 
-    img: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
+    img: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80", 
     q: "white" 
   },
   { 
     id: 2, 
     title: "내추럴 우드 & 플랜테리어", 
     desc: "따뜻한 감성의 원목과 식물의 조화", 
-    img: "https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&q=80",
+    img: "https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&q=80", 
     q: "wood" 
   },
   { 
     id: 3, 
     title: "프리미엄 키친 & 다이닝", 
     desc: "호텔 같은 고급스러운 주방 공간", 
-    img: "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?w=800&q=80",
+    img: "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?w=800&q=80", 
     q: "modern" 
   },
 ];
@@ -62,12 +68,38 @@ const reasons = [
 export default function Home() {
   const [authed, setAuthed] = useState(false);
   const [featuredPartners, setFeaturedPartners] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    estimates: 0,
+    partners: 0
+  });
+  
   const navigate = useNavigate();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setAuthed(!!session));
     fetchFeaturedPartners();
+    fetchRealtimeStats();
   }, []);
+
+  const fetchRealtimeStats = async () => {
+    try {
+      const { count: estimateCount } = await supabase
+        .from('estimate_requests')
+        .select('*', { count: 'exact', head: true });
+
+      const { count: partnerCount } = await supabase
+        .from('partners')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'approved');
+
+      setStats({
+        estimates: estimateCount || 0,
+        partners: partnerCount || 0
+      });
+    } catch (error) {
+      console.error("통계 불러오기 실패:", error);
+    }
+  };
 
   const fetchFeaturedPartners = async () => {
     const { data } = await supabase.from("partners").select("*").eq("status", "approved").limit(4);
@@ -78,19 +110,19 @@ export default function Home() {
       setFeaturedPartners([
         { 
           id: 'demo1', business_name: '아텔리에 서울', category: '프리미엄 아파트', description: '강남권 하이엔드 주거공간 전문', 
-          portfolio_images: ['https://images.unsplash.com/photo-1600210491892-03d54c0aaf87?w=600&q=80']
+          portfolio_images: ['https://images.unsplash.com/photo-1600210491892-03d54c0aaf87?w=600&q=80'] 
         },
         { 
           id: 'demo2', business_name: '스튜디오 모노', category: '상업/오피스', description: '트렌디한 카페 및 쇼룸 디자인', 
-          portfolio_images: ['https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600&q=80']
+          portfolio_images: ['https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600&q=80'] 
         },
         { 
           id: 'demo3', business_name: '더 빌드', category: '단독주택/빌라', description: '기초부터 튼튼한 리모델링', 
-          portfolio_images: ['https://images.unsplash.com/photo-1600607687644-c7171b42498f?w=600&q=80']
+          portfolio_images: ['https://images.unsplash.com/photo-1600607687644-c7171b42498f?w=600&q=80'] 
         },
         { 
           id: 'demo4', business_name: '공간작업소', category: '부분시공/스타일링', description: '합리적인 공간 변화 솔루션', 
-          portfolio_images: ['https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=600&q=80']
+          portfolio_images: ['https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=600&q=80'] 
         },
       ]);
     }
@@ -101,7 +133,6 @@ export default function Home() {
 
       {/* 1. 히어로 섹션 */}
       <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
-
         <div className="absolute inset-0 z-0">
           <img 
             src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1920&q=80" 
@@ -154,14 +185,18 @@ export default function Home() {
                 <Calculator className="w-6 h-6 text-blue-600" />
               </div>
               <p className="text-xs md:text-sm text-muted-foreground">누적 견적 요청</p>
-              <p className="text-2xl md:text-3xl font-bold text-slate-800">1,240+</p>
+              <p className="text-2xl md:text-3xl font-bold text-slate-800">
+                {(BASE_STATS.ESTIMATES + stats.estimates).toLocaleString()}건
+              </p>
             </div>
             <div className="flex flex-col items-center">
               <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-3">
                 <HardHat className="w-6 h-6 text-green-600" />
               </div>
               <p className="text-xs md:text-sm text-muted-foreground">검증된 파트너</p>
-              <p className="text-2xl md:text-3xl font-bold text-slate-800">58팀</p>
+              <p className="text-2xl md:text-3xl font-bold text-slate-800">
+                {(BASE_STATS.PARTNERS + stats.partners).toLocaleString()}팀
+              </p>
             </div>
             <div className="flex flex-col items-center">
               <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mb-3">
@@ -288,6 +323,24 @@ export default function Home() {
                 파트너 신청하고 혜택받기
               </Button>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 8. 공식 협력업체 섹션 */}
+      <section className="py-16 bg-slate-100 border-t">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-xs text-muted-foreground tracking-widest mb-6 uppercase">
+            Official Partners
+          </p>
+          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 text-slate-400">
+            <span className="flex items-center gap-2 text-xl font-semibold hover:text-slate-600 transition-colors">
+              <Handshake className="w-6 h-6" />
+              (주)명광
+            </span>
+            <span className="text-xl font-semibold hover:text-slate-600 transition-colors">K-Build</span>
+            <span className="text-xl font-semibold hover:text-slate-600 transition-colors">Safety Home</span>
+            <span className="text-xl font-semibold hover:text-slate-600 transition-colors">Design Hub</span>
           </div>
         </div>
       </section>
