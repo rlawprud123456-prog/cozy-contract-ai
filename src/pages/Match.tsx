@@ -1,97 +1,163 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
-import { partners } from "@/services/api";
-import { Star, Phone } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ArrowLeft, Home, Building2, Bath, CheckCircle2, Briefcase } from "lucide-react";
+import Chatbot from "@/components/Chatbot";
 
 export default function Match() {
-  const [city, setCity] = useState("");
-  const [minRating, setMinRating] = useState("4.0");
-  const [results, setResults] = useState<any[]>([]);
-  const { toast } = useToast();
+  const navigate = useNavigate();
+  const [step, setStep] = useState(1);
+  const [selection, setSelection] = useState({ type: "", budget: "", style: "" });
 
-  const handleSearch = async () => {
-    const { items } = await partners.match({ city, minRating: parseFloat(minRating) });
-    setResults(items);
-    if (items.length === 0) {
-      toast({ title: "검색 결과 없음", description: "조건에 맞는 전문가가 없습니다" });
-    }
+  const handleSelect = (key: string, value: string) => {
+    setSelection({ ...selection, [key]: value });
   };
 
-  return (
-    <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-background to-secondary/30 p-3 sm:p-4">
-      <div className="container mx-auto max-w-4xl py-4 sm:py-6 md:py-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-primary mb-4 sm:mb-6">전문가 매칭</h1>
-        
-        <Card className="shadow-[var(--shadow-card)] mb-4 sm:mb-6">
-          <CardHeader className="p-4 sm:p-6">
-            <CardTitle className="text-lg sm:text-xl">조건 입력</CardTitle>
-            <CardDescription className="text-sm">원하는 지역과 평점을 선택하세요</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6">
-            <div className="space-y-2">
-              <Label htmlFor="city" className="text-sm">지역</Label>
-              <Input
-                id="city"
-                placeholder="예: 서울, 수원, 인천"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                className="text-sm"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="rating" className="text-sm">최소 평점</Label>
-              <Select value={minRating} onValueChange={setMinRating}>
-                <SelectTrigger id="rating" className="text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="4.0">4.0 이상</SelectItem>
-                  <SelectItem value="4.3">4.3 이상</SelectItem>
-                  <SelectItem value="4.5">4.5 이상</SelectItem>
-                  <SelectItem value="4.7">4.7 이상</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button onClick={handleSearch} className="w-full bg-primary hover:bg-primary/90 text-sm sm:text-base">
-              전문가 찾기
-            </Button>
-          </CardContent>
-        </Card>
+  const nextStep = () => setStep(step + 1);
+  const prevStep = () => setStep(step - 1);
 
-        {results.length > 0 && (
-          <div className="space-y-3 sm:space-y-4">
-            <h2 className="text-lg sm:text-xl font-semibold">검색 결과 ({results.length}개)</h2>
-            {results.map((partner) => (
-              <Card key={partner.id} className="shadow-[var(--shadow-card)]">
-                <CardHeader className="p-4 sm:p-6">
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
-                    <div>
-                      <CardTitle className="text-base sm:text-lg">{partner.name}</CardTitle>
-                      <CardDescription className="text-xs sm:text-sm">{partner.city} · {partner.category}</CardDescription>
-                    </div>
-                    <div className="flex items-center gap-1 text-amber-500">
-                      <Star className="h-4 w-4 sm:h-5 sm:w-5 fill-current" />
-                      <span className="font-semibold text-sm sm:text-base">{partner.rating}</span>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4 sm:p-6">
-                  <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
-                    <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span>{partner.phone}</span>
-                  </div>
-                  <Button className="bg-primary hover:bg-primary/90 w-full sm:w-auto text-sm">상담 신청</Button>
-                </CardContent>
-              </Card>
-            ))}
+  const spaceTypes = [
+    { id: "apt", label: "아파트", icon: <Home className="w-8 h-8" /> },
+    { id: "office", label: "사무실/상가", icon: <Briefcase className="w-8 h-8" /> },
+    { id: "studio", label: "원룸/오피스텔", icon: <Building2 className="w-8 h-8" /> },
+    { id: "bath", label: "욕실/주방", icon: <Bath className="w-8 h-8" /> },
+  ];
+
+  const budgetOptions = [
+    "1,000만원 미만",
+    "1,000만원 ~ 3,000만원",
+    "3,000만원 ~ 5,000만원",
+    "5,000만원 이상",
+    "잘 모르겠어요"
+  ];
+
+  const styleOptions = ["모던/심플", "내추럴/우드", "빈티지", "럭셔리/호텔", "화이트"];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex flex-col">
+      {/* 헤더 */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b px-4 py-4 flex items-center gap-4">
+        <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+          <ArrowLeft className="w-6 h-6 text-gray-600" />
+        </button>
+        <h1 className="text-lg font-bold text-foreground">맞춤 전문가 찾기</h1>
+        <div className="flex-1" />
+      </header>
+
+      <div className="flex-1 flex flex-col max-w-lg mx-auto w-full px-4 py-8">
+        {/* 진행 상태 바 */}
+        <div className="flex gap-2 mb-8">
+          {[1, 2, 3].map((i) => (
+            <div 
+              key={i} 
+              className={`h-1.5 flex-1 rounded-full transition-colors ${step >= i ? "bg-primary" : "bg-gray-200"}`} 
+            />
+          ))}
+        </div>
+
+        {/* 질문 영역 */}
+        <div className="flex-1">
+          <div className="mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+              {step === 1 && "어떤 공간을 바꾸고 싶으신가요?"}
+              {step === 2 && "생각하시는 예산대는 얼마인가요?"}
+              {step === 3 && "선호하는 스타일이 있나요?"}
+            </h2>
+            <p className="text-muted-foreground">딱 맞는 전문가를 연결해 드릴게요.</p>
           </div>
-        )}
+
+          {/* Step 1: 공간 선택 */}
+          {step === 1 && (
+            <div className="grid grid-cols-2 gap-4">
+              {spaceTypes.map((item) => (
+                <Card
+                  key={item.id}
+                  onClick={() => handleSelect("type", item.id)}
+                  className={`p-6 cursor-pointer transition-all border-2 hover:shadow-md ${
+                    selection.type === item.id 
+                      ? "border-primary bg-primary/5 shadow-md" 
+                      : "border-transparent bg-card hover:bg-muted/50"
+                  }`}
+                >
+                  <div className={`mb-3 ${selection.type === item.id ? "text-primary" : "text-muted-foreground"}`}>
+                    {item.icon}
+                  </div>
+                  <span className={`font-bold ${selection.type === item.id ? "text-primary" : "text-foreground"}`}>
+                    {item.label}
+                  </span>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Step 2: 예산 선택 */}
+          {step === 2 && (
+            <div className="space-y-3">
+              {budgetOptions.map((label) => (
+                <Card
+                  key={label}
+                  onClick={() => handleSelect("budget", label)}
+                  className={`w-full p-5 cursor-pointer text-left font-bold text-lg transition-all border-2 ${
+                    selection.budget === label 
+                      ? "border-primary bg-primary/5 text-primary shadow-md" 
+                      : "border-transparent bg-card text-foreground hover:bg-muted/50"
+                  }`}
+                >
+                  {label}
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Step 3: 스타일 선택 */}
+          {step === 3 && (
+            <div className="grid grid-cols-2 gap-3">
+              {styleOptions.map((style) => (
+                <Card
+                  key={style}
+                  onClick={() => handleSelect("style", style)}
+                  className={`h-24 flex items-center justify-center cursor-pointer font-bold text-lg transition-all border-2 ${
+                    selection.style === style 
+                      ? "border-primary bg-primary/5 text-primary shadow-md" 
+                      : "border-transparent bg-card text-foreground hover:bg-muted/50"
+                  }`}
+                >
+                  {style}
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 하단 버튼 */}
+        <div className="pt-8 mt-auto">
+          <div className="flex gap-3">
+            {step > 1 && (
+              <Button variant="outline" size="lg" onClick={prevStep} className="h-14 px-6 rounded-xl">
+                이전
+              </Button>
+            )}
+            <Button 
+              size="lg" 
+              className="flex-1 h-14 rounded-xl font-bold text-lg"
+              disabled={
+                (step === 1 && !selection.type) ||
+                (step === 2 && !selection.budget) ||
+                (step === 3 && !selection.style)
+              }
+              onClick={() => {
+                if (step < 3) nextStep();
+                else navigate('/partners');
+              }}
+            >
+              {step === 3 ? "전문가 매칭하기" : "다음"}
+            </Button>
+          </div>
+        </div>
       </div>
+
+      <Chatbot />
     </div>
   );
 }
