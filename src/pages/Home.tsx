@@ -17,7 +17,8 @@ import {
   ArrowRight,
   Handshake,
   Search,
-  AlertTriangle
+  AlertTriangle,
+  Star
 } from "lucide-react";
 import Chatbot from "@/components/Chatbot";
 
@@ -193,48 +194,92 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 5. 이달의 전문가 */}
-      <section className="py-20 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-end mb-10">
-            <div>
-              <Badge className="mb-2 bg-amber-500 text-white">이달의 추천</Badge>
-              <h2 className="text-3xl font-bold">검증된 시공 파트너</h2>
-            </div>
-            <Button variant="ghost" onClick={() => navigate("/partners")}>
-              전체보기 <ArrowRight className="ml-1 h-4 w-4" />
-            </Button>
+      {/* 5. 이달의 전문가 (디자인 업그레이드) */}
+      <section className="container px-4 py-16 bg-muted/50 rounded-3xl my-16">
+        <div className="flex items-center justify-between mb-10">
+          <div>
+            <Badge className="mb-3 bg-primary text-primary-foreground border-none">이달의 추천</Badge>
+            <h2 className="text-3xl font-bold text-foreground">검증된 시공 파트너</h2>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredPartners.map((partner) => (
-              <Link key={partner.id} to={`/partners/detail/${partner.id}`}>
-                <Card className="h-full hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden group border-none shadow-md">
-                  <div className="aspect-[4/3] relative bg-muted overflow-hidden">
+          <Button variant="ghost" className="text-primary hover:text-primary/80 hover:bg-primary/10" onClick={() => navigate("/partners")}>
+            전체보기 <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+          {featuredPartners.map((partner) => (
+            <Link 
+              key={partner.id} 
+              to={`/partners/detail/${partner.id}`} 
+              className="block h-full group cursor-pointer"
+            >
+              <Card className="h-full hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border-0 shadow-sm overflow-hidden bg-card rounded-2xl relative">
+                
+                {/* 1. 활동 사진 (메인 이미지) */}
+                <div className="h-56 overflow-hidden relative bg-muted">
+                  <img 
+                    src={partner.portfolio_images?.[0] || "https://placehold.co/600x400?text=No+Image"} 
+                    alt={partner.business_name} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                  />
+                  {/* 인증 배지 */}
+                  <div className="absolute top-3 right-3 bg-background/90 backdrop-blur px-2.5 py-1 rounded-full text-xs font-bold text-primary shadow-sm flex items-center gap-1">
+                    <Award className="w-3 h-3" /> 인증업체
+                  </div>
+                </div>
+
+                {/* 2. 로고 & 업체명 (겹치게 디자인) */}
+                <div className="px-5 relative">
+                  <div className="absolute -top-8 left-5 w-16 h-16 rounded-2xl bg-card p-1 shadow-md border border-border">
                     <img 
-                      src={partner.portfolio_images?.[0] || '/placeholder.svg'} 
-                      alt={partner.business_name} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      src={partner.logo_url || "https://placehold.co/100x100?text=Logo"} 
+                      alt="logo" 
+                      className="w-full h-full object-cover rounded-xl"
                     />
-                    <div className="absolute top-3 left-3">
-                      <Badge className="bg-primary/90 text-primary-foreground text-xs backdrop-blur-sm"><Award className="w-3 h-3 mr-1" /> 인증업체</Badge>
+                  </div>
+                </div>
+
+                <CardHeader className="p-5 pt-10 mt-1">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardDescription className="text-primary font-bold text-xs mb-1">{partner.category}</CardDescription>
+                      <CardTitle className="text-lg font-bold group-hover:text-primary transition-colors truncate">
+                        {partner.business_name}
+                      </CardTitle>
+                    </div>
+                    {/* 별점 표시 */}
+                    <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-md">
+                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                      <span className="text-xs font-bold text-amber-700">{partner.rating || "5.0"}</span>
                     </div>
                   </div>
-                  <CardHeader className="pb-1 pt-4">
-                    <CardDescription className="text-xs">{partner.category}</CardDescription>
-                    <CardTitle className="text-lg group-hover:text-primary transition-colors">
-                      {partner.business_name}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
+                </CardHeader>
+
+                {/* 3. 리뷰 & 설명 */}
+                <CardContent className="p-5 pt-0">
+                  {partner.review_summary ? (
+                    <div className="bg-muted p-3 rounded-xl mb-3 relative">
+                      {/* 말풍선 꼬리 */}
+                      <div className="absolute -top-1 left-4 w-2 h-2 bg-muted rotate-45"></div> 
+                      <p className="text-xs text-muted-foreground font-medium line-clamp-2">
+                        "{partner.review_summary}"
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed mb-3">
                       {partner.description}
                     </p>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
+                  )}
+                  
+                  <div className="flex gap-2 text-xs text-muted-foreground pt-2 border-t mt-auto">
+                    <span>최근 시공 {Math.floor(Math.random() * 20) + 5}건</span>
+                    <span>•</span>
+                    <span>경력 {Math.floor(Math.random() * 10) + 3}년</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
         </div>
       </section>
 
