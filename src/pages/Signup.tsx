@@ -15,6 +15,7 @@ export default function Signup() {
     password: "",
     passwordConfirm: "",
     name: "",
+    phone: "",
   });
   const [loading, setLoading] = useState(false);
 
@@ -22,8 +23,15 @@ export default function Signup() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^0-9]/g, "").slice(0, 11);
+    const formatted = value.replace(/^(\d{2,3})(\d{3,4})(\d{4})$/, `$1-$2-$3`);
+    setFormData({ ...formData, phone: formatted });
+  };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (formData.password !== formData.passwordConfirm) {
       toast({ title: "비밀번호 불일치", description: "비밀번호가 서로 다릅니다.", variant: "destructive" });
       return;
@@ -37,6 +45,7 @@ export default function Signup() {
         options: {
           data: {
             name: formData.name,
+            phone: formData.phone,
           },
         },
       });
@@ -45,7 +54,7 @@ export default function Signup() {
 
       toast({
         title: "가입 성공!",
-        description: "이메일 인증을 확인해주세요. (또는 바로 로그인 가능)",
+        description: "환영합니다! 이제 로그인해주세요.",
       });
       navigate("/login");
 
@@ -75,7 +84,7 @@ export default function Signup() {
             환영합니다!<br />
             바로고침을 시작해볼까요?
           </h1>
-          <p className="text-slate-500 mt-2">안전한 인테리어의 시작, 30초면 충분해요.</p>
+          <p className="text-slate-500 mt-2">안전한 시공을 위한 첫걸음입니다.</p>
         </div>
 
         <form onSubmit={handleSignup} className="space-y-5">
@@ -92,7 +101,20 @@ export default function Signup() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-sm font-semibold text-slate-600 pl-1">이메일</label>
+            <label className="text-sm font-semibold text-slate-600 pl-1">휴대폰 번호</label>
+            <Input 
+              name="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={handlePhoneChange}
+              required
+              placeholder="010-1234-5678"
+              className="h-14 rounded-2xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-blue-500 text-lg px-4 transition-all"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-sm font-semibold text-slate-600 pl-1">이메일 (아이디)</label>
             <Input 
               name="email"
               type="email"
@@ -140,12 +162,8 @@ export default function Signup() {
             disabled={loading} 
             className="w-full h-14 rounded-2xl text-lg font-bold bg-slate-900 hover:bg-slate-800 transition-transform active:scale-[0.98] mt-4"
           >
-            {loading ? "가입 처리 중..." : "회원가입 완료"}
+            {loading ? "가입 처리 중..." : "동의하고 가입하기"}
           </Button>
-
-          <p className="text-center text-xs text-slate-400 pt-2">
-            가입 시 <a href="/terms" className="underline hover:text-slate-600">이용약관</a> 및 <a href="/privacy" className="underline hover:text-slate-600">개인정보처리방침</a>에 동의하게 됩니다.
-          </p>
         </form>
       </div>
     </div>
