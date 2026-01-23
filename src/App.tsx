@@ -54,6 +54,7 @@ import FeaturedHistory from "./pages/FeaturedHistory";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AIInterior from "./pages/AIInterior";
 import CommunityManagement from "./pages/admin/Community";
+import EvidenceManager from "./pages/admin/EvidenceManager";
 import PartnerCenter from "./pages/PartnerCenter";
 import EvidencePackage from "./pages/EvidencePackage";
 import PartnerLogin from "./pages/PartnerLogin";
@@ -119,6 +120,7 @@ function AppContent() {
             <Route path="damage-reports" element={<DamageReports />} />
             <Route path="featured" element={<Featured />} />
             <Route path="community" element={<CommunityManagement />} />
+            <Route path="evidence" element={<EvidenceManager />} />
           </Route>
           <Route path="/contract-create" element={<ContractCreate user={user} />} />
           <Route path="/escrow" element={<Escrow user={user} />} />

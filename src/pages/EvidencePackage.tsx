@@ -1,78 +1,183 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import {
-  ShieldCheck,
-  FileText,
-  Camera,
-  CreditCard,
-  Download,
-  CheckCircle,
-  Clock,
-  X,
+  ShieldCheck, FileText, Camera, CreditCard,
+  CheckCircle, Clock, X, Loader2, Download
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AppPage } from "@/components/layout/AppPage";
-import { SectionCard } from "@/components/layout/SectionCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 
 type EvidenceType = "contract" | "photo" | "payment";
 
-interface ProjectInfo {
-  name: string;
-  contractor: string;
-  startDate?: string;
+interface EvidenceItem {
+  id: string;
+  package_id: string;
+  type: string;
+  title: string;
+  file_url: string;
+  status: string;
+  created_at: string;
+  verified_at: string | null;
 }
 
-interface EvidenceItem {
-  id: number;
-  type: EvidenceType;
-  title: string;
-  date: string;
-  status: "verified" | "pending";
-  file: string;
+interface EvidencePackageData {
+  id: string;
+  project_name: string;
+  contractor_name: string | null;
+  status: string;
+  created_at: string;
 }
 
 export default function EvidencePackage() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const timelineEndRef = useRef<HTMLDivElement>(null);
 
-  const [projectInfo, setProjectInfo] = useState<ProjectInfo>({
-    name: "",
-    contractor: "",
-    startDate: "",
-  });
-
-  const [evidenceList, setEvidenceList] = useState<EvidenceItem[]>([
-    {
-      id: 1,
-      type: "contract",
-      title: "표준계약서 (전자서명 완료)",
-      date: "2025. 11. 20.",
-      status: "verified",
-      file: "contract_final_v1.pdf",
-    },
-    {
-      id: 2,
-      type: "payment",
-      title: "계약금 10% 송금 내역",
-      date: "2025. 11. 20.",
-      status: "verified",
-      file: "bank_receipt_001.jpg",
-    },
-  ]);
-
+  const [userId, setUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [currentPackage, setCurrentPackage] = useState<EvidencePackageData | null>(null);
+  const [evidenceList, setEvidenceList] = useState<EvidenceItem[]>([]);
+  
+  const [projectInfo, setProjectInfo] = useState({ name: "", contractor: "" });
+  const [isUploading, setIsUploading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  useEffect(() => {
+    checkAuthAndLoadData();
+  }, []);
+
+  const checkAuthAndLoadData = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      toast({ title: "로그인 필요", description: "증빙 패키지는 로그인 후 이용 가능합니다.", variant: "destructive" });
+      navigate("/login");
+      return;
+    }
+
+    setUserId(session.user.id);
+    await loadEvidence(session.user.id);
+  };
+
+  const loadEvidence = async (uid: string) => {
+    try {
+      const { data: packages, error: pkgError } = await supabase
+        .from("evidence_packages")
+        .select("*")
+        .eq("user_id", uid)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (pkgError) throw pkgError;
+
+      if (packages && packages.length > 0) {
+        const pkg = packages[0];
+        setCurrentPackage(pkg);
+        setProjectInfo({ 
+          name: pkg.project_name, 
+          contractor: pkg.contractor_name || "" 
+        });
+
+        const { data: items, error: itemsError } = await supabase
+          .from("evidence_items")
+          .select("*")
+          .eq("package_id", pkg.id)
+          .order("created_at", { ascending: true });
+
+        if (itemsError) throw itemsError;
+        setEvidenceList(items || []);
+      }
+    } catch (error) {
+      console.error("Evidence load error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     timelineEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [evidenceList]);
 
-  const handleDeleteItem = (id: number) => {
-    if (confirm("이 증빙 자료를 삭제하시겠습니까?")) {
+  const handleDeleteItem = async (id: string) => {
+    if (!confirm("이 증빙 자료를 삭제하시겠습니까?")) return;
+
+    try {
+      const { error } = await supabase.from("evidence_items").delete().eq("id", id);
+      if (error) throw error;
+
       setEvidenceList(prev => prev.filter(item => item.id !== id));
       toast({ title: "삭제 완료", description: "항목이 타임라인에서 제거되었습니다." });
+    } catch (e) {
+      toast({ title: "오류", description: "삭제하지 못했습니다.", variant: "destructive" });
+    }
+  };
+
+  const ensurePackageExists = async (): Promise<string | null> => {
+    if (!userId) return null;
+
+    if (currentPackage && currentPackage.project_name === projectInfo.name) {
+      return currentPackage.id;
+    }
+
+    const { data, error } = await supabase
+      .from("evidence_packages")
+      .insert({
+        user_id: userId,
+        project_name: projectInfo.name,
+        contractor_name: projectInfo.contractor || null,
+        status: "draft"
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    setCurrentPackage(data);
+    return data.id;
+  };
+
+  const handleFileUpload = async (type: EvidenceType) => {
+    if (!projectInfo.name.trim()) {
+      toast({ title: "프로젝트명 입력 필요", description: "어떤 공사인지 입력해주세요.", variant: "destructive" });
+      return;
+    }
+
+    setIsUploading(true);
+    const typeName = type === "photo" ? "현장 시공 사진" : type === "payment" ? "결제 영수증" : "계약서/변경합의서";
+    const fileName = `upload_${Date.now()}.jpg`;
+
+    try {
+      const packageId = await ensurePackageExists();
+      if (!packageId) throw new Error("패키지 생성 실패");
+
+      const { data, error } = await supabase.from("evidence_items").insert({
+        package_id: packageId,
+        type: type,
+        title: `${typeName} 업로드`,
+        file_url: fileName,
+        status: "pending"
+      }).select().single();
+
+      if (error) throw error;
+
+      setEvidenceList(prev => [...prev, data]);
+      
+      setTimeout(async () => {
+        await supabase.from("evidence_items").update({ status: 'verified' }).eq('id', data.id);
+        setEvidenceList(prev => prev.map(item => 
+          item.id === data.id ? { ...item, status: 'verified' } : item
+        ));
+        toast({ title: "인증 완료", description: "블록체인 해시값이 생성되었습니다." });
+      }, 1500);
+
+    } catch (e: any) {
+      toast({ title: "업로드 실패", description: e.message, variant: "destructive" });
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -87,7 +192,6 @@ export default function EvidencePackage() {
     }
 
     setIsGenerating(true);
-
     setTimeout(() => {
       setIsGenerating(false);
       toast({
@@ -97,216 +201,143 @@ export default function EvidencePackage() {
     }, 2000);
   };
 
-  const handleFileUpload = (type: EvidenceType) => {
-    const typeName =
-      type === "photo"
-        ? "현장 시공 사진"
-        : type === "payment"
-        ? "결제 영수증"
-        : "계약서/변경합의서";
-
-    const date = new Date();
-    const formattedDate = `${date.getFullYear()}. ${date.getMonth() + 1}. ${date.getDate()}.`;
-
-    const newItem: EvidenceItem = {
-      id: Date.now(),
-      type,
-      title: `${typeName} 업로드`,
-      date: formattedDate,
-      status: "pending",
-      file: `upload_${date.getTime()}.jpg`,
-    };
-
-    setEvidenceList((prev) => [...prev, newItem]);
-
-    setTimeout(() => {
-      setEvidenceList((prev) =>
-        prev.map((item) =>
-          item.id === newItem.id ? { ...item, status: "verified" as const } : item
-        )
-      );
-      toast({
-        title: "타임스탬프 인증 완료",
-        description: "블록체인 네트워크에 해시값이 기록되었습니다.",
-      });
-    }, 1500);
-  };
-
-  const getTypeBadgeVariant = (type: EvidenceType) => {
+  const getTypeStyle = (type: string) => {
     switch (type) {
-      case "contract":
-        return "default";
-      case "payment":
-        return "secondary";
-      default:
-        return "outline";
+      case "contract": return { icon: <FileText className="w-5 h-5" />, bg: "bg-blue-50" };
+      case "payment": return { icon: <CreditCard className="w-5 h-5" />, bg: "bg-purple-50" };
+      default: return { icon: <Camera className="w-5 h-5" />, bg: "bg-green-50" };
     }
   };
 
-  const renderTypeIcon = (type: EvidenceType) => {
-    switch (type) {
-      case "contract":
-        return <FileText className="w-4 h-4" />;
-      case "payment":
-        return <CreditCard className="w-4 h-4" />;
-      default:
-        return <Camera className="w-4 h-4" />;
-    }
-  };
+  if (loading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin" /></div>;
 
   return (
-    <AppPage
-      title="소비자 자동 증빙 패키지"
-      description="계약·시공·결제 데이터 자동 아카이빙 시스템"
-      icon={<ShieldCheck className="w-6 h-6 text-accent" />}
-      maxWidth="xl"
-    >
+    <AppPage title="증빙 패키지" description="계약·시공 기록을 안전하게 보관하세요">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* 좌측: 입력 컨트롤 패널 */}
+
+        {/* 왼쪽: 입력 패널 */}
         <div className="lg:col-span-1 space-y-6">
-          {/* 프로젝트 정보 카드 */}
-          <SectionCard title="프로젝트 정보">
+          <Card className="p-6 rounded-3xl shadow-sm">
+            <div className="flex items-center gap-2 mb-6 text-primary font-bold text-lg">
+              <ShieldCheck className="w-5 h-5" />
+              프로젝트 정보
+            </div>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="project-name" className="text-xs">
-                  프로젝트 명
-                </Label>
-                <Input
-                  id="project-name"
-                  type="text"
-                  placeholder="예: 전주 효자동 리모델링"
-                  value={projectInfo.name}
-                  onChange={(e) =>
-                    setProjectInfo((prev) => ({ ...prev, name: e.target.value }))
-                  }
-                  className="mt-1.5"
+                <Label className="text-sm text-muted-foreground">프로젝트 명</Label>
+                <Input 
+                  placeholder="예: 강남 아파트 욕실 리모델링" 
+                  value={projectInfo.name} 
+                  onChange={e => setProjectInfo(prev => ({ ...prev, name: e.target.value }))} 
+                  className="bg-gray-50 border-0 rounded-xl h-12 mt-1" 
                 />
               </div>
               <div>
-                <Label htmlFor="contractor" className="text-xs">
-                  시공 업체
-                </Label>
-                <Input
-                  id="contractor"
-                  type="text"
-                  placeholder="업체명 입력"
-                  value={projectInfo.contractor}
-                  onChange={(e) =>
-                    setProjectInfo((prev) => ({ ...prev, contractor: e.target.value }))
-                  }
-                  className="mt-1.5"
+                <Label className="text-sm text-muted-foreground">시공 업체</Label>
+                <Input 
+                  placeholder="예: ㅇㅇ인테리어" 
+                  value={projectInfo.contractor} 
+                  onChange={e => setProjectInfo(prev => ({ ...prev, contractor: e.target.value }))} 
+                  className="bg-gray-50 border-0 rounded-xl h-12 mt-1" 
                 />
               </div>
             </div>
-          </SectionCard>
+          </Card>
 
-          {/* 업로드 액션 버튼들 */}
-          <SectionCard title="증빙 자료 추가">
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                variant="outline"
-                onClick={() => handleFileUpload("contract")}
-                className="h-24 flex flex-col items-center justify-center gap-2 border-dashed hover:bg-accent"
-              >
-                <FileText className="w-5 h-5" />
-                <span className="text-xs">계약서</span>
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => handleFileUpload("photo")}
-                className="h-24 flex flex-col items-center justify-center gap-2 border-dashed hover:bg-accent"
-              >
-                <Camera className="w-5 h-5" />
-                <span className="text-xs">현장 사진</span>
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => handleFileUpload("payment")}
-                className="col-span-2 h-16 flex items-center justify-center gap-2 border-dashed hover:bg-accent"
-              >
-                <CreditCard className="w-5 h-5" />
-                <span className="text-xs">결제 영수증 / 송금 내역 추가</span>
-              </Button>
+          <Card className="p-6 rounded-3xl shadow-sm">
+            <div className="flex items-center gap-2 mb-6 text-primary font-bold text-lg">
+              <Camera className="w-5 h-5" />
+              자료 업로드
             </div>
-          </SectionCard>
+            <div className="grid grid-cols-2 gap-3">
+              <button 
+                disabled={isUploading} 
+                onClick={() => handleFileUpload("contract")} 
+                className="col-span-2 flex items-center justify-center gap-2 p-4 rounded-2xl bg-blue-50 text-blue-700 hover:bg-blue-100 transition font-bold disabled:opacity-50"
+              >
+                <FileText className="w-5 h-5" /> 계약서 등록
+              </button>
+              <button 
+                disabled={isUploading} 
+                onClick={() => handleFileUpload("photo")} 
+                className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-green-50 text-green-700 hover:bg-green-100 transition font-medium text-sm disabled:opacity-50"
+              >
+                <Camera className="w-5 h-5" /> 현장 사진
+              </button>
+              <button 
+                disabled={isUploading} 
+                onClick={() => handleFileUpload("payment")} 
+                className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-purple-50 text-purple-700 hover:bg-purple-100 transition font-medium text-sm disabled:opacity-50"
+              >
+                <CreditCard className="w-5 h-5" /> 송금 내역
+              </button>
+            </div>
+          </Card>
         </div>
 
-        {/* 우측: 타임라인 디스플레이 */}
+        {/* 오른쪽: 타임라인 */}
         <div className="lg:col-span-2">
-          <SectionCard
-            title="실시간 증빙 타임라인"
-            headerRight={
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="text-[10px]">
-                  Total: {evidenceList.length}건
-                </Badge>
-                <Badge variant="default" className="text-[10px] flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3" /> 보안 연결됨
-                </Badge>
+          <Card className="rounded-3xl shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b">
+              <div>
+                <h2 className="text-xl font-bold">타임라인</h2>
+                <p className="text-sm text-muted-foreground">모든 기록은 로그인한 계정에만 저장됩니다.</p>
               </div>
-            }
-            className="h-[600px] flex flex-col"
-          >
-            {/* 타임라인 본문 (스크롤 영역) */}
-            <div className="flex-1 overflow-y-auto -mx-6 px-6 -mb-6 pb-6">
-              <div className="relative border-l-2 border-border ml-3 space-y-6 pb-2">
-                {evidenceList.map((item) => (
-                  <div
-                    key={item.id}
-                    className="relative pl-8 animate-in fade-in slide-in-from-bottom-2 duration-300 group"
-                  >
-                    {/* 타임라인 점 */}
-                    <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full border-4 border-card bg-primary shadow-sm" />
-
-                    {/* 카드 내용 */}
-                    <div className="bg-card p-4 rounded-xl border shadow-sm hover:shadow-md transition-all relative">
-                      {/* 삭제 버튼 (호버 시 표시) */}
-                      <button
-                        onClick={() => handleDeleteItem(item.id)}
-                        className="absolute top-3 right-3 text-muted-foreground/50 hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex items-center gap-2">
-                          {renderTypeIcon(item.type)}
-                          <span className="font-bold text-sm">{item.title}</span>
-                        </div>
-                        <Badge variant="outline" className="text-xs flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> {item.date}
-                        </Badge>
-                      </div>
-
-                      <div className="flex justify-between items-center mt-3 pt-3 border-t">
-                        <code className="text-xs text-muted-foreground truncate max-w-[150px] bg-muted px-2 py-0.5 rounded">
-                          {item.file}
-                        </code>
-                        {item.status === "verified" ? (
-                          <Badge
-                            variant={getTypeBadgeVariant(item.type)}
-                            className="text-[11px] flex items-center gap-1"
-                          >
-                            <CheckCircle className="w-3 h-3" /> 타임스탬프 인증
-                          </Badge>
-                        ) : (
-                          <Badge
-                            variant="outline"
-                            className="text-[11px] flex items-center gap-1 animate-pulse"
-                          >
-                            <Clock className="w-3 h-3" /> 블록체인 기록 중...
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                <div ref={timelineEndRef} />
-              </div>
+              <span className="text-sm font-medium text-primary">{evidenceList.length}건 기록됨</span>
             </div>
 
-            {/* 하단 액션 버튼 */}
-            <div className="mt-6 pt-6 border-t -mx-6 px-6 -mb-6 pb-6">
+            <div className="p-6 max-h-[500px] overflow-y-auto">
+              {evidenceList.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                  <ShieldCheck className="w-12 h-12 mb-4 opacity-30" />
+                  <p>아직 등록된 증빙 자료가 없습니다.</p>
+                </div>
+              ) : (
+                <div className="relative pl-8 border-l-2 border-gray-100 space-y-6">
+                  {evidenceList.map((item) => {
+                    const style = getTypeStyle(item.type);
+                    return (
+                      <div key={item.id} className="relative group">
+                        <div className="absolute -left-[41px] w-4 h-4 bg-primary rounded-full border-4 border-white" />
+                        <div className={`${style.bg} p-5 rounded-2xl relative`}>
+                          <button 
+                            onClick={() => handleDeleteItem(item.id)} 
+                            className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                          <div className="flex items-start gap-4">
+                            <div className="p-2 bg-white rounded-xl shadow-sm">{style.icon}</div>
+                            <div className="flex-1">
+                              <h4 className="font-bold">{item.title}</h4>
+                              <span className="text-sm text-muted-foreground">
+                                {new Date(item.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between mt-4 pt-4 border-t border-black/5">
+                            <span className="text-xs text-muted-foreground truncate max-w-[200px]">{item.file_url}</span>
+                            {item.status === "verified" ? (
+                              <div className="flex items-center gap-1 text-green-600 text-xs font-medium">
+                                <CheckCircle className="w-4 h-4" /> 인증됨
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1 text-amber-500 text-xs font-medium">
+                                <Clock className="w-4 h-4" /> 확인 중
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div ref={timelineEndRef} />
+                </div>
+              )}
+            </div>
+
+            {/* 하단 PDF 생성 버튼 */}
+            <div className="p-6 border-t">
               <Button
                 type="button"
                 onClick={handleGeneratePDF}
@@ -316,7 +347,7 @@ export default function EvidencePackage() {
               >
                 {isGenerating ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin mr-2" />
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                     패키징 중...
                   </>
                 ) : (
@@ -326,13 +357,11 @@ export default function EvidencePackage() {
                   </>
                 )}
               </Button>
-              <p className="text-center text-[10px] text-muted-foreground mt-3">
-                * 생성된 문서는{" "}
-                <span className="font-bold">전자문서 및 전자거래 기본법</span>에 의거하여
-                법적 효력을 가집니다.
+              <p className="text-center text-xs text-muted-foreground mt-3">
+                * 생성된 문서는 전자문서 및 전자거래 기본법에 의거하여 법적 효력을 가집니다.
               </p>
             </div>
-          </SectionCard>
+          </Card>
         </div>
       </div>
     </AppPage>
