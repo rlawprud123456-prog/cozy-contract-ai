@@ -64,6 +64,8 @@ import PartnerDetail from "./pages/PartnerDetail";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Signup from "./pages/Signup";
+import PartnerProfile from "./pages/PartnerProfile";
+import SafeChatPage from "./pages/SafeChatPage";
 const queryClient = new QueryClient();
 
 function AppContent() {
@@ -157,6 +159,8 @@ function AppContent() {
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/partner-profile" element={<PartnerProfile />} />
+          <Route path="/safe-chat" element={<SafeChatPage />} />
           <Route path="*" element={<NotFound />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
