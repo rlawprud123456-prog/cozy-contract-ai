@@ -161,7 +161,9 @@ function AppContent() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/partner-profile" element={<PartnerProfile />} />
           <Route path="/safe-chat" element={<SafeChatPage />} />
-          <Route path="*" element={<NotFound />} />
+          {/* 테스트용 라우트 */}
+          <Route path="/test/partner-profile" element={<PartnerProfile />} />
+          <Route path="/test/safe-chat" element={<SafeChatPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
