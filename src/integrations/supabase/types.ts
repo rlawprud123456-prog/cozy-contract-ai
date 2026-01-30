@@ -47,6 +47,70 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          room_id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          room_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          room_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_rooms: {
+        Row: {
+          contract_id: string | null
+          created_at: string
+          customer_id: string | null
+          id: string
+          partner_id: string | null
+        }
+        Insert: {
+          contract_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          partner_id?: string | null
+        }
+        Update: {
+          contract_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          partner_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_rooms_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comments: {
         Row: {
           content: string
@@ -135,6 +199,47 @@ export type Database = {
             columns: ["partner_id"]
             isOneToOne: false
             referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_stages: {
+        Row: {
+          amount: number | null
+          completed_at: string | null
+          contract_id: string
+          created_at: string
+          evidence_photo_url: string | null
+          id: string
+          stage_name: string
+          status: string
+        }
+        Insert: {
+          amount?: number | null
+          completed_at?: string | null
+          contract_id: string
+          created_at?: string
+          evidence_photo_url?: string | null
+          id?: string
+          stage_name: string
+          status?: string
+        }
+        Update: {
+          amount?: number | null
+          completed_at?: string | null
+          contract_id?: string
+          created_at?: string
+          evidence_photo_url?: string | null
+          id?: string
+          stage_name?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_stages_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
         ]
@@ -473,13 +578,45 @@ export type Database = {
           },
         ]
       }
+      idea_books: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string
+          is_contract_attached: boolean | null
+          note: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url: string
+          is_contract_attached?: boolean | null
+          note?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string
+          is_contract_attached?: boolean | null
+          note?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       partners: {
         Row: {
           business_license: string | null
           business_name: string
           category: string
+          completed_count: number | null
           created_at: string
           description: string | null
+          dispute_count: number | null
           email: string
           featured: boolean | null
           featured_at: string | null
@@ -496,8 +633,10 @@ export type Database = {
           business_license?: string | null
           business_name: string
           category: string
+          completed_count?: number | null
           created_at?: string
           description?: string | null
+          dispute_count?: number | null
           email: string
           featured?: boolean | null
           featured_at?: string | null
@@ -514,8 +653,10 @@ export type Database = {
           business_license?: string | null
           business_name?: string
           category?: string
+          completed_count?: number | null
           created_at?: string
           description?: string | null
+          dispute_count?: number | null
           email?: string
           featured?: boolean | null
           featured_at?: string | null
