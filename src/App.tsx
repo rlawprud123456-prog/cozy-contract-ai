@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate, useLocation, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
@@ -75,6 +75,7 @@ function AppContent() {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     // Set up auth state listener
@@ -101,80 +102,98 @@ function AppContent() {
     navigate("/");
   };
 
-  const location = useLocation();
   const isHomePage = location.pathname === "/";
+  const isTestPage = location.pathname.startsWith("/test/");
 
   return (
     <div className="flex flex-col min-h-screen">
-      {!isHomePage && <Header />}
-      <main className="flex-1">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/partner-login" element={<PartnerLogin />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/admin-old" element={<Admin />} />
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="users" element={<Users />} />
-            <Route path="partners" element={<AdminPartners />} />
-            <Route path="contracts" element={<Contracts />} />
-            <Route path="estimates" element={<Estimates />} />
-            <Route path="payments" element={<Payments />} />
-            <Route path="damage-reports" element={<DamageReports />} />
-            <Route path="featured" element={<Featured />} />
-            <Route path="community" element={<CommunityManagement />} />
-            <Route path="evidence" element={<EvidenceManager />} />
-          </Route>
-          <Route path="/contract-create" element={<ContractCreate user={user} />} />
-          <Route path="/escrow" element={<Escrow user={user} />} />
-          <Route path="/contract-review" element={<ContractReview user={user} />} />
-          <Route path="/estimate" element={<EstimatePage />} />
-          <Route path="/match" element={<Match />} />
-          <Route path="/partners" element={<Partners />} />
-          <Route path="/partners/detail/:id" element={<PartnerDetail />} />
-          <Route path="/ai-interior" element={<AIInterior />} />
-          <Route path="/partners/:category" element={<PartnerList />} />
-          <Route path="/scammer-search" element={<ScammerSearch />} />
-          <Route path="/damage-history" element={<DamageHistory />} />
-          <Route path="/damage-report" element={<DamageReport />} />
-          <Route path="/profile" element={<ProtectedRoute><Profile user={user} /></ProtectedRoute>} />
-          <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
-          <Route path="/partner/apply" element={<PartnerApply />} />
-          <Route path="/community/sad" element={<Sad />} />
-          <Route path="/community/unfair" element={<Unfair />} />
-          <Route path="/community/diy-tips" element={<DiyTips />} />
-          <Route path="/community/jobs" element={<Jobs />} />
-          <Route path="/community/help" element={<Help />} />
-          <Route path="/community/post/:id" element={<PostDetailPage />} />
-          <Route path="/reviews" element={<Reviews />} />
-          <Route path="/reviews/write" element={<ReviewWrite />} />
-          <Route path="/partner-center" element={<ProtectedRoute><PartnerCenter /></ProtectedRoute>} />
-          <Route path="/evidence-package" element={<ProtectedRoute><EvidencePackage /></ProtectedRoute>} />
-          <Route path="/install" element={<Install />} />
-          <Route path="/all-menu" element={<AllMenu />} />
-          <Route path="/cases" element={<Cases />} />
-          <Route path="/community" element={<Community />} />
-          <Route path="/estimate-requests" element={<ProtectedRoute><EstimateRequests /></ProtectedRoute>} />
-          <Route path="/featured-history" element={<ProtectedRoute><FeaturedHistory /></ProtectedRoute>} />
-          <Route path="/support" element={<SupportPage />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/partner-profile" element={<PartnerProfile />} />
-          <Route path="/safe-chat" element={<SafeChatPage />} />
-          {/* 테스트용 라우트 */}
-          <Route path="/test/partner-profile" element={<PartnerProfile />} />
-          <Route path="/test/safe-chat" element={<SafeChatPage />} />
-          <Route path="/test/escrow" element={<EscrowTimeline />} />
-          <Route path="/test/ideabook" element={<SafeIdeaBook />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </main>
-      {!isHomePage && <Footer />}
-      <Chatbot />
-      <BottomNav />
+      {/* ★ 개발자 테스트 메뉴바 ★ */}
+      <div className="fixed top-0 left-0 right-0 z-[100] bg-yellow-400 text-black px-4 py-2 flex items-center gap-4 text-sm font-medium shadow-md overflow-x-auto">
+        <span className="font-bold whitespace-nowrap">🛠️ TEST MODE</span>
+        <span className="text-yellow-700">|</span>
+        <Link to="/test/partner-profile" className="hover:underline whitespace-nowrap">🔍 안심 프로필</Link>
+        <span className="text-yellow-700">|</span>
+        <Link to="/test/safe-chat" className="hover:underline whitespace-nowrap">💬 안심 채팅</Link>
+        <span className="text-yellow-700">|</span>
+        <Link to="/test/escrow" className="hover:underline whitespace-nowrap">🔒 에스크로</Link>
+        <span className="text-yellow-700">|</span>
+        <Link to="/test/ideabook" className="hover:underline whitespace-nowrap">📖 아이디어북</Link>
+        <span className="text-yellow-700">|</span>
+        <Link to="/partner-center" className="hover:underline whitespace-nowrap">🏢 파트너 센터</Link>
+      </div>
+
+      {/* 메뉴바 높이만큼 여백 */}
+      <div className="pt-10 flex flex-col min-h-[calc(100vh-40px)]">
+        {!isHomePage && <Header />}
+        <main className="flex-1">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/partner-login" element={<PartnerLogin />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/admin-old" element={<Admin />} />
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="users" element={<Users />} />
+              <Route path="partners" element={<AdminPartners />} />
+              <Route path="contracts" element={<Contracts />} />
+              <Route path="estimates" element={<Estimates />} />
+              <Route path="payments" element={<Payments />} />
+              <Route path="damage-reports" element={<DamageReports />} />
+              <Route path="featured" element={<Featured />} />
+              <Route path="community" element={<CommunityManagement />} />
+              <Route path="evidence" element={<EvidenceManager />} />
+            </Route>
+            <Route path="/contract-create" element={<ContractCreate user={user} />} />
+            <Route path="/escrow" element={<Escrow user={user} />} />
+            <Route path="/contract-review" element={<ContractReview user={user} />} />
+            <Route path="/estimate" element={<EstimatePage />} />
+            <Route path="/match" element={<Match />} />
+            <Route path="/partners" element={<Partners />} />
+            <Route path="/partners/detail/:id" element={<PartnerDetail />} />
+            <Route path="/ai-interior" element={<AIInterior />} />
+            <Route path="/partners/:category" element={<PartnerList />} />
+            <Route path="/scammer-search" element={<ScammerSearch />} />
+            <Route path="/damage-history" element={<DamageHistory />} />
+            <Route path="/damage-report" element={<DamageReport />} />
+            <Route path="/profile" element={<ProtectedRoute><Profile user={user} /></ProtectedRoute>} />
+            <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
+            <Route path="/partner/apply" element={<PartnerApply />} />
+            <Route path="/community/sad" element={<Sad />} />
+            <Route path="/community/unfair" element={<Unfair />} />
+            <Route path="/community/diy-tips" element={<DiyTips />} />
+            <Route path="/community/jobs" element={<Jobs />} />
+            <Route path="/community/help" element={<Help />} />
+            <Route path="/community/post/:id" element={<PostDetailPage />} />
+            <Route path="/reviews" element={<Reviews />} />
+            <Route path="/reviews/write" element={<ReviewWrite />} />
+            <Route path="/partner-center" element={<ProtectedRoute><PartnerCenter /></ProtectedRoute>} />
+            <Route path="/evidence-package" element={<ProtectedRoute><EvidencePackage /></ProtectedRoute>} />
+            <Route path="/install" element={<Install />} />
+            <Route path="/all-menu" element={<AllMenu />} />
+            <Route path="/cases" element={<Cases />} />
+            <Route path="/community" element={<Community />} />
+            <Route path="/estimate-requests" element={<ProtectedRoute><EstimateRequests /></ProtectedRoute>} />
+            <Route path="/featured-history" element={<ProtectedRoute><FeaturedHistory /></ProtectedRoute>} />
+            <Route path="/support" element={<SupportPage />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/partner-profile" element={<PartnerProfile />} />
+            <Route path="/safe-chat" element={<SafeChatPage />} />
+            {/* 테스트용 라우트 */}
+            <Route path="/test/partner-profile" element={<PartnerProfile />} />
+            <Route path="/test/safe-chat" element={<SafeChatPage />} />
+            <Route path="/test/escrow" element={<EscrowTimeline />} />
+            <Route path="/test/ideabook" element={<SafeIdeaBook />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </main>
+        {!isHomePage && <Footer />}
+        <Chatbot />
+        <BottomNav />
+      </div>
     </div>
   );
 }
