@@ -66,6 +66,9 @@ import Privacy from "./pages/Privacy";
 import Signup from "./pages/Signup";
 import PartnerProfile from "./pages/PartnerProfile";
 import SafeChatPage from "./pages/SafeChatPage";
+import EscrowTimeline from "./components/EscrowTimeline";
+import SafeIdeaBook from "./components/SafeIdeaBook";
+
 const queryClient = new QueryClient();
 
 function AppContent() {
@@ -164,6 +167,8 @@ function AppContent() {
           {/* 테스트용 라우트 */}
           <Route path="/test/partner-profile" element={<PartnerProfile />} />
           <Route path="/test/safe-chat" element={<SafeChatPage />} />
+          <Route path="/test/escrow" element={<EscrowTimeline />} />
+          <Route path="/test/ideabook" element={<SafeIdeaBook />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
