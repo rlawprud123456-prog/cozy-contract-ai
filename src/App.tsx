@@ -68,6 +68,7 @@ import PartnerProfile from "./pages/PartnerProfile";
 import SafeChatPage from "./pages/SafeChatPage";
 import EscrowTimeline from "./components/EscrowTimeline";
 import SafeIdeaBook from "./components/SafeIdeaBook";
+import ContractPaymentFlow from "./pages/ContractPaymentFlow";
 
 const queryClient = new QueryClient();
 
@@ -118,6 +119,8 @@ function AppContent() {
         <Link to="/test/escrow" className="hover:underline whitespace-nowrap">🔒 에스크로</Link>
         <span className="text-yellow-700">|</span>
         <Link to="/test/ideabook" className="hover:underline whitespace-nowrap">📖 아이디어북</Link>
+        <span className="text-yellow-700">|</span>
+        <Link to="/test/contract-payment" className="hover:underline whitespace-nowrap">📝 계약결제</Link>
         <span className="text-yellow-700">|</span>
         <Link to="/partner-center" className="hover:underline whitespace-nowrap">🏢 파트너 센터</Link>
       </div>
@@ -187,6 +190,7 @@ function AppContent() {
             <Route path="/test/safe-chat" element={<SafeChatPage />} />
             <Route path="/test/escrow" element={<EscrowTimeline />} />
             <Route path="/test/ideabook" element={<SafeIdeaBook />} />
+            <Route path="/test/contract-payment" element={<ContractPaymentFlow />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
