@@ -1,16 +1,72 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Wallet, Info, ArrowRight, TrendingUp, Receipt } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export default function PartnerSettlement() {
-  const settlementData = {
-    totalSales: 25000000,
-    feeRate: 10,
-    feeAmount: 2500000,
-    actualCash: 22500000,
-    thisMonthCases: 3,
+  const [loading, setLoading] = useState(true);
+  const [settlement, setSettlement] = useState({
+    totalSales: 0,
+    feeRate: 5.5,
+    feeAmount: 0,
+    vatAmount: 0,
+    actualCash: 0,
+    thisMonthCases: 0,
+  });
+
+  useEffect(() => {
+    fetchSettlementData();
+  }, []);
+
+  const fetchSettlementData = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: partnerData } = await supabase
+        .from("partners")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!partnerData) return;
+
+      const feeRate = 5.5;
+
+      const now = new Date();
+      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+      const { data: contracts } = await supabase
+        .from("contracts")
+        .select("total_amount")
+        .eq("partner_id", partnerData.id)
+        .gte("created_at", firstDayOfMonth);
+
+      if (contracts) {
+        const totalSales = contracts.reduce((sum, c) => sum + (c.total_amount || 0), 0);
+        const feeAmount = Math.floor(totalSales * (feeRate / 100));
+        const vatAmount = Math.floor(feeAmount * 0.1);
+        const actualCash = totalSales - (feeAmount + vatAmount);
+
+        setSettlement({
+          totalSales,
+          feeRate,
+          feeAmount,
+          vatAmount,
+          actualCash,
+          thisMonthCases: contracts.length,
+        });
+      }
+    } catch (error) {
+      console.error("정산 데이터 로딩 오류:", error);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><p className="text-muted-foreground">정산 데이터를 불러오는 중입니다...</p></div>;
 
   return (
     <div className="max-w-md mx-auto p-4 space-y-5">
@@ -32,7 +88,7 @@ export default function PartnerSettlement() {
 
           <div className="flex items-baseline gap-1">
             <span className="text-3xl font-extrabold tracking-tight text-primary">
-              {settlementData.actualCash.toLocaleString()}
+              {settlement.actualCash.toLocaleString()}
             </span>
             <span className="text-base text-muted-foreground">원</span>
           </div>
@@ -42,13 +98,19 @@ export default function PartnerSettlement() {
               <span className="flex items-center gap-1">
                 <Receipt className="w-3.5 h-3.5" /> 고객 총 결제금액
               </span>
-              {settlementData.totalSales.toLocaleString()}원
+              {settlement.totalSales.toLocaleString()}원
             </div>
             <div className="flex justify-between text-destructive/80">
               <span className="flex items-center gap-1">
-                <Info className="w-3.5 h-3.5" /> 플랫폼 수수료 ({settlementData.feeRate}%)
+                <Info className="w-3.5 h-3.5" /> 플랫폼 수수료 ({settlement.feeRate}%)
               </span>
-              -{settlementData.feeAmount.toLocaleString()}원
+              -{settlement.feeAmount.toLocaleString()}원
+            </div>
+            <div className="flex justify-between text-destructive/60">
+              <span className="flex items-center gap-1">
+                ↳ 부가세 (10%)
+              </span>
+              -{settlement.vatAmount.toLocaleString()}원
             </div>
           </div>
         </div>
@@ -67,7 +129,7 @@ export default function PartnerSettlement() {
         <Card className="p-4">
           <p className="text-xs text-muted-foreground">이번 달 완료 공사</p>
           <div className="mt-1 flex items-baseline gap-1">
-            <span className="text-2xl font-bold text-foreground">{settlementData.thisMonthCases}</span>
+            <span className="text-2xl font-bold text-foreground">{settlement.thisMonthCases}</span>
             <span className="text-sm text-muted-foreground">건</span>
           </div>
         </Card>
@@ -77,7 +139,9 @@ export default function PartnerSettlement() {
           </p>
           <div className="mt-1 flex items-baseline gap-1">
             <span className="text-2xl font-bold text-foreground">
-              {Math.floor(settlementData.totalSales / settlementData.thisMonthCases / 10000)}
+              {settlement.thisMonthCases > 0
+                ? Math.floor(settlement.totalSales / settlement.thisMonthCases / 10000).toLocaleString()
+                : 0}
             </span>
             <span className="text-sm text-muted-foreground">만원</span>
           </div>
