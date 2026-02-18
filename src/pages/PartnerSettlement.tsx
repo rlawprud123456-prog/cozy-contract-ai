@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Wallet, Info, ArrowRight, TrendingUp, Receipt } from "lucide-react";
+import { Wallet, Info, ArrowRight, TrendingUp, Receipt, Crown } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export default function PartnerSettlement() {
   const [loading, setLoading] = useState(true);
+  const [partnerGrade, setPartnerGrade] = useState("normal");
   const [settlement, setSettlement] = useState({
     totalSales: 0,
     feeRate: 5.5,
@@ -27,13 +28,16 @@ export default function PartnerSettlement() {
 
       const { data: partnerData } = await supabase
         .from("partners")
-        .select("id")
+        .select("id, grade")
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (!partnerData) return;
 
-      const feeRate = 5.5;
+      const grade = (partnerData as any).grade || "normal";
+      setPartnerGrade(grade);
+
+      const feeRate = grade === "prime" ? 3.3 : 5.5;
 
       const now = new Date();
       const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
@@ -68,13 +72,21 @@ export default function PartnerSettlement() {
 
   if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><p className="text-muted-foreground">정산 데이터를 불러오는 중입니다...</p></div>;
 
+  const isPrime = partnerGrade === "prime";
+
   return (
     <div className="max-w-md mx-auto p-4 space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-foreground">이번 달 정산 현황</h1>
-        <Badge variant="outline" className="text-muted-foreground">
-          2026년 2월
-        </Badge>
+        {isPrime ? (
+          <Badge className="bg-amber-500 text-white">
+            <Crown className="w-3 h-3 mr-1" /> 프라임 파트너
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="text-muted-foreground">
+            일반 파트너
+          </Badge>
+        )}
       </div>
 
       <Card className="relative overflow-hidden">

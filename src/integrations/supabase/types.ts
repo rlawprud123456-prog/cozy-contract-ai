@@ -620,6 +620,7 @@ export type Database = {
           email: string
           featured: boolean | null
           featured_at: string | null
+          grade: string | null
           id: string
           location: string | null
           phone: string
@@ -640,6 +641,7 @@ export type Database = {
           email: string
           featured?: boolean | null
           featured_at?: string | null
+          grade?: string | null
           id?: string
           location?: string | null
           phone: string
@@ -660,6 +662,7 @@ export type Database = {
           email?: string
           featured?: boolean | null
           featured_at?: string | null
+          grade?: string | null
           id?: string
           location?: string | null
           phone?: string
