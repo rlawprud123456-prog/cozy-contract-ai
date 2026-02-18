@@ -209,8 +209,10 @@ export type Database = {
           completed_at: string | null
           contract_id: string
           created_at: string
+          escrow_status: string | null
           evidence_photo_url: string | null
           id: string
+          reject_reason: string | null
           stage_name: string
           status: string
         }
@@ -219,8 +221,10 @@ export type Database = {
           completed_at?: string | null
           contract_id: string
           created_at?: string
+          escrow_status?: string | null
           evidence_photo_url?: string | null
           id?: string
+          reject_reason?: string | null
           stage_name: string
           status?: string
         }
@@ -229,8 +233,10 @@ export type Database = {
           completed_at?: string | null
           contract_id?: string
           created_at?: string
+          escrow_status?: string | null
           evidence_photo_url?: string | null
           id?: string
+          reject_reason?: string | null
           stage_name?: string
           status?: string
         }
