@@ -1,7 +1,18 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Users, CalendarDays, Clock, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+
+interface PartnerStat {
+  id: string;
+  name: string;
+  status: string;
+  todayCases: number;
+  monthCases: number;
+  totalVolume: number;
+  feeEarned: number;
+}
 
 interface AdminDashboardProps {
   stats: {
@@ -15,11 +26,66 @@ interface AdminDashboardProps {
 }
 
 export function AdminDashboard({ stats }: AdminDashboardProps) {
-  const partners = [
-    { id: 1, name: "공간작업소", todayCases: 2, monthCases: 12, totalVolume: 85000000, feeEarned: 8500000 },
-    { id: 2, name: "모던인테리어", todayCases: 0, monthCases: 5, totalVolume: 32000000, feeEarned: 3200000 },
-    { id: 3, name: "바른디자인", todayCases: 1, monthCases: 8, totalVolume: 45000000, feeEarned: 4500000 },
-  ];
+  const [loading, setLoading] = useState(true);
+  const [partnerStats, setPartnerStats] = useState<PartnerStat[]>([]);
+  const [platformStats, setPlatformStats] = useState({ todayCases: 0, monthCases: 0, totalFeeEarned: 0 });
+
+  const FEE_RATE = 5.5;
+
+  useEffect(() => {
+    fetchAdminData();
+  }, []);
+
+  const fetchAdminData = async () => {
+    try {
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+      const { data: partners } = await supabase.from("partners").select("id, business_name, status");
+
+      const { data: contracts } = await supabase
+        .from("contracts")
+        .select("partner_id, total_amount, created_at")
+        .gte("created_at", monthStart);
+
+      if (!partners || !contracts) return;
+
+      let globalTodayCases = 0;
+      let globalMonthCases = contracts.length;
+      let globalFeeEarned = 0;
+
+      const statsArray: PartnerStat[] = partners.map(p => {
+        const myContracts = contracts.filter(c => c.partner_id === p.id);
+        const todayContracts = myContracts.filter(c => c.created_at >= todayStart);
+
+        const totalVolume = myContracts.reduce((sum, c) => sum + (c.total_amount || 0), 0);
+        const feeEarned = Math.floor(totalVolume * (FEE_RATE / 100));
+
+        globalTodayCases += todayContracts.length;
+        globalFeeEarned += feeEarned;
+
+        return {
+          id: p.id,
+          name: p.business_name,
+          status: p.status,
+          todayCases: todayContracts.length,
+          monthCases: myContracts.length,
+          totalVolume,
+          feeEarned,
+        };
+      });
+
+      statsArray.sort((a, b) => b.monthCases - a.monthCases);
+
+      setPartnerStats(statsArray);
+      setPlatformStats({ todayCases: globalTodayCases, monthCases: globalMonthCases, totalFeeEarned: globalFeeEarned });
+    } catch (error) {
+      console.error("관리자 데이터 로딩 오류:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -37,21 +103,21 @@ export function AdminDashboard({ stats }: AdminDashboardProps) {
             <CalendarDays className="w-4 h-4 text-primary" />
             오늘 성사된 계약
           </div>
-          <p className="text-2xl font-bold text-foreground">{stats.contracts > 0 ? stats.contracts : 3}건</p>
+          <p className="text-2xl font-bold text-foreground">{platformStats.todayCases}건</p>
         </Card>
         <Card className="p-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
             <Clock className="w-4 h-4 text-primary" />
             이번 달 총 계약
           </div>
-          <p className="text-2xl font-bold text-foreground">25건</p>
+          <p className="text-2xl font-bold text-foreground">{platformStats.monthCases}건</p>
         </Card>
         <Card className="p-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
             <CheckCircle className="w-4 h-4 text-primary" />
-            이번 달 플랫폼 예상 수익
+            이번 달 예상 수수료 수익
           </div>
-          <p className="text-2xl font-bold text-foreground">16,200,000원</p>
+          <p className="text-2xl font-bold text-foreground">{platformStats.totalFeeEarned.toLocaleString()}원</p>
         </Card>
       </div>
 
@@ -63,38 +129,44 @@ export function AdminDashboard({ stats }: AdminDashboardProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-0 p-0">
-          {partners.map((p) => (
-            <div key={p.id} className="px-5 py-4 border-t flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-foreground">{p.name}</span>
-                <Badge variant="secondary" className="text-xs">
-                  정상 활동중
-                </Badge>
-              </div>
+          {loading ? (
+            <p className="px-5 py-8 text-center text-muted-foreground">데이터를 집계 중입니다...</p>
+          ) : partnerStats.length === 0 ? (
+            <p className="px-5 py-8 text-center text-muted-foreground">등록된 파트너 실적이 없습니다.</p>
+          ) : (
+            partnerStats.map((p) => (
+              <div key={p.id} className="px-5 py-4 border-t flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-foreground">{p.name}</span>
+                  <Badge variant="secondary" className="text-xs">
+                    정상 활동중
+                  </Badge>
+                </div>
 
-              <div className="flex items-center gap-4 text-sm">
-                <div className="flex-1">
-                  <p className="text-muted-foreground text-xs">오늘 계약</p>
-                  <p className={`font-bold ${p.todayCases > 0 ? 'text-primary' : 'text-foreground'}`}>
-                    {p.todayCases}건
+                <div className="flex items-center gap-4 text-sm">
+                  <div className="flex-1">
+                    <p className="text-muted-foreground text-xs">오늘 계약</p>
+                    <p className={`font-bold ${p.todayCases > 0 ? 'text-primary' : 'text-foreground'}`}>
+                      {p.todayCases}건
+                    </p>
+                  </div>
+                  <div className="w-px h-8 bg-border" />
+                  <div className="flex-1">
+                    <p className="text-muted-foreground text-xs">이번 달 누적</p>
+                    <p className="font-bold text-foreground">{p.monthCases}건</p>
+                  </div>
+                </div>
+
+                <div className="bg-muted/50 rounded-md p-2.5 text-sm">
+                  <p className="text-muted-foreground text-xs">발생 수수료 (매출)</p>
+                  <p className="font-bold text-foreground">{p.feeEarned.toLocaleString()}원</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    총 거래액: {p.totalVolume.toLocaleString()}원
                   </p>
                 </div>
-                <div className="w-px h-8 bg-border" />
-                <div className="flex-1">
-                  <p className="text-muted-foreground text-xs">이번 달 누적</p>
-                  <p className="font-bold text-foreground">{p.monthCases}건</p>
-                </div>
               </div>
-
-              <div className="bg-muted/50 rounded-md p-2.5 text-sm">
-                <p className="text-muted-foreground text-xs">발생 수수료 (매출)</p>
-                <p className="font-bold text-foreground">{p.feeEarned.toLocaleString()}원</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  총 거래액: {p.totalVolume.toLocaleString()}원
-                </p>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </CardContent>
       </Card>
     </div>
