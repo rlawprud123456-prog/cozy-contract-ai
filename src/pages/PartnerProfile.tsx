@@ -1,13 +1,54 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { ShieldCheck, Award, MapPin, CheckCircle2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const partnerInfo = {
-  name: "바로고침 인테리어",
-  completedInGangwon: 42,
-};
-
 export default function PartnerProfile() {
+  const [loading, setLoading] = useState(true);
+  const [partnerInfo, setPartnerInfo] = useState({
+    name: "로딩 중...",
+    completedInGangwon: 0,
+    grade: "normal"
+  });
+
+  useEffect(() => {
+    fetchPartnerInfo();
+  }, []);
+
+  const fetchPartnerInfo = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("partners")
+        .select("id, business_name, grade")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (data) {
+        const { count } = await supabase
+          .from("contracts")
+          .select("*", { count: 'exact', head: true })
+          .eq("partner_id", data.id)
+          .eq("status", "completed");
+
+        setPartnerInfo({
+          name: data.business_name || "업체명 없음",
+          completedInGangwon: count || 0,
+          grade: (data as any).grade || "normal"
+        });
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) return <div className="flex items-center justify-center min-h-screen"><p className="text-muted-foreground">로딩 중...</p></div>;
+
   return (
     <div className="min-h-screen bg-background p-4 pb-24">
       <div className="max-w-lg mx-auto space-y-6">
@@ -17,14 +58,15 @@ export default function PartnerProfile() {
               <ShieldCheck className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">{partnerInfo.name}</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold">{partnerInfo.name}</h1>
+                {partnerInfo.grade === 'prime' && <Badge className="bg-amber-500 text-white border-0">PRIME</Badge>}
+              </div>
               <p className="text-slate-400 text-sm">종합 인테리어 전문 • 강원특별자치도</p>
             </div>
           </div>
 
-          {/* 핵심: 신뢰 뱃지 3종 세트 */}
           <div className="space-y-3 mt-4">
-            {/* 1. 면허 보유 */}
             <div className="flex items-start gap-3 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
               <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
                 <Award className="w-5 h-5 text-blue-400" />
@@ -35,7 +77,6 @@ export default function PartnerProfile() {
               </div>
             </div>
 
-            {/* 2. 강원도 내 시공 완료 */}
             <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
               <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
                 <MapPin className="w-5 h-5 text-amber-400" />
@@ -48,7 +89,6 @@ export default function PartnerProfile() {
               </div>
             </div>
 
-            {/* 3. 하자 이행 보증보험 */}
             <div className="flex items-start gap-3 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
               <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
                 <CheckCircle2 className="w-5 h-5 text-green-400" />
